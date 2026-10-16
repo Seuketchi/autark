@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark wallpaper</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; background: #EFE9DF; font-family: 'Geist', system-ui, sans-serif; color: #24221E">
+  <svg width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true" style="position: absolute; inset: 0; display: block">
+    <rect x="0" y="0" width="1440" height="900" fill="#EFE9DF"></rect>
+    <rect x="0" y="320" width="1440" height="580" fill="#E9E2D6"></rect>
+    <circle cx="1040" cy="400" r="88" fill="{{sun}}"></circle>
+    <path d="M0 560 L180 470 L330 520 L520 400 L690 500 L860 430 L1010 490 L1180 380 L1330 460 L1440 420 L1440 900 L0 900 Z" fill="#DDD4C5"></path>
+    <path d="M0 640 L140 580 L300 620 L470 540 L640 610 L800 560 L980 630 L1150 560 L1300 600 L1440 570 L1440 900 L0 900 Z" fill="#D0C5B3"></path>
+    <path d="M0 730 L200 660 L380 700 L560 640 L760 720 L940 670 L1120 730 L1300 680 L1440 710 L1440 900 L0 900 Z" fill="#B9CBBE"></path>
+    <path d="M0 820 L240 760 L480 800 L720 750 L960 810 L1200 770 L1440 800 L1440 900 L0 900 Z" fill="#9DB5A5"></path>
+  </svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sun":{"editor":"color","default":"#F8F4EC","options":["#F8F4EC","#A9C7B6","#E8C9A8"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { sun: this.props.sun ?? '#F8F4EC' };
+  }
+}
+</script>
+</body>
+</html>

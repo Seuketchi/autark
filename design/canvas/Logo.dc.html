@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark logo directions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; background: #101114; font-family: 'Geist', system-ui, sans-serif; color: #ECEEF1">
+  <sc-for list="{{options}}" as="o" hint-placeholder-count="4">
+    <article style="display: flex; flex-direction: column; gap: 20px; padding: 28px; border-radius: 16px; background: #16181D; border: 1px solid rgba(255, 255, 255, 0.07)">
+      <div style="display: flex; align-items: baseline; gap: 10px">
+        <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: #8B93A0">{{o.num}}</span>
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">{{o.name}}</h2>
+        <span style="font-size: 13px; color: #A3AAB5">{{o.idea}}</span>
+      </div>
+
+      <div style="flex: 1; display: flex; align-items: center; gap: 36px">
+        <svg width="148" height="148" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="{{o.a.d}}" fill="{{o.a.fill}}" stroke="{{o.a.stroke}}" stroke-width="{{o.a.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="{{o.b.d}}" fill="{{o.b.fill}}" stroke="{{o.b.stroke}}" stroke-width="{{o.b.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="{{o.c.d}}" fill="{{o.c.fill}}" stroke="{{o.c.stroke}}" stroke-width="{{o.c.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <div style="display: flex; align-items: center; gap: 14px">
+          <svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="{{o.a.d}}" fill="{{o.a.fill}}" stroke="{{o.a.stroke}}" stroke-width="{{o.a.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{o.b.d}}" fill="{{o.b.fill}}" stroke="{{o.b.stroke}}" stroke-width="{{o.b.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{o.c.d}}" fill="{{o.c.fill}}" stroke="{{o.c.stroke}}" stroke-width="{{o.c.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span style="font-size: 44px; font-weight: 600; letter-spacing: -0.03em">autark</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.06)">
+        <span style="position: relative; width: 64px; height: 64px; display: flex; border-radius: 26%; overflow: hidden; background: linear-gradient(180deg, #6AB0FF 0%, #2C6BE0 100%); box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.55), 0 3px 10px rgba(0, 0, 0, 0.35)">
+          <span aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 52%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0) 100%)"></span>
+          <svg width="100%" height="100%" viewBox="-4 -4 32 32" aria-hidden="true" style="position: relative">
+            <path d="{{o.a.d}}" fill="{{o.w.afill}}" stroke="{{o.w.astroke}}" stroke-width="{{o.a.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{o.b.d}}" fill="{{o.w.bfill}}" stroke="{{o.w.bstroke}}" stroke-width="{{o.b.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{o.c.d}}" fill="{{o.w.cfill}}" stroke="{{o.w.cstroke}}" stroke-width="{{o.c.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </span>
+        <span style="display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 18px; border-radius: 12px; background: #F4F6F9; color: #16181D">
+          <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="{{o.a.d}}" fill="{{o.l.afill}}" stroke="{{o.l.astroke}}" stroke-width="{{o.a.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{o.b.d}}" fill="{{o.l.bfill}}" stroke="{{o.l.bstroke}}" stroke-width="{{o.b.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{o.c.d}}" fill="{{o.l.cfill}}" stroke="{{o.l.cstroke}}" stroke-width="{{o.c.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          <span style="font-size: 22px; font-weight: 600; letter-spacing: -0.03em">autark</span>
+        </span>
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8B93A0">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="{{o.a.d}}" fill="{{o.a.fill}}" stroke="{{o.a.stroke}}" stroke-width="{{o.a.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{o.b.d}}" fill="{{o.b.fill}}" stroke="{{o.b.stroke}}" stroke-width="{{o.b.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{o.c.d}}" fill="{{o.c.fill}}" stroke="{{o.c.stroke}}" stroke-width="{{o.c.sw}}" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          16 px
+        </span>
+      </div>
+    </article>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const B = '#4C8DF6';
+    const B2 = '#9CC2FB';
+    const T = '#ECEEF1';
+    const D = '#16181D';
+    const none = { d: 'M0 0', fill: 'none', stroke: 'none', sw: 0 };
+    const f = (d, c) => ({ d, fill: c, stroke: 'none', sw: 0 });
+    const s = (d, c, sw) => ({ d, fill: 'none', stroke: c, sw });
+    const white = (a, b, c) => ({ afill: a.fill === 'none' ? 'none' : '#FFFFFF', astroke: a.stroke === 'none' ? 'none' : '#FFFFFF', bfill: b.fill === 'none' ? 'none' : 'rgba(255, 255, 255, 0.6)', bstroke: b.stroke === 'none' ? 'none' : 'rgba(255, 255, 255, 0.6)', cfill: c.fill === 'none' ? 'none' : (c.fill === D ? '#2C6BE0' : '#FFFFFF'), cstroke: c.stroke === 'none' ? 'none' : (c.stroke === D ? '#2C6BE0' : '#FFFFFF') });
+    const light = (a, b, c) => ({ afill: a.fill, astroke: a.stroke, bfill: b.fill, bstroke: b.stroke, cfill: c.fill === T ? D : (c.fill === D ? '#F4F6F9' : c.fill), cstroke: c.stroke === T ? D : (c.stroke === D ? '#F4F6F9' : c.stroke) });
+    const raw = [
+      { num: '01', name: 'Ridge', idea: 'Two peaks and a moon: standing on your own ground.',
+        a: f('M2 20L9.5 6L17 20Z', B), b: f('M11.5 20L16.5 11.5L22 20Z', B2), c: f('M18 3.5a2 2 0 1 0 0 4a2 2 0 1 0 0-4z', T) },
+      { num: '02', name: 'Loop', idea: 'An A drawn in one closed stroke: nothing borrowed.',
+        a: s('M5.5 19.5L12 4.5l6.5 15C14.5 16 9.5 16 5.5 19.5z', B, 2.4), b: none, c: none },
+      { num: '03', name: 'Enclosure', idea: 'A peak inside a ring: a self-contained system.',
+        a: s('M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z', B, 2.2), b: s('M7.5 16L12 8.5l4.5 7.5', B2, 2.2), c: none },
+      { num: '04', name: 'Kernel', idea: 'An A cut from a solid hexagon: built from the core.',
+        a: f('M12 2.5l8.2 4.75v9.5L12 21.5l-8.2-4.75v-9.5z', B), b: none, c: s('M8.75 16.5L12 8.5l3.25 8M10 13.5h4', D, 2.2) }
+    ];
+    const options = raw.map((o) => ({ ...o, w: white(o.a, o.b, o.c), l: light(o.a, o.b, o.c) }));
+    return { options };
+  }
+}
+</script>
+</body>
+</html>

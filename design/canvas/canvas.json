@@ -1,0 +1,33 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-16T09:00:00Z"},
+  "title": "Autark Desktop",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "Desktop", "is_interactive": true, "radius": 12},
+    "Launcher.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "Launcher", "is_interactive": true, "radius": 12},
+    "Overview.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 900, "title": "Overview (all windows)", "radius": 12},
+    "NotificationCenter.dc.html": {"x": 0, "y": 1020, "w": 1440, "h": 900, "title": "Notification centre", "is_interactive": true, "radius": 12},
+    "Lock.dc.html": {"x": 1520, "y": 1020, "w": 1440, "h": 900, "title": "Lock screen", "radius": 12},
+    "Settings.dc.html": {"x": 3040, "y": 1020, "w": 1440, "h": 900, "title": "Settings", "is_interactive": true, "radius": 12},
+    "FileManager.dc.html": {"x": 4560, "y": 0, "w": 1440, "h": 900, "title": "File manager", "is_interactive": true, "radius": 12},
+    "Logo.dc.html": {"x": 4560, "y": 1020, "w": 1440, "h": 900, "title": "Logo directions", "radius": 12},
+    "Colors.dc.html": {"x": 6080, "y": 0, "w": 1440, "h": 900, "title": "Colour systems (light)", "radius": 12},
+    "AiLauncher.dc.html": {"x": 6080, "y": 1020, "w": 1440, "h": 900, "title": "AI launcher (Jev + Ollama)", "is_interactive": true, "radius": 12},
+    "Assistant.dc.html": {"x": 7600, "y": 1020, "w": 1440, "h": 900, "title": "Assistant (chat, memory, suggestions)", "is_interactive": true, "radius": 12},
+    "Tasks.dc.html": {"x": 7600, "y": 0, "w": 1440, "h": 900, "title": "Assistant tasks (scheduled, local)", "is_interactive": true, "radius": 12},
+    "Persona.dc.html": {"x": 9120, "y": 0, "w": 1440, "h": 900, "title": "Assistant name and face", "is_interactive": true, "radius": 12},
+    "Wallpaper.dc.html": {"x": 0, "y": 2320, "w": 1440, "h": 900, "title": "Component: wallpaper"},
+    "TopBar.dc.html": {"x": 1520, "y": 2320, "w": 1440, "h": 32, "title": "Component: top bar"},
+    "Dock.dc.html": {"x": 1520, "y": 2472, "w": 720, "h": 112, "title": "Component: dock", "is_interactive": true},
+    "AppIcon.dc.html": {"x": 2320, "y": 2472, "w": 64, "h": 64, "title": "Component: app icon"},
+    "Icons.dc.html": {"x": 3040, "y": 2320, "w": 1200, "h": 560, "title": "Icon set", "radius": 12}
+  },
+  "order": ["Main.dc.html", "Launcher.dc.html", "Overview.dc.html", "NotificationCenter.dc.html", "Lock.dc.html", "Settings.dc.html", "FileManager.dc.html", "Logo.dc.html", "Colors.dc.html", "AiLauncher.dc.html", "Assistant.dc.html", "Tasks.dc.html", "Persona.dc.html", "Wallpaper.dc.html", "TopBar.dc.html", "Dock.dc.html", "AppIcon.dc.html", "Icons.dc.html"],
+  "notes": {
+    "t1": {"x": 0, "y": -300, "text": "Autark desktop", "kind": "title1", "maxW": 10560},
+    "t2": {"x": 0, "y": 2060, "text": "Shell components and icons", "kind": "title1", "maxW": 4240}
+  },
+  "designSystems": []
+}

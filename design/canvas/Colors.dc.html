@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark colour systems</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; background: #E9EBEF; font-family: 'Geist', system-ui, sans-serif">
+  <sc-for list="{{systems}}" as="s" hint-placeholder-count="4">
+    <article style="display: flex; flex-direction: column; gap: 18px; padding: 26px; border-radius: 16px; background: {{s.ground}}; border: 1px solid {{s.border}}; color: {{s.text}}">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5.5 19.5L12 4.5l6.5 15C14.5 16 9.5 16 5.5 19.5z" stroke="{{s.accent}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">{{s.name}}</h2>
+        <span style="font-size: 13px; color: {{s.text2}}">{{s.mood}}</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{s.chips}}" as="c" hint-placeholder-count="8">
+          <div style="display: flex; flex-direction: column; gap: 5px">
+            <span style="height: 40px; border-radius: 8px; background: {{c.hex}}; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08)"></span>
+            <span style="font-size: 10px; font-weight: 600; color: {{s.text}}">{{c.role}}</span>
+            <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: {{s.text2}}">{{c.hex}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1; display: flex; gap: 16px; min-height: 0">
+        <div style="flex: 1; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; background: {{s.wall}}; box-shadow: inset 0 0 0 1px {{s.border}}">
+          <div style="height: 22px; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: {{s.bar}}; font-size: 10px; font-weight: 600; color: {{s.text}}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5.5 19.5L12 4.5l6.5 15C14.5 16 9.5 16 5.5 19.5z" stroke="{{s.accent}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Files <span style="font-weight: 400; color: {{s.text2}}">File  Edit  View</span>
+          </div>
+          <div style="flex: 1; display: flex; margin: 12px; border-radius: 9px; overflow: hidden; background: {{s.surface}}; box-shadow: 0 8px 24px rgba(20, 24, 32, 0.12), inset 0 0 0 1px {{s.border}}">
+            <div style="width: 96px; display: flex; flex-direction: column; gap: 3px; padding: 10px 6px; background: {{s.sidebar}}; font-size: 10px">
+              <span style="padding: 4px 6px; border-radius: 5px; color: {{s.text2}}">Home</span>
+              <span style="padding: 4px 6px; border-radius: 5px; background: {{s.accentSoft}}; color: {{s.accentText}}; font-weight: 600">autark</span>
+              <span style="padding: 4px 6px; border-radius: 5px; color: {{s.text2}}">Downloads</span>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 9px; padding: 12px">
+              <span style="font-size: 12px; font-weight: 600">Appearance</span>
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: {{s.text2}}">Magnify icons
+                <span style="width: 26px; height: 15px; padding: 2px; box-sizing: border-box; display: flex; justify-content: flex-end; border-radius: 8px; background: {{s.accent}}"><span style="width: 11px; height: 11px; border-radius: 50%; background: #FFFFFF"></span></span>
+              </div>
+              <div style="display: flex; gap: 6px">
+                <span style="padding: 5px 10px; border-radius: 6px; background: {{s.accent}}; color: #FFFFFF; font-size: 10px; font-weight: 600">Open</span>
+                <span style="padding: 5px 10px; border-radius: 6px; background: {{s.sidebar}}; color: {{s.text}}; font-size: 10px; box-shadow: inset 0 0 0 1px {{s.border}}">Cancel</span>
+              </div>
+              <span style="font-size: 10px; color: {{s.accentText}}; text-decoration: underline">Learn more</span>
+            </div>
+          </div>
+        </div>
+        <div style="width: 128px; display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; background: {{s.dGround}}; color: #ECEEF1; font-size: 10px">
+          <span style="font-weight: 600">Dark mode</span>
+          <span style="height: 30px; border-radius: 6px; background: {{s.dSurface}}"></span>
+          <span style="padding: 5px 8px; border-radius: 6px; background: {{s.dAccent}}; color: {{s.dOnAccent}}; font-weight: 600; text-align: center">Open</span>
+          <span style="font-family: 'Geist Mono', ui-monospace, monospace; color: #A3AAB5">{{s.dAccent}}</span>
+        </div>
+      </div>
+    </article>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const make = (o) => ({
+      ...o,
+      chips: [
+        { role: 'Ground', hex: o.ground },
+        { role: 'Surface', hex: o.surface },
+        { role: 'Sidebar', hex: o.sidebar },
+        { role: 'Border', hex: o.border },
+        { role: 'Text', hex: o.text },
+        { role: 'Text 2', hex: o.text2 },
+        { role: 'Accent', hex: o.accent },
+        { role: 'Accent soft', hex: o.accentSoft }
+      ]
+    });
+    const systems = [
+      make({ name: 'Mist', mood: 'Cool, crisp and quiet. The closest to macOS.',
+        ground: '#F5F6F8', surface: '#FFFFFF', sidebar: '#EEF0F4', border: '#DDE1E8', text: '#1A1E26', text2: '#5A6372',
+        accent: '#3D63E8', accentSoft: '#E3E9FD', accentText: '#2F50C7', wall: '#DCE4F0', bar: 'rgba(255, 255, 255, 0.72)',
+        dGround: '#16181D', dSurface: '#22252C', dAccent: '#7C9BFF', dOnAccent: '#0B1533' }),
+      make({ name: 'Linen', mood: 'Warm paper whites with a sage accent. Calm and natural.',
+        ground: '#F6F4EF', surface: '#FFFFFF', sidebar: '#EFECE5', border: '#E2DDD3', text: '#24221E', text2: '#68625A',
+        accent: '#3F7A5F', accentSoft: '#E1EDE6', accentText: '#336650', wall: '#E7E1D6', bar: 'rgba(255, 253, 249, 0.75)',
+        dGround: '#1A1916', dSurface: '#26241F', dAccent: '#7FC1A1', dOnAccent: '#0F2219' }),
+      make({ name: 'Glacier', mood: 'Icy neutrals with a teal accent. Fresh and technical.',
+        ground: '#F3F7F8', surface: '#FFFFFF', sidebar: '#EAF1F3', border: '#D7E2E5', text: '#152226', text2: '#536569',
+        accent: '#12807A', accentSoft: '#D9F0EE', accentText: '#0E6B66', wall: '#D5E7EA', bar: 'rgba(255, 255, 255, 0.72)',
+        dGround: '#121A1C', dSurface: '#1C2628', dAccent: '#4CC9BF', dOnAccent: '#062220' }),
+      make({ name: 'Dawn', mood: 'Soft whites with a coral accent. Friendly and bright.',
+        ground: '#F8F5F4', surface: '#FFFFFF', sidebar: '#F2EDEB', border: '#E6DEDB', text: '#26201E', text2: '#6B5F5B',
+        accent: '#C4503C', accentSoft: '#FBE4DF', accentText: '#A84433', wall: '#F0E2DD', bar: 'rgba(255, 252, 251, 0.75)',
+        dGround: '#1B1716', dSurface: '#282220', dAccent: '#F28B76', dOnAccent: '#2B0E08' })
+    ];
+    return { systems };
+  }
+}
+</script>
+</body>
+</html>

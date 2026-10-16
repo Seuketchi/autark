@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark dock</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 720px; height: 112px; display: flex; align-items: flex-end; justify-content: center; font-family: 'Geist', system-ui, sans-serif; color: #24221E">
+  <nav aria-label="Dock" onMouseLeave="{{leave}}" style="display: flex; align-items: flex-end; gap: 8px; padding: 8px 10px 4px; background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 20px">
+    <sc-for list="{{items}}" as="item" hint-placeholder-count="7">
+      <sc-if value="{{item.sep}}" hint-placeholder-val="{{false}}">
+        <div aria-hidden="true" style="width: 1px; height: 44px; margin: 0 4px 12px; align-self: flex-end; background: rgba(36, 34, 30, 0.16)"></div>
+      </sc-if>
+      <div style="position: relative; display: flex; flex-direction: column; align-items: center">
+        <sc-if value="{{item.hover}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; bottom: calc(100% + 10px); padding: 4px 10px; border-radius: 6px; background: rgba(239, 236, 229, 0.92); border: 1px solid rgba(36, 34, 30, 0.10); font-size: 12px; white-space: nowrap">{{item.label}}</div>
+        </sc-if>
+        <button aria-label="{{item.label}}" onMouseEnter="{{item.enter}}" style="display: flex; padding: 0; border: none; background: transparent">
+          <dc-import name="AppIcon" app="{{item.id}}" size="{{item.size}}" hint-size="52px,52px"></dc-import>
+        </button>
+        <div aria-hidden="true" style="width: 4px; height: 4px; margin-top: 4px; border-radius: 50%; background: {{item.dot}}"></div>
+      </div>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":720,"height":112}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hovered: -1 };
+  }
+  renderVals() {
+    const apps = [
+      { id: 'files', label: 'Files', running: true },
+      { id: 'browser', label: 'Browser', running: false },
+      { id: 'terminal', label: 'Terminal', running: true },
+      { id: 'editor', label: 'Editor', running: false },
+      { id: 'music', label: 'Music', running: false },
+      { id: 'packages', label: 'Packages', running: false },
+      { id: 'settings', label: 'Settings', running: false },
+      { id: 'trash', label: 'Trash', running: false, sep: true }
+    ];
+    const h = this.state.hovered;
+    const items = apps.map((a, i) => {
+      const k = h < 0 ? 0 : Math.max(0, 1 - Math.abs(i - h) / 2.2);
+      return {
+        ...a,
+        sep: !!a.sep,
+        size: Math.round(52 + 26 * k),
+        hover: i === h,
+        dot: a.running ? '#24221E' : 'transparent',
+        enter: () => this.setState({ hovered: i })
+      };
+    });
+    return { items, leave: () => this.setState({ hovered: -1 }) };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; color: #24221E; background: #F6F4EF">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Wallpaper" hint-size="1440px,900px"></dc-import>
+  </div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(246, 244, 239, 0.55)"></div>
+
+  <nav aria-label="Workspaces" style="position: absolute; top: 28px; left: 0; right: 0; display: flex; justify-content: center; gap: 20px">
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 8px; color: #24221E; text-decoration: none; font-size: 12px">
+      <span style="position: relative; width: 192px; height: 120px; border-radius: 10px; border: 2px solid #3F7A5F; background: #E2DDD3; overflow: hidden">
+        <span style="position: absolute; left: 16px; top: 14px; width: 86px; height: 56px; border-radius: 4px; background: #FFFFFF"></span>
+        <span style="position: absolute; left: 76px; top: 34px; width: 98px; height: 62px; border-radius: 4px; background: #FBFAF7; border: 1px solid rgba(36, 34, 30, 0.15)"></span>
+      </span>
+      <span style="font-weight: 600">Desktop 1</span>
+    </a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 8px; color: #3E3A34; text-decoration: none; font-size: 12px">
+      <span style="position: relative; width: 192px; height: 120px; border-radius: 10px; border: 2px solid rgba(36, 34, 30, 0.12); background: #E2DDD3; overflow: hidden">
+        <span style="position: absolute; left: 20px; top: 16px; width: 152px; height: 88px; border-radius: 4px; background: #E9ECF1"></span>
+      </span>
+      <span>Desktop 2</span>
+    </a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 8px; color: #3E3A34; text-decoration: none; font-size: 12px">
+      <span style="width: 192px; height: 120px; border-radius: 10px; border: 2px solid rgba(36, 34, 30, 0.12); background: #E2DDD3"></span>
+      <span>Desktop 3</span>
+    </a>
+    <button aria-label="Add desktop" style="align-self: flex-start; width: 64px; height: 120px; border-radius: 10px; border: 2px dashed rgba(255, 255, 255, 0.22); background: transparent; color: #3E3A34; font: inherit; font-size: 28px; font-weight: 400">+</button>
+  </nav>
+
+  <div style="position: absolute; left: 120px; right: 120px; top: 220px; bottom: 60px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 56px; align-content: center">
+    <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px">
+      <div style="width: 100%; height: 260px; display: flex; flex-direction: column; border-radius: 12px; background: #FBFAF7; border: 2px solid #3F7A5F; box-shadow: 0 24px 60px rgba(70, 58, 40, 0.2); overflow: hidden">
+        <div style="height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: #E5684F"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #E8B04A"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #6FAF7A"></span>
+        </div>
+        <div style="padding: 14px 16px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; line-height: 1.7; color: #3E3A34">
+          <div><span style="color: #3F7A5F">tan@autark</span> ~ $ autark-info</div>
+          <div><span style="color: #3F7A5F">OS</span>          Autark (Linux From Scratch, systemd)</div>
+          <div><span style="color: #3F7A5F">Compositor</span>  Wayfire</div>
+          <div><span style="color: #3F7A5F">Shell</span>       autark-shell (GTK4 + Rust)</div>
+          <div><span style="color: #3F7A5F">Memory</span>      30 GB, zram swap</div>
+        </div>
+      </div>
+      <figcaption style="font-size: 13px; font-weight: 500">Terminal</figcaption>
+    </figure>
+    <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px">
+      <div style="width: 100%; height: 260px; display: flex; flex-direction: column; border-radius: 12px; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.10); box-shadow: 0 24px 60px rgba(70, 58, 40, 0.2); overflow: hidden">
+        <div style="height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: #C9C2B6"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #C9C2B6"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #C9C2B6"></span>
+        </div>
+        <div style="flex: 1; display: flex">
+          <div style="width: 110px; border-right: 1px solid rgba(36, 34, 30, 0.06); padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; font-size: 11px; color: #68625A"><span>Home</span><span>projects</span><span style="color: #3F7A5F">autark</span><span>Downloads</span></div>
+          <div style="flex: 1; padding: 18px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-content: start; font-size: 10px; color: #3E3A34; text-align: center">
+            <span><span style="display: block; height: 30px; margin-bottom: 4px; border-radius: 4px; background: #336650"></span>docs</span>
+            <span><span style="display: block; height: 30px; margin-bottom: 4px; border-radius: 4px; background: #336650"></span>hardware</span>
+            <span><span style="display: block; height: 30px; margin-bottom: 4px; border-radius: 4px; background: #336650"></span>scripts</span>
+            <span><span style="display: block; height: 30px; margin-bottom: 4px; border-radius: 4px; background: #336650"></span>sources</span>
+          </div>
+        </div>
+      </div>
+      <figcaption style="font-size: 13px; font-weight: 500">Files</figcaption>
+    </figure>
+    <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px">
+      <div style="width: 100%; height: 260px; display: flex; flex-direction: column; border-radius: 12px; background: #F4F5F7; border: 1px solid rgba(36, 34, 30, 0.10); box-shadow: 0 24px 60px rgba(70, 58, 40, 0.2); overflow: hidden">
+        <div style="height: 34px; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: #E3E6EB">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: #9AA1AC"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #9AA1AC"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #9AA1AC"></span>
+          <span style="flex: 1; height: 20px; display: flex; align-items: center; padding: 0 10px; border-radius: 6px; background: #FFFFFF; font-size: 10px; color: #4A515C">linuxfromscratch.org/blfs</span>
+        </div>
+        <div style="padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; color: #1F242C">
+          <span style="font-size: 16px; font-weight: 600">Beyond Linux From Scratch</span>
+          <span style="font-size: 11px; color: #4A515C">systemd edition</span>
+          <span style="height: 8px; width: 80%; border-radius: 4px; background: #D5D9E0"></span>
+          <span style="height: 8px; width: 92%; border-radius: 4px; background: #D5D9E0"></span>
+          <span style="height: 8px; width: 64%; border-radius: 4px; background: #D5D9E0"></span>
+        </div>
+      </div>
+      <figcaption style="font-size: 13px; font-weight: 500">Browser</figcaption>
+    </figure>
+    <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px">
+      <div style="width: 100%; height: 260px; display: flex; flex-direction: column; border-radius: 12px; background: #FBFAF7; border: 1px solid rgba(36, 34, 30, 0.10); box-shadow: 0 24px 60px rgba(70, 58, 40, 0.2); overflow: hidden">
+        <div style="height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background: #C9C2B6"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #C9C2B6"></span><span style="width: 9px; height: 9px; border-radius: 50%; background: #C9C2B6"></span>
+          <span style="margin-left: 10px; font-size: 10px; color: #68625A">dock.rs — autark-shell</span>
+        </div>
+        <div style="padding: 14px 16px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; line-height: 1.7; color: #3E3A34">
+          <div><span style="color: #7E45AE">fn</span> <span style="color: #7FA7D9">icon_size</span>(index: <span style="color: #3F7A5F">usize</span>, hovered: <span style="color: #3F7A5F">usize</span>) -&gt; <span style="color: #3F7A5F">f64</span> {</div>
+          <div>    <span style="color: #7E45AE">let</span> distance = index.abs_diff(hovered) <span style="color: #7E45AE">as</span> <span style="color: #3F7A5F">f64</span>;</div>
+          <div>    <span style="color: #7E45AE">let</span> pull = (<span style="color: #4E7A22">1.0</span> - distance / <span style="color: #4E7A22">2.2</span>).max(<span style="color: #4E7A22">0.0</span>);</div>
+          <div>    <span style="color: #4E7A22">52.0</span> + <span style="color: #4E7A22">26.0</span> * pull</div>
+          <div>}</div>
+        </div>
+      </div>
+      <figcaption style="font-size: 13px; font-weight: 500">Editor</figcaption>
+    </figure>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

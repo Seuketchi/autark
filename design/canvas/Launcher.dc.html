@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark launcher</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+input::placeholder{color:#7A736A}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; color: #24221E; background: #F6F4EF">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Wallpaper" hint-size="1440px,900px"></dc-import>
+  </div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 5">
+    <dc-import name="TopBar" app="Files" hint-size="1440px,32px"></dc-import>
+  </div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(246, 244, 239, 0.40)"></div>
+
+  <div role="dialog" aria-label="Launcher" style="position: absolute; left: 400px; top: 176px; width: 640px; background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.12); border-radius: 16px; box-shadow: 0 30px 80px rgba(70, 58, 40, 0.2); overflow: hidden">
+    <label style="display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 20px; border-bottom: 1px solid rgba(36, 34, 30, 0.08)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#68625A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search apps, files and actions</span>
+      <input type="text" value="{{query}}" onInput="{{onQuery}}" placeholder="Search apps, files and actions" style="flex: 1; height: 40px; border: none; outline: none; background: transparent; color: #24221E; font: inherit; font-size: 20px">
+      <span style="padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(36, 34, 30, 0.14); font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: #68625A">esc</span>
+    </label>
+    <div style="padding: 8px; display: flex; flex-direction: column; gap: 2px">
+      <sc-for list="{{results}}" as="r" hint-placeholder-count="6">
+        <sc-if value="{{r.heading}}" hint-placeholder-val="{{false}}">
+          <div style="padding: 10px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">{{r.group}}</div>
+        </sc-if>
+        <button onMouseEnter="{{r.enter}}" style="display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 12px; border: none; border-radius: 10px; text-align: left; font: inherit; color: {{r.fg}}; background: {{r.bg}}">
+          <sc-if value="{{r.isApp}}" hint-placeholder-val="{{true}}">
+            <dc-import name="AppIcon" app="{{r.icon}}" size="32" hint-size="32px,32px"></dc-import>
+          </sc-if>
+          <sc-if value="{{r.isGlyph}}" hint-placeholder-val="{{false}}">
+            <span style="width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(36, 34, 30, 0.10); color: #24221E">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.d}}"></path></svg>
+            </span>
+          </sc-if>
+          <span style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+            <span style="font-size: 14px; font-weight: 500">{{r.title}}</span>
+            <span style="font-size: 12px; color: {{r.sub}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.detail}}</span>
+          </span>
+          <sc-if value="{{r.active}}" hint-placeholder-val="{{false}}">
+            <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: #E1EDE6">↵ open</span>
+          </sc-if>
+        </button>
+      </sc-for>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+        <div style="padding: 28px 12px; text-align: center; font-size: 14px; color: #68625A">No matches for “{{query}}”</div>
+      </sc-if>
+    </div>
+    <div style="display: flex; gap: 16px; padding: 10px 20px; border-top: 1px solid rgba(36, 34, 30, 0.08); font-size: 12px; color: #7A736A">
+      <span>↑↓ to move</span><span>↵ to open</span><span>Super + Space to toggle</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { query: 'te', active: 0 };
+  }
+  renderVals() {
+    const doc = 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6';
+    const all = [
+      { group: 'APPLICATIONS', title: 'Terminal', detail: 'Application', icon: 'terminal' },
+      { group: 'APPLICATIONS', title: 'Text Editor', detail: 'Application', icon: 'editor' },
+      { group: 'APPLICATIONS', title: 'Settings', detail: 'Application', icon: 'settings' },
+      { group: 'APPLICATIONS', title: 'Packages', detail: 'Application', icon: 'packages' },
+      { group: 'FILES', title: 'build-guide.md', detail: '~/autark/docs/specs', d: doc },
+      { group: 'FILES', title: 'kernel.config', detail: '~/autark/hardware', d: doc },
+      { group: 'ACTIONS', title: 'Lock screen', detail: 'Super + L', d: 'M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3' },
+      { group: 'ACTIONS', title: 'Restart Wayfire', detail: 'Reload the compositor', d: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7' }
+    ];
+    const q = this.state.query.trim().toLowerCase();
+    const hits = all.filter((a) => !q || a.title.toLowerCase().includes(q) || a.detail.toLowerCase().includes(q));
+    const results = hits.map((a, i) => {
+      const active = i === this.state.active;
+      return {
+        ...a,
+        isApp: !!a.icon,
+        isGlyph: !a.icon,
+        icon: a.icon || 'files',
+        d: a.d || 'M0 0',
+        heading: i === 0 || hits[i - 1].group !== a.group,
+        active,
+        bg: active ? '#3F7A5F' : 'transparent',
+        fg: active ? '#FFFFFF' : '#24221E',
+        sub: active ? '#E1EDE6' : '#68625A',
+        enter: () => this.setState({ active: i })
+      };
+    });
+    return {
+      query: this.state.query,
+      results,
+      empty: results.length === 0,
+      onQuery: (e) => this.setState({ query: e.target.value, active: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>

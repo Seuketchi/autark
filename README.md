@@ -11,6 +11,7 @@ The name comes from *autarky*, meaning self-sufficient: every package chosen and
 | [`docs/specs/decisions.md`](docs/specs/decisions.md) | What Autark is made of and why, plus the hardware standard |
 | [`docs/specs/build-guide.md`](docs/specs/build-guide.md) | The build, step by step, from an Ubuntu host to a running desktop |
 | [`docs/specs/ai-layer.md`](docs/specs/ai-layer.md) | AI in the OS: Jev for fast decisions, Ollama for local generation |
+| [`design/`](design/) | Desktop design mockups: every screen, Kith, icons, logo and colours |
 | [`hardware/`](hardware/) | Reference laptop profile: kernel config, loaded modules, PCI and USB devices |
 
 The disk image, source tarballs and backups stay local and are never committed (see `.gitignore`).

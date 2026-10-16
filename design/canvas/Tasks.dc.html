@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark assistant tasks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; color: #24221E; background: #F6F4EF">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Wallpaper" hint-size="1440px,900px"></dc-import>
+  </div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 5">
+    <dc-import name="TopBar" app="Kith" hint-size="1440px,32px"></dc-import>
+  </div>
+
+  <article aria-label="Task result notification" style="position: absolute; top: 44px; right: 12px; width: 380px; display: flex; flex-direction: column; gap: 10px; padding: 14px; background: rgba(255, 255, 255, 0.90); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 16px; box-shadow: 0 20px 50px rgba(70, 58, 40, 0.16); z-index: 6">
+    <div style="display: flex; gap: 12px">
+      <svg width="36" height="36" viewBox="0 0 120 120" aria-hidden="true" style="flex-shrink: 0"><rect x="14" y="20" width="92" height="80" rx="30" fill="#24221E"></rect><ellipse cx="44" cy="58" rx="7" ry="12" fill="#7FC1A1"></ellipse><ellipse cx="76" cy="58" rx="7" ry="12" fill="#7FC1A1"></ellipse></svg>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0">
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #68625A"><span>Kith · Task</span><span>08:00</span></div>
+        <span style="font-size: 13px; font-weight: 600">Morning build summary</span>
+        <span style="font-size: 12px; line-height: 1.45; color: #3E3A34">Overnight, 3 packages finished building. No new test failures. Next in the book: Python.</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; padding-left: 48px">
+      <button style="height: 28px; padding: 0 12px; border: none; border-radius: 7px; background: #3F7A5F; color: #FFFFFF; font: inherit; font-size: 12px; font-weight: 600">Open summary</button>
+      <button style="height: 28px; padding: 0 12px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Open log</button>
+    </div>
+    <span style="padding-left: 48px; font-size: 11px; color: #7A736A">Ran on this laptop with Ollama</span>
+  </article>
+
+  <aside aria-label="Kith" style="position: absolute; top: 120px; left: 420px; width: 520px; display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 18px; box-shadow: 0 30px 80px rgba(70, 58, 40, 0.18); overflow: hidden">
+    <header style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; border-bottom: 1px solid rgba(36, 34, 30, 0.08)">
+      <svg width="28" height="28" viewBox="0 0 120 120" aria-hidden="true"><rect x="14" y="20" width="92" height="80" rx="30" fill="#24221E"></rect><ellipse cx="44" cy="58" rx="7" ry="12" fill="#7FC1A1"></ellipse><ellipse cx="76" cy="58" rx="7" ry="12" fill="#7FC1A1"></ellipse></svg>
+      <span style="font-size: 15px; font-weight: 600">Kith</span>
+    </header>
+    <div style="display: flex; flex-direction: column; gap: 14px; padding: 16px">
+      <div style="align-self: flex-end; max-width: 82%; padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: #3F7A5F; color: #FFFFFF; font-size: 14px">every morning at 8, summarise last night's build log</div>
+      <div style="align-self: flex-start; width: 90%; display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 16px 16px 16px 4px; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.08)">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">NEW TASK</span>
+        <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr); row-gap: 8px; column-gap: 12px; font-size: 13px">
+          <span style="color: #68625A">Name</span><span style="font-weight: 600">Morning build summary</span>
+          <span style="color: #68625A">When</span><span>Every day at 08:00, catching up after sleep</span>
+          <span style="color: #68625A">Reads</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px">~/autark/log.md</span>
+          <span style="color: #68625A">Runs on</span><span>This laptop (Ollama), up to 5 minutes</span>
+          <span style="color: #68625A">Delivery</span><span>Notification card, banner only if urgent</span>
+        </div>
+        <sc-if value="{{pending}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; gap: 8px">
+            <button onClick="{{create}}" style="height: 32px; padding: 0 14px; border: none; border-radius: 8px; background: #3F7A5F; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600">Create task</button>
+            <button style="height: 32px; padding: 0 12px; border: none; border-radius: 8px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 13px">Edit</button>
+            <button onClick="{{cancel}}" style="height: 32px; padding: 0 12px; border: none; border-radius: 8px; background: transparent; color: #68625A; font: inherit; font-size: 13px">Cancel</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{created}}" hint-placeholder-val="{{false}}">
+          <span style="font-size: 12px; color: #336650">Created · first run tomorrow at 08:00 · <span style="font-family: 'Geist Mono', ui-monospace, monospace">autark-task@morning-build.timer</span></span>
+        </sc-if>
+        <sc-if value="{{cancelled}}" hint-placeholder-val="{{false}}">
+          <span style="font-size: 12px; color: #68625A">Not created</span>
+        </sc-if>
+      </div>
+    </div>
+  </aside>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; z-index: 5">
+    <dc-import name="Dock" hint-size="720px,112px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { status: 'pending' };
+  }
+  renderVals() {
+    const s = this.state.status;
+    return {
+      pending: s === 'pending',
+      created: s === 'created',
+      cancelled: s === 'cancelled',
+      create: () => this.setState({ status: 'created' }),
+      cancel: () => this.setState({ status: 'cancelled' })
+    };
+  }
+}
+</script>
+</body>
+</html>

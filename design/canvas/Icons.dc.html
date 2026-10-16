@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark icon set</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1200px; height: 560px; box-sizing: border-box; padding: 56px 64px; display: flex; flex-direction: column; gap: 40px; background: #F6F4EF; font-family: 'Geist', system-ui, sans-serif; color: #24221E">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 600">Autark icons</h1>
+    <p style="margin: 0; font-size: 14px; color: #68625A">Own colour per app, bold glass symbols lit from above, rounder corners.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 16px">
+    <sc-for list="{{icons}}" as="i" hint-placeholder-count="9">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px">
+        <dc-import name="AppIcon" app="{{i.id}}" size="96" hint-size="96px,96px"></dc-import>
+        <span style="font-size: 13px; color: #3E3A34">{{i.label}}</span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display: flex; align-items: flex-end; gap: 28px; padding-top: 24px; border-top: 1px solid rgba(36, 34, 30, 0.08)">
+    <span style="font-size: 12px; color: #7A736A; align-self: center">Scales</span>
+    <dc-import name="AppIcon" app="terminal" size="64" hint-size="64px,64px"></dc-import>
+    <dc-import name="AppIcon" app="terminal" size="48" hint-size="48px,48px"></dc-import>
+    <dc-import name="AppIcon" app="terminal" size="32" hint-size="32px,32px"></dc-import>
+    <dc-import name="AppIcon" app="terminal" size="24" hint-size="24px,24px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1200,"height":560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      icons: [
+        { id: 'files', label: 'Files' },
+        { id: 'browser', label: 'Browser' },
+        { id: 'terminal', label: 'Terminal' },
+        { id: 'editor', label: 'Editor' },
+        { id: 'music', label: 'Music' },
+        { id: 'packages', label: 'Packages' },
+        { id: 'calendar', label: 'Calendar' },
+        { id: 'settings', label: 'Settings' },
+        { id: 'trash', label: 'Trash' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark app icon</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: {{size}}px; height: {{size}}px; flex-shrink: 0; display: flex; border-radius: 26%; overflow: hidden; background: {{bg}}; box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.14), inset 0 -2px 3px rgba(0, 0, 0, 0.18), 0 3px 10px rgba(0, 0, 0, 0.35); transition: width 140ms ease, height 140ms ease">
+  <span aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 52%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0) 100%)"></span>
+  <svg width="100%" height="100%" viewBox="0 0 64 64" aria-hidden="true" style="position: relative; filter: drop-shadow(0 1.5px 2px rgba(0, 0, 0, 0.28))">
+    <path d="{{p0.d}}" fill="{{p0.fill}}" stroke="{{p0.stroke}}" stroke-width="{{p0.sw}}" opacity="{{p0.op}}" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="{{p1.d}}" fill="{{p1.fill}}" stroke="{{p1.stroke}}" stroke-width="{{p1.sw}}" opacity="{{p1.op}}" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="{{p2.d}}" fill="{{p2.fill}}" stroke="{{p2.stroke}}" stroke-width="{{p2.sw}}" opacity="{{p2.op}}" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="{{p3.d}}" fill="{{p3.fill}}" stroke="{{p3.stroke}}" stroke-width="{{p3.sw}}" opacity="{{p3.op}}" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"app":{"editor":"enum","options":["files","browser","terminal","editor","music","settings","packages","calendar","trash"],"default":"files"},"size":{"editor":"int","default":64,"min":16,"max":256},"$preview":{"width":64,"height":64}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const W = '#FFFFFF';
+    const fill = (d, c, op) => ({ d, fill: c, stroke: 'none', sw: 0, op: op ?? 1 });
+    const line = (d, c, sw, op) => ({ d, fill: 'none', stroke: c, sw: sw || 4.5, op: op ?? 1 });
+    const none = { d: 'M0 0', fill: 'none', stroke: 'none', sw: 0, op: 0 };
+    const grad = (top, bottom) => 'linear-gradient(180deg, ' + top + ' 0%, ' + bottom + ' 100%)';
+    const icons = {
+      files: {
+        bg: grad('#6AB0FF', '#2C6BE0'),
+        shapes: [
+          fill('M14 20a4 4 0 0 1 4-4h9.5l4 4H46a4 4 0 0 1 4 4v4H14z', W, 0.55),
+          fill('M12 27a4 4 0 0 1 4-4h32a4 4 0 0 1 4 4v15a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5z', W, 0.97)
+        ]
+      },
+      browser: {
+        bg: grad('#4FD8E6', '#1380C4'),
+        shapes: [
+          fill('M32 14a18 18 0 1 0 0 36a18 18 0 1 0 0-36z', W, 0.30),
+          line('M14.5 32h35M32 14.5c-6.5 5-6.5 30 0 35M32 14.5c6.5 5 6.5 30 0 35', W, 3, 0.9),
+          line('M32 14a18 18 0 1 0 0 36a18 18 0 1 0 0-36z', W, 4)
+        ]
+      },
+      terminal: {
+        bg: grad('#454A55', '#141619'),
+        shapes: [
+          fill('M14 17h36a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V21a4 4 0 0 1 4-4z', W, 0.14),
+          line('M20 26l7.5 6.5L20 39', W, 4.5),
+          line('M31.5 40h12', '#6AB0FF', 4.5)
+        ]
+      },
+      editor: {
+        bg: grad('#A88BFF', '#5537D2'),
+        shapes: [
+          line('M23.5 20L12.5 32l11 12M40.5 20l11 12l-11 12', W, 4.5),
+          line('M35.5 16l-7 32', W, 4.5, 0.55)
+        ]
+      },
+      music: {
+        bg: grad('#FF7A96', '#D92B55'),
+        shapes: [
+          line('M27 43V21l19-5v22', W, 4.5),
+          fill('M27 43a6 6 0 1 1-12 0a6 6 0 1 1 12 0z', W),
+          fill('M46 38a6 6 0 1 1-12 0a6 6 0 1 1 12 0z', W, 0.7)
+        ]
+      },
+      packages: {
+        bg: grad('#FFBE5C', '#EE7418'),
+        shapes: [
+          fill('M14 22l18 9v20l-18-9zM50 22l-18 9v20l18-9z', W, 0.97),
+          fill('M32 13l18 9l-18 9l-18-9z', W, 0.6),
+          fill('M41 17.5l-18 9v6.5l4.5-2.25V26.5l18-9z', '#C85A0C', 0.85)
+        ]
+      },
+      calendar: {
+        bg: grad('#5EDC94', '#1C9A57'),
+        shapes: [
+          fill('M15 19a5 5 0 0 1 5-5h24a5 5 0 0 1 5 5v25a5 5 0 0 1-5 5H20a5 5 0 0 1-5-5z', W, 0.97),
+          fill('M15 19a5 5 0 0 1 5-5h24a5 5 0 0 1 5 5v5H15z', '#167A45', 0.9),
+          line('M23.5 33h3M30.5 33h3M37.5 33h3M23.5 41h3M30.5 41h3', '#1C9A57', 4)
+        ]
+      },
+      settings: {
+        bg: grad('#C3C9D2', '#6A717E'),
+        shapes: [
+          line('M32 11.5v7M32 45.5v7M11.5 32h7M45.5 32h7M17.5 17.5l5 5M41.5 41.5l5 5M17.5 46.5l5-5M41.5 22.5l5-5', W, 6),
+          fill('M32 19.5a12.5 12.5 0 1 0 0 25a12.5 12.5 0 1 0 0-25z', W, 0.97),
+          fill('M32 27a5 5 0 1 0 0 10a5 5 0 1 0 0-10z', '#6A717E')
+        ]
+      },
+      trash: {
+        bg: grad('rgba(255, 255, 255, 0.30)', 'rgba(255, 255, 255, 0.10)'),
+        shapes: [
+          fill('M21 25h22l-2.2 21a3 3 0 0 1-3 2.7H26.2a3 3 0 0 1-3-2.7z', W, 0.9),
+          line('M17 21h30M27 21v-4h10v4', W, 4),
+          line('M28.5 31v11M35.5 31v11', '#8A919E', 2.5)
+        ]
+      }
+    };
+    const icon = icons[this.props.app] || icons.files;
+    const s = icon.shapes;
+    return {
+      size: Number(this.props.size ?? 64),
+      bg: icon.bg,
+      p0: s[0] || none,
+      p1: s[1] || none,
+      p2: s[2] || none,
+      p3: s[3] || none
+    };
+  }
+}
+</script>
+</body>
+</html>

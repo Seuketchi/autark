@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark file manager</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+input::placeholder{color:#7A736A}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; color: #24221E; background: #F6F4EF">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Wallpaper" hint-size="1440px,900px"></dc-import>
+  </div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 5">
+    <dc-import name="TopBar" app="Files" hint-size="1440px,32px"></dc-import>
+  </div>
+
+  <section aria-label="Files window" style="position: absolute; left: 120px; top: 60px; width: 1200px; height: 712px; display: flex; background: rgba(255, 255, 255, 0.94); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 14px; box-shadow: 0 30px 80px rgba(70, 58, 40, 0.22); overflow: hidden">
+    <nav aria-label="Places" style="width: 216px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 14px 10px; background: rgba(239, 236, 229, 0.55); border-right: 1px solid rgba(36, 34, 30, 0.06); font-size: 13px">
+      <div style="display: flex; gap: 8px; padding: 2px 6px 16px">
+        <button aria-label="Close" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #E5684F"></button>
+        <button aria-label="Minimize" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #E8B04A"></button>
+        <button aria-label="Maximize" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #6FAF7A"></button>
+      </div>
+      <div style="padding: 0 8px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">FAVOURITES</div>
+      <sc-for list="{{places}}" as="p" hint-placeholder-count="6">
+        <button onClick="{{p.go}}" aria-current="{{p.current}}" style="display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 8px; border: none; border-radius: 8px; text-align: left; font: inherit; background: {{p.bg}}; color: {{p.fg}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{p.iconColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{p.d}}"></path></svg>
+          <span style="font-weight: {{p.weight}}">{{p.label}}</span>
+        </button>
+      </sc-for>
+      <div style="padding: 16px 8px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">LOCATIONS</div>
+      <button style="display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 8px; border: none; border-radius: 8px; text-align: left; font: inherit; background: transparent; color: #24221E">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3F7A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14h18v5H3zM5 14l2-9h10l2 9M7 16.5h.01"></path></svg>
+        <span style="flex: 1">Autark</span>
+        <span style="font-size: 11px; color: #7A736A">ext4</span>
+      </button>
+      <button style="display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 8px; border: none; border-radius: 8px; text-align: left; font: inherit; background: transparent; color: #24221E">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3F7A5F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg>
+        <span>Trash</span>
+      </button>
+    </nav>
+
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+      <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
+        <button aria-label="Back" onClick="{{back}}" disabled="{{atRoot}}" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 8px; background: rgba(36, 34, 30, 0.06); color: {{backColor}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6l6 6"></path></svg>
+        </button>
+        <nav aria-label="Path" style="flex: 1; display: flex; align-items: center; gap: 4px; min-width: 0; font-size: 14px">
+          <sc-for list="{{crumbs}}" as="c" hint-placeholder-count="3">
+            <sc-if value="{{c.sep}}" hint-placeholder-val="{{false}}">
+              <span aria-hidden="true" style="color: #C9C2B6">›</span>
+            </sc-if>
+            <button onClick="{{c.go}}" style="height: 28px; padding: 0 6px; border: none; border-radius: 6px; background: transparent; font: inherit; color: {{c.color}}; font-weight: {{c.weight}}">{{c.label}}</button>
+          </sc-for>
+        </nav>
+        <div role="group" aria-label="View" style="display: flex; padding: 2px; border-radius: 8px; background: rgba(36, 34, 30, 0.06)">
+          <button aria-label="Icons" aria-pressed="{{gridPressed}}" onClick="{{showGrid}}" style="width: 30px; height: 26px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 6px; background: {{gridBg}}; color: #24221E">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"></path></svg>
+          </button>
+          <button aria-label="List" aria-pressed="{{listPressed}}" onClick="{{showList}}" style="width: 30px; height: 26px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 6px; background: {{listBg}}; color: #24221E">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg>
+          </button>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; width: 200px; height: 30px; padding: 0 10px; box-sizing: border-box; border-radius: 8px; background: rgba(36, 34, 30, 0.06)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A736A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search this folder</span>
+          <input type="text" placeholder="Search" style="flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #24221E; font: inherit; font-size: 13px">
+        </label>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex">
+        <div style="flex: 1; min-width: 0; padding: 20px; overflow: hidden">
+          <sc-if value="{{isGrid}}" hint-placeholder-val="{{true}}">
+            <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-content: start">
+              <sc-for list="{{items}}" as="it" hint-placeholder-count="4">
+                <button onClick="{{it.select}}" onDoubleClick="{{it.open}}" aria-pressed="{{it.pressed}}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 6px; border: none; border-radius: 10px; font: inherit; background: {{it.tileBg}}; color: #24221E">
+                  <sc-if value="{{it.folder}}" hint-placeholder-val="{{true}}">
+                    <svg width="72" height="58" viewBox="0 0 56 46" aria-hidden="true"><path d="M2 8a4 4 0 0 1 4-4h14l5 5h25a4 4 0 0 1 4 4v27a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z" fill="#336650"></path><path d="M2 15h52v25a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z" fill="#3F7A5F"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{it.file}}" hint-placeholder-val="{{false}}">
+                    <span style="position: relative; display: flex; justify-content: center; width: 72px; height: 58px">
+                      <svg width="58" height="58" viewBox="0 0 46 46" aria-hidden="true"><path d="M10 2h18l10 10v30a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="#E9ECF1"></path><path d="M28 2v10h10" fill="#C3CAD4"></path></svg>
+                      <span style="position: absolute; bottom: 6px; padding: 1px 5px; border-radius: 4px; background: #3F7A5F; color: #FFFFFF; font-size: 9px; font-weight: 600; letter-spacing: 0.04em">{{it.ext}}</span>
+                    </span>
+                  </sc-if>
+                  <span style="max-width: 100%; padding: 1px 6px; border-radius: 5px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: {{it.labelBg}}; color: {{it.labelFg}}">{{it.name}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{isList}}" hint-placeholder-val="{{false}}">
+            <div role="table" aria-label="Folder contents" style="display: flex; flex-direction: column; font-size: 13px">
+              <div role="row" style="display: grid; grid-template-columns: minmax(0, 1fr) 110px 110px 130px; gap: 12px; padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
+                <span role="columnheader">NAME</span><span role="columnheader">SIZE</span><span role="columnheader">MODIFIED</span><span role="columnheader">KIND</span>
+              </div>
+              <sc-for list="{{items}}" as="it" hint-placeholder-count="4">
+                <button role="row" onClick="{{it.select}}" onDoubleClick="{{it.open}}" aria-pressed="{{it.pressed}}" style="display: grid; grid-template-columns: minmax(0, 1fr) 110px 110px 130px; gap: 12px; align-items: center; height: 36px; padding: 0 12px; border: none; border-radius: 8px; text-align: left; font: inherit; background: {{it.rowBg}}; color: {{it.rowFg}}">
+                  <span role="cell" style="display: flex; align-items: center; gap: 10px; min-width: 0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="{{it.miniD}}" fill="{{it.miniFill}}"></path></svg>
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{it.name}}</span>
+                  </span>
+                  <span role="cell" style="color: {{it.rowSub}}">{{it.size}}</span>
+                  <span role="cell" style="color: {{it.rowSub}}">Today</span>
+                  <span role="cell" style="color: {{it.rowSub}}">{{it.kind}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <aside aria-label="Preview" style="width: 248px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 20px; border-left: 1px solid rgba(36, 34, 30, 0.06)">
+          <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+            <sc-if value="{{selFolder}}" hint-placeholder-val="{{true}}">
+              <svg width="112" height="92" viewBox="0 0 56 46" aria-hidden="true"><path d="M2 8a4 4 0 0 1 4-4h14l5 5h25a4 4 0 0 1 4 4v27a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z" fill="#336650"></path><path d="M2 15h52v25a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z" fill="#3F7A5F"></path></svg>
+            </sc-if>
+            <sc-if value="{{selFile}}" hint-placeholder-val="{{false}}">
+              <svg width="92" height="92" viewBox="0 0 46 46" aria-hidden="true"><path d="M10 2h18l10 10v30a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="#E9ECF1"></path><path d="M28 2v10h10" fill="#C3CAD4"></path><path d="M14 20h18M14 25h18M14 30h12" stroke="#7A736A" stroke-width="1.6" stroke-linecap="round"></path></svg>
+            </sc-if>
+            <span style="font-size: 15px; font-weight: 600; text-align: center; word-break: break-all">{{sel.name}}</span>
+            <span style="font-size: 12px; color: #68625A">{{sel.kind}}, {{sel.size}}</span>
+            <div style="align-self: stretch; display: flex; flex-direction: column; gap: 8px; margin-top: 8px; padding-top: 14px; border-top: 1px solid rgba(36, 34, 30, 0.06); font-size: 12px">
+              <div style="display: flex; justify-content: space-between"><span style="color: #7A736A">Modified</span><span>Today</span></div>
+              <div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #7A736A">Where</span><span style="text-align: right; word-break: break-all">{{where}}</span></div>
+            </div>
+            <sc-if value="{{selFolder}}" hint-placeholder-val="{{true}}">
+              <button onClick="{{openSel}}" style="align-self: stretch; height: 32px; margin-top: 6px; border: none; border-radius: 8px; background: #3F7A5F; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600">Open</button>
+            </sc-if>
+          </sc-if>
+          <sc-if value="{{noSel}}" hint-placeholder-val="{{false}}">
+            <span style="margin-top: 120px; font-size: 13px; color: #7A736A">Select an item to preview it</span>
+          </sc-if>
+        </aside>
+      </div>
+
+      <div style="height: 30px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-top: 1px solid rgba(36, 34, 30, 0.06); font-size: 12px; color: #7A736A">{{status}}</div>
+    </div>
+  </section>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; z-index: 5">
+    <dc-import name="Dock" hint-size="720px,112px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { path: ['autark'], view: 'grid', sel: 'hardware' };
+  }
+  renderVals() {
+    const tree = {
+      'autark': [
+        { name: 'docs', folder: true, size: '1 item' },
+        { name: 'hardware', folder: true, size: '4 items' },
+        { name: 'README.md', ext: 'MD', size: '880 bytes', kind: 'Markdown' }
+      ],
+      'autark/docs': [
+        { name: 'specs', folder: true, size: '2 items' }
+      ],
+      'autark/docs/specs': [
+        { name: 'build-guide.md', ext: 'MD', size: '12.5 KB', kind: 'Markdown' },
+        { name: 'decisions.md', ext: 'MD', size: '3.1 KB', kind: 'Markdown' }
+      ],
+      'autark/hardware': [
+        { name: 'kernel.config', ext: 'CFG', size: '308.5 KB', kind: 'Kernel config' },
+        { name: 'lsmod.txt', ext: 'TXT', size: '13.7 KB', kind: 'Plain text' },
+        { name: 'lspci.txt', ext: 'TXT', size: '5.3 KB', kind: 'Plain text' },
+        { name: 'lsusb.txt', ext: 'TXT', size: '711 bytes', kind: 'Plain text' }
+      ]
+    };
+    const st = this.state;
+    const key = st.path.join('/');
+    const list = tree[key] || [];
+    const folderD = 'M2 6a2 2 0 0 1 2-2h6l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z';
+    const fileD = 'M6 2h8l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z';
+    const open = (name) => this.setState({ path: [...st.path, name], sel: null });
+    const items = list.map((f) => {
+      const on = f.name === st.sel;
+      const isFolder = !!f.folder;
+      return {
+        ...f,
+        folder: isFolder,
+        file: !isFolder,
+        ext: f.ext || '',
+        kind: f.kind || 'Folder',
+        pressed: on ? 'true' : 'false',
+        tileBg: on ? 'rgba(63, 122, 95, 0.14)' : 'transparent',
+        labelBg: on ? '#3F7A5F' : 'transparent',
+        labelFg: on ? '#FFFFFF' : '#24221E',
+        rowBg: on ? '#3F7A5F' : 'transparent',
+        rowFg: on ? '#FFFFFF' : '#24221E',
+        rowSub: on ? '#E1EDE6' : '#68625A',
+        miniD: isFolder ? folderD : fileD,
+        miniFill: on ? '#FFFFFF' : (isFolder ? '#3F7A5F' : '#C3CAD4'),
+        select: () => this.setState({ sel: f.name }),
+        open: () => { if (isFolder) open(f.name); }
+      };
+    });
+    const sel = items.find((i) => i.name === st.sel) || null;
+    const crumbs = st.path.map((seg, i) => ({
+      label: seg,
+      sep: i > 0,
+      color: i === st.path.length - 1 ? '#24221E' : '#68625A',
+      weight: i === st.path.length - 1 ? 600 : 400,
+      go: () => this.setState({ path: st.path.slice(0, i + 1), sel: null })
+    }));
+    const placeDefs = [
+      { label: 'Home', d: 'M3 11l9-7l9 7v9H3zM9 20v-6h6v6' },
+      { label: 'Desktop', d: 'M3 5h18v11H3zM8 20h8M12 16v4' },
+      { label: 'Documents', d: 'M6 2h8l5 5v15H6zM14 2v5h5' },
+      { label: 'Downloads', d: 'M12 4v11M7 10l5 5l5-5M5 20h14' },
+      { label: 'projects', d: folderD },
+      { label: 'autark', d: folderD, home: true }
+    ];
+    const places = placeDefs.map((p) => {
+      const on = !!p.home;
+      return {
+        ...p,
+        current: on ? 'page' : 'false',
+        bg: on ? 'rgba(36, 34, 30, 0.10)' : 'transparent',
+        fg: '#24221E',
+        weight: on ? 600 : 400,
+        iconColor: '#3F7A5F',
+        go: on ? () => this.setState({ path: ['autark'], sel: null }) : () => {}
+      };
+    });
+    return {
+      places,
+      crumbs,
+      items,
+      isGrid: st.view === 'grid',
+      isList: st.view === 'list',
+      gridPressed: st.view === 'grid' ? 'true' : 'false',
+      listPressed: st.view === 'list' ? 'true' : 'false',
+      gridBg: st.view === 'grid' ? 'rgba(36, 34, 30, 0.14)' : 'transparent',
+      listBg: st.view === 'list' ? 'rgba(36, 34, 30, 0.14)' : 'transparent',
+      showGrid: () => this.setState({ view: 'grid' }),
+      showList: () => this.setState({ view: 'list' }),
+      atRoot: st.path.length <= 1,
+      backColor: st.path.length <= 1 ? '#B5AEA3' : '#24221E',
+      back: () => { if (st.path.length > 1) this.setState({ path: st.path.slice(0, -1), sel: null }); },
+      hasSel: !!sel,
+      noSel: !sel,
+      selFolder: !!(sel && sel.folder),
+      selFile: !!(sel && !sel.folder),
+      sel: sel || { name: '', kind: '', size: '' },
+      where: '~/' + key,
+      openSel: () => { if (sel && sel.folder) open(sel.name); },
+      status: list.length + (list.length === 1 ? ' item' : ' items') + ', 470 GB available'
+    };
+  }
+}
+</script>
+</body>
+</html>

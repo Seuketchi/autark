@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark assistant persona</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+@keyframes ak-blink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(0.12)}}
+@keyframes ak-pulse{0%{transform:scale(0.85);opacity:0.55}100%{transform:scale(1.15);opacity:0}}
+@keyframes ak-dot{0%,100%{opacity:0.25}50%{opacity:1}}
+@keyframes ak-talk{0%,100%{transform:scaleY(0.6)}50%{transform:scaleY(1.8)}}
+.ak-eye{transform-box:fill-box;transform-origin:center;animation:ak-blink 4.2s infinite}
+.ak-ring{transform-box:fill-box;transform-origin:center;animation:ak-pulse 1.6s ease-out infinite}
+.ak-ring2{transform-box:fill-box;transform-origin:center;animation:ak-pulse 1.6s ease-out 0.8s infinite}
+.ak-dot1{animation:ak-dot 1.2s infinite}
+.ak-dot2{animation:ak-dot 1.2s 0.2s infinite}
+.ak-dot3{animation:ak-dot 1.2s 0.4s infinite}
+.ak-mouth{transform-box:fill-box;transform-origin:center;animation:ak-talk 0.35s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ak-eye,.ak-ring,.ak-ring2,.ak-dot1,.ak-dot2,.ak-dot3,.ak-mouth{animation:none}}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 48px 56px; display: flex; gap: 48px; background: #F6F4EF; font-family: 'Geist', system-ui, sans-serif; color: #24221E">
+  <section aria-label="Name" style="width: 560px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600">Name</h1>
+      <p style="margin: 0; font-size: 14px; color: #68625A">Short, easy to say aloud, and tied to what Autark is.</p>
+    </div>
+    <sc-for list="{{names}}" as="n" hint-placeholder-count="4">
+      <button onClick="{{n.pick}}" aria-pressed="{{n.pressed}}" style="display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; border-radius: 14px; text-align: left; font: inherit; color: #24221E; background: {{n.bg}}; border: 1.5px solid {{n.border}}">
+        <span style="display: flex; align-items: baseline; gap: 12px">
+          <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em">{{n.name}}</span>
+          <span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: #7A736A">{{n.say}}</span>
+        </span>
+        <span style="font-size: 13px; line-height: 1.5; color: #3E3A34">{{n.meaning}}</span>
+      </button>
+    </sc-for>
+  </section>
+
+  <section aria-label="Face" style="flex: 1; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 600">Face</h1>
+      <p style="margin: 0; font-size: 14px; color: #68625A">Abstract, never a human likeness. Drawn as vectors, so it costs nothing to animate.</p>
+    </div>
+
+    <div style="display: flex; gap: 10px">
+      <sc-for list="{{styles}}" as="s" hint-placeholder-count="3">
+        <button onClick="{{s.pick}}" aria-pressed="{{s.pressed}}" style="flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; text-align: left; font: inherit; color: #24221E; background: {{s.bg}}; border: 1.5px solid {{s.border}}">
+          <span style="font-size: 14px; font-weight: 600">{{s.label}}</span>
+          <span style="font-size: 12px; color: #68625A">{{s.idea}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="flex: 1; display: flex; gap: 24px; min-height: 0">
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; border-radius: 18px; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.08)">
+        <svg width="260" height="260" viewBox="0 0 120 120" role="img" aria-label="{{faceLabel}}">
+          <sc-if value="{{isListening}}" hint-placeholder-val="{{false}}">
+            <circle class="ak-ring" cx="60" cy="60" r="50" fill="none" stroke="#3F7A5F" stroke-width="1.5"></circle>
+            <circle class="ak-ring2" cx="60" cy="60" r="50" fill="none" stroke="#3F7A5F" stroke-width="1.5"></circle>
+          </sc-if>
+          <sc-if value="{{isLoop}}" hint-placeholder-val="{{true}}">
+            <path d="M28 100L60 18l32 82C74 82 46 82 28 100z" fill="#E1EDE6" stroke="#3F7A5F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+          </sc-if>
+          <sc-if value="{{isPebble}}" hint-placeholder-val="{{false}}">
+            <path d="M60 14c27 0 47 19 47 46s-19 46-47 46s-47-17-47-45s20-47 47-47z" fill="#3F7A5F"></path>
+            <path d="M60 14c27 0 47 19 47 46c-12-20-30-28-47-28s-35 8-47 28c0-28 20-46 47-46z" fill="#FFFFFF" opacity="0.12"></path>
+          </sc-if>
+          <sc-if value="{{isVisor}}" hint-placeholder-val="{{false}}">
+            <rect x="14" y="20" width="92" height="80" rx="30" fill="#24221E"></rect>
+          </sc-if>
+          <g style="transform: translate({{eyeX}}px, {{eyeY}}px); transition: transform 300ms ease">
+            <ellipse class="ak-eye" cx="{{e1x}}" cy="{{ey}}" rx="{{erx}}" ry="{{ery}}" fill="{{eyeFill}}"></ellipse>
+            <ellipse class="ak-eye" cx="{{e2x}}" cy="{{ey}}" rx="{{erx}}" ry="{{ery}}" fill="{{eyeFill}}"></ellipse>
+          </g>
+          <sc-if value="{{isSpeaking}}" hint-placeholder-val="{{false}}">
+            <rect class="ak-mouth" x="53" y="{{mouthY}}" width="14" height="3.5" rx="1.75" fill="{{eyeFill}}"></rect>
+          </sc-if>
+          <sc-if value="{{isThinking}}" hint-placeholder-val="{{false}}">
+            <circle class="ak-dot1" cx="84" cy="24" r="3" fill="#3F7A5F"></circle>
+            <circle class="ak-dot2" cx="93" cy="17" r="3" fill="#3F7A5F"></circle>
+            <circle class="ak-dot3" cx="102" cy="10" r="3" fill="#3F7A5F"></circle>
+          </sc-if>
+        </svg>
+        <div role="group" aria-label="State" style="display: flex; gap: 6px; padding: 4px; border-radius: 10px; background: rgba(36, 34, 30, 0.06)">
+          <sc-for list="{{states}}" as="t" hint-placeholder-count="4">
+            <button onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="height: 30px; padding: 0 12px; border: none; border-radius: 7px; font: inherit; font-size: 12px; background: {{t.bg}}; color: {{t.fg}}">{{t.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="width: 300px; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">IN PLACE</span>
+        <div style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.08)">
+          <div style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px; border-bottom: 1px solid rgba(36, 34, 30, 0.08)">
+            <svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true">
+              <sc-if value="{{isLoop}}" hint-placeholder-val="{{true}}"><path d="M28 100L60 18l32 82C74 82 46 82 28 100z" fill="#E1EDE6" stroke="#3F7A5F" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path></sc-if>
+              <sc-if value="{{isPebble}}" hint-placeholder-val="{{false}}"><path d="M60 14c27 0 47 19 47 46s-19 46-47 46s-47-17-47-45s20-47 47-47z" fill="#3F7A5F"></path></sc-if>
+              <sc-if value="{{isVisor}}" hint-placeholder-val="{{false}}"><rect x="14" y="20" width="92" height="80" rx="30" fill="#24221E"></rect></sc-if>
+              <ellipse class="ak-eye" cx="{{e1x}}" cy="{{ey}}" rx="{{erx}}" ry="{{ery}}" fill="{{eyeFill}}"></ellipse>
+              <ellipse class="ak-eye" cx="{{e2x}}" cy="{{ey}}" rx="{{erx}}" ry="{{ery}}" fill="{{eyeFill}}"></ellipse>
+            </svg>
+            <span style="font-size: 15px; font-weight: 600">{{name}}</span>
+          </div>
+          <div style="padding: 14px; display: flex; flex-direction: column; gap: 10px">
+            <div style="align-self: flex-start; padding: 10px 12px; border-radius: 14px 14px 14px 4px; background: #FBFAF7; border: 1px solid rgba(36, 34, 30, 0.08); font-size: 13px; line-height: 1.5">{{greeting}}</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.08)">
+          <svg width="22" height="22" viewBox="0 0 120 120" aria-hidden="true">
+            <sc-if value="{{isLoop}}" hint-placeholder-val="{{true}}"><path d="M28 100L60 18l32 82C74 82 46 82 28 100z" fill="#E1EDE6" stroke="#3F7A5F" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"></path></sc-if>
+            <sc-if value="{{isPebble}}" hint-placeholder-val="{{false}}"><path d="M60 14c27 0 47 19 47 46s-19 46-47 46s-47-17-47-45s20-47 47-47z" fill="#3F7A5F"></path></sc-if>
+            <sc-if value="{{isVisor}}" hint-placeholder-val="{{false}}"><rect x="14" y="20" width="92" height="80" rx="30" fill="#24221E"></rect></sc-if>
+            <ellipse cx="{{e1x}}" cy="{{ey}}" rx="{{erx}}" ry="{{ery}}" fill="{{eyeFill}}"></ellipse>
+            <ellipse cx="{{e2x}}" cy="{{ey}}" rx="{{erx}}" ry="{{ery}}" fill="{{eyeFill}}"></ellipse>
+          </svg>
+          <span style="font-size: 12px; color: #3E3A34">Top bar: {{name}} is listening when this pulses</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { name: 'Kith', style: 'visor', face: 'idle' };
+  }
+  renderVals() {
+    const st = this.state;
+    const nameDefs = [
+      { name: 'Ark', say: '/ark/', meaning: 'Hidden inside "Autark". A vessel that carries what you need and keeps it safe.' },
+      { name: 'Tala', say: '/TAH-lah/', meaning: 'Tagalog for "star": the light you steer by. Personal, if Filipino is close to home.' },
+      { name: 'Kith', say: '/kith/', meaning: 'Old English for the people you know and trust, as in "kith and kin". A companion, not a servant.' },
+      { name: 'Sinag', say: '/SEE-nahg/', meaning: 'Tagalog for "ray of light": quick, warm and clear.' }
+    ];
+    const names = nameDefs.map((n) => ({
+      ...n,
+      pressed: n.name === st.name ? 'true' : 'false',
+      bg: n.name === st.name ? '#E1EDE6' : '#FFFFFF',
+      border: n.name === st.name ? '#3F7A5F' : 'rgba(36, 34, 30, 0.10)',
+      pick: () => this.setState({ name: n.name })
+    }));
+    const styleDefs = [
+      { id: 'loop', label: 'Loop', idea: 'The logo comes alive' },
+      { id: 'pebble', label: 'Pebble', idea: 'A soft sage shape' },
+      { id: 'visor', label: 'Visor', idea: 'Dark glass, glowing eyes' }
+    ];
+    const styles = styleDefs.map((s) => ({
+      ...s,
+      pressed: s.id === st.style ? 'true' : 'false',
+      bg: s.id === st.style ? '#E1EDE6' : '#FFFFFF',
+      border: s.id === st.style ? '#3F7A5F' : 'rgba(36, 34, 30, 0.10)',
+      pick: () => this.setState({ style: s.id })
+    }));
+    const stateDefs = [
+      { id: 'idle', label: 'Idle' },
+      { id: 'listening', label: 'Listening' },
+      { id: 'thinking', label: 'Thinking' },
+      { id: 'speaking', label: 'Speaking' }
+    ];
+    const states = stateDefs.map((t) => ({
+      ...t,
+      pressed: t.id === st.face ? 'true' : 'false',
+      bg: t.id === st.face ? '#3F7A5F' : 'transparent',
+      fg: t.id === st.face ? '#FFFFFF' : '#24221E',
+      pick: () => this.setState({ face: t.id })
+    }));
+    const geo = {
+      loop: { e1x: 52, e2x: 68, ey: 66, erx: 3.6, ery: 5.2, fill: '#24221E', mouthY: 76 },
+      pebble: { e1x: 46, e2x: 74, ey: 58, erx: 5, ery: 8, fill: '#FFFFFF', mouthY: 76 },
+      visor: { e1x: 44, e2x: 76, ey: 58, erx: 7, ery: 12, fill: '#7FC1A1', mouthY: 80 }
+    }[st.style];
+    const thinking = st.face === 'thinking';
+    const listening = st.face === 'listening';
+    return {
+      names,
+      styles,
+      states,
+      name: st.name,
+      greeting: 'Hi, I’m ' + st.name + '. I run on this laptop, and I only remember what you approve.',
+      faceLabel: st.name + ', ' + st.face,
+      isLoop: st.style === 'loop',
+      isPebble: st.style === 'pebble',
+      isVisor: st.style === 'visor',
+      isListening: listening,
+      isThinking: thinking,
+      isSpeaking: st.face === 'speaking',
+      e1x: geo.e1x,
+      e2x: geo.e2x,
+      ey: geo.ey,
+      erx: geo.erx,
+      ery: listening ? geo.ery * 1.2 : geo.ery,
+      eyeFill: geo.fill,
+      mouthY: geo.mouthY,
+      eyeX: thinking ? 4 : 0,
+      eyeY: thinking ? -5 : 0
+    };
+  }
+}
+</script>
+</body>
+</html>
