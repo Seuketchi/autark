@@ -26,7 +26,7 @@ Autark has two AI engines behind one daemon. Jev makes fast typed decisions in t
 
 ## Assistant
 
-The launcher grows into a personal assistant, like Grok, but split the Autark way. Jev decides, code acts, Ollama writes, and everything it remembers stays on the encrypted disk.
+The launcher grows into a personal assistant called **Kith**, like Grok, but split the Autark way. Its face is the Visor: dark glass with glowing sage eyes, drawn as vectors and animated for idle, listening, thinking and speaking. Jev decides, code acts, Ollama writes, and everything it remembers stays on the encrypted disk.
 
 | Capability | How it works | Default |
 | --- | --- | --- |

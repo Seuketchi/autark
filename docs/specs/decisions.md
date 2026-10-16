@@ -64,6 +64,7 @@ This laptop is the reference machine. Its full profile is in [`hardware/`](../..
 | AI: generation | Ollama, on the laptop | Private, works offline, and handles explanations and summaries |
 | AI: defaults | Opt-in, with a local-only mode | Nothing goes to the cloud unless you turn it on |
 | Logo | Loop: an "A" drawn as one closed stroke | Nothing borrowed |
+| Assistant | **Kith**, with a Visor face: dark glass with glowing sage eyes | Old English for the people you know and trust: a companion, not a servant. Abstract face, never a human likeness |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected
