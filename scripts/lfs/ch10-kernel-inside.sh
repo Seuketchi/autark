@@ -100,6 +100,9 @@ SLAB_FREELIST_RANDOM y
 SHUFFLE_PAGE_ALLOCATOR y
 KEXEC n
 KEXEC_FILE n
+# KEXEC_HANDOVER (live update) selects KEXEC_FILE, overriding the line above; crash dumps need kexec too
+KEXEC_HANDOVER n
+CRASH_DUMP n
 SECURITY_LANDLOCK y
 SECURITY_YAMA y
 SECURITY_APPARMOR n
@@ -110,6 +113,14 @@ SYSTEM_TRUSTED_KEYS ""
 SYSTEM_REVOCATION_KEYS ""
 DEBUG_INFO_BTF n
 RUST n
+# gendwarfksyms (module symbol versions from DWARF) needs libdw's dwarf.h, which LFS doesn't install;
+# genksyms is used instead. No kernel debug info at all: smaller and faster to build.
+GENDWARFKSYMS n
+# DEBUG_INFO_NONE is one member of a choice; the other members must be turned off for it to win
+DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT n
+DEBUG_INFO_DWARF4 n
+DEBUG_INFO_DWARF5 n
+DEBUG_INFO_NONE y
 
 # qemu test boot (build guide 7a): serial console; the screen comes from SIMPLEDRM above
 SERIAL_8250 y
@@ -121,6 +132,8 @@ USB_UAS m
 USB_HID m
 HID_GENERIC m
 HID_MULTITOUCH m
+# localmodconfig turns off whole menus this laptop didn't use; their children need the menu back on
+USB_NET_DRIVERS m
 USB_USBNET m
 USB_NET_CDCETHER m
 USB_RTL8152 m
@@ -130,6 +143,7 @@ MEDIA_USB_SUPPORT y
 USB_VIDEO_CLASS m
 SND_USB_AUDIO m
 BT_HCIBTUSB m
+TYPEC m
 TYPEC_UCSI m
 UCSI_ACPI m
 USB4 m
@@ -178,7 +192,9 @@ set +e
   make mrproper
   cp /sources/target-kernel.config .config
   make olddefconfig
-  yes '' | make LSMOD=/sources/target-lsmod.txt localmodconfig
+  # `yes` answers NEW-option prompts with the default. It dies of SIGPIPE when make exits, which pipefail
+  # would count as a failure, so its own status is ignored; make's still counts.
+  (yes '' || true) | make LSMOD=/sources/target-lsmod.txt localmodconfig
   # Twice: enabling an option can reveal dependent options that a second pass then sets.
   apply; make olddefconfig
   apply; make olddefconfig
