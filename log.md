@@ -160,3 +160,20 @@ Open after chapter 8:
 - [ ] Keep `-g` out of shipped binaries but confirm the libelf and libstdc++ test theories once (rebuild with `-g`
       / without hardening flags, re-run just those tests).
 - [ ] Build failures should keep the source dir's test logs: copy `*.log`/`*.sum` to `/sources/logs/<pkg>/` before deleting.
+
+## 2026-10-17 — Disk encryption and TPM support (before Step 6)
+
+Script: `scripts/lfs/blfs-crypto-inside.sh` (BLFS 13.1-systemd commands; `[Autark]` marks deviations).
+Sources, each verified:
+- BLFS md5 match: LVM2-2.03.42, popt-1.19, cmake-4.4.2, json-c-0.19, cryptsetup-2.8.7.
+- libaio-0.3.113: BLFS URL (releases.pagure.org) 404s; Debian's `libaio_0.3.113.orig.tar.gz` has the **identical
+  md5** BLFS lists.
+- tpm2-tss-4.2.0 (not in BLFS): GitHub release + `.asc`. Good signature by key D533275B…8F4F9A45D7FFEE74
+  (Andreas Fuchs, Infineon), fetched from keys.openpgp.org; GitHub lists the same key on `AndreasFuchsTPM`, who
+  commits to tpm2-tss (the project's RELEASE.md rule). sha256 b53f0c5c8c4ce17f05701a410ca9688f725ca380c9bc4640eacd0eadb1fea124.
+- pefile-2024.8.26 (not in BLFS): PyPI sdist, sha256 matches PyPI's 3ff6c5d8b43e8c37bb6e6dd5085658d658a7a0bdcd20b6a07b1fcfc1c4e9d632.
+Deviations: CMake `--no-system-libs` (no curl/libarchive/libuv/nghttp2); LVM2 and cryptsetup tests skipped
+(they drive the host kernel's device-mapper, which holds Autark's own volumes); tpm2-tss `--disable-fapi`;
+`tss` user/group created by hand (sysusers=false); systemd rebuilt with `ukify`, `libcryptsetup`, `tpm2` enabled.
+- [ ] Step 6 kernel needs (cryptsetup page): BLK_DEV_DM, DM_CRYPT, CRYPTO_AES, CRYPTO_XTS, CRYPTO_SHA256,
+  CRYPTO_USER_API_SKCIPHER; plus TPM: TCG_TPM, TCG_TIS / TCG_CRB (from hardware/target).
