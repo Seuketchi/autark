@@ -20,7 +20,7 @@ The name comes from *autarky*, meaning self-sufficient: every package chosen and
 
 The disk image, source tarballs and backups stay local and are never committed (see `.gitignore`).
 
-The Rust tools (shell, Kith's daemon, Notes, Files, the package manager and more) live in a separate repo, `autark-tools`, so other distros can use them too.
+The Rust tools (shell, Kith's daemon, Notes, Files, the package manager and more) live in a separate repo, [`autark-tools`](https://github.com/Seuketchi/autark-tools), so other distros can use them too.
 
 ## Status
 
