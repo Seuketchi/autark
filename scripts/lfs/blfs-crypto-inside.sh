@@ -142,7 +142,17 @@ pkg_pefile() {
   pip3 install --no-index --find-links dist pefile
 }
 
-# [Autark] systemd rebuilt with LFS chapter 8's options except: ukify, libcryptsetup and tpm2 enabled.
+# [Autark] pyelftools from PyPI (not in BLFS): systemd needs it to build systemd-stub, the EFI program ukify
+# wraps around the kernel (and which measures the boot image into the TPM).
+pkg_pyelftools() {
+  pip3 wheel -w dist --no-cache-dir --no-build-isolation --no-deps $PWD
+  pip3 install --no-index --find-links dist pyelftools
+}
+
+# [Autark] systemd rebuilt with LFS chapter 8's options except: ukify, libcryptsetup, tpm2, sysusers and bootloader enabled
+# (dracut's journald module, which the whole systemd initramfs needs, requires systemd-sysusers;
+# bootloader=enabled builds systemd-stub for ukify; Autark doesn't use systemd-boot itself. The stub embeds
+# SBAT metadata naming the distribution, which systemd can't autodetect for a new one).
 # machine-id and preset-all were done in chapter 8 and aren't repeated.
 pkg_systemd_crypto() {
   sed -e 's/GROUP="render"/GROUP="video"/' \
@@ -158,7 +168,7 @@ pkg_systemd_crypto() {
         -D firstboot=false      \
         -D install-tests=false  \
         -D ldconfig=false       \
-        -D sysusers=false       \
+        -D sysusers=true        \
         -D rpmmacrosdir=no      \
         -D homed=disabled       \
         -D man=disabled         \
@@ -170,6 +180,12 @@ pkg_systemd_crypto() {
         -D ukify=enabled        \
         -D libcryptsetup=enabled \
         -D tpm2=enabled         \
+        -D bootloader=enabled   \
+        -D sbat-distro=autark   \
+        -D sbat-distro-summary=Autark \
+        -D sbat-distro-pkgname=systemd \
+        -D sbat-distro-version=261.2 \
+        -D sbat-distro-url=https://github.com/Seuketchi/autark \
         -D docdir=/usr/share/doc/systemd-261.2
   ninja
   ninja install
@@ -184,5 +200,6 @@ run_pkg cryptsetup     cryptsetup-2.8.7.tar.xz  pkg_cryptsetup
 run_pkg tss-user       -                        step_tss_user
 run_pkg tpm2-tss       tpm2-tss-4.2.0.tar.gz    pkg_tpm2_tss
 run_pkg pefile         pefile-2024.8.26.tar.gz  pkg_pefile
+run_pkg pyelftools     pyelftools-0.33.tar.gz   pkg_pyelftools
 run_pkg systemd-crypto systemd-261.2.tar.gz     pkg_systemd_crypto
 echo "== disk encryption and TPM support done"

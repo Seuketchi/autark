@@ -107,13 +107,16 @@ step_initramfs() {
   install -d /etc/dracut.conf.d /etc/kernel
   cat > /etc/dracut.conf.d/autark.conf << "EOF"
 hostonly="no"
-add_dracutmodules+=" systemd systemd-cryptsetup tpm2-tss "
+add_dracutmodules+=" systemd systemd-cryptsetup "
+# systemd-cryptsetup loads the TSS libraries itself (dlopen) for TPM unlock; dracut's tpm2-tss module would
+# require the separate tpm2-tools CLI, so the libraries go in directly instead.
+install_items+=" /usr/lib/libtss2-esys.so.0 /usr/lib/libtss2-mu.so.0 /usr/lib/libtss2-rc.so.0 /usr/lib/libtss2-tcti-device.so.0 "
 omit_dracutmodules+=" network nfs iscsi multipath lvm mdraid dmraid "
 compress="zstd"
 early_microcode="no"
 EOF
   dracut --force --kver $KVER /boot/initramfs-$KVER.img
-  lsinitrd /boot/initramfs-$KVER.img | grep -E 'systemd-cryptsetup|libtss2-esys|cryptsetup.target' | head -5
+  lsinitrd /boot/initramfs-$KVER.img | grep -E 'systemd-cryptsetup|libtss2|cryptsetup.target|systemd-sysusers' | head -8
 }
 
 # The unified kernel image: microcode first, then the initramfs, the kernel and its command line, in one

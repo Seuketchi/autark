@@ -182,3 +182,43 @@ Deviations: CMake `--no-system-libs` (no curl/libarchive/libuv/nghttp2); LVM2 an
 - Verified inside the chroot: `systemctl --version` shows `+LIBCRYPTSETUP +TPM2 +OPENSSL`;
   `systemd-cryptsetup`, `systemd-cryptenroll`, `ukify` (261.2) run; `cryptsetup 2.8.7`; `import pefile` works;
   group `tss` (998). Both Step 6 blockers (ukify, cryptsetup/TPM in systemd) are closed.
+
+## 2026-10-17 — Step 6 (configure, kernel, boot image)
+
+Config (`scripts/lfs/ch9-config-inside.sh`): hostname `autark`; os-release NAME="Autark" ID=autark; networkd DHCP on
+any wired link (Wi-Fi with Step 8); resolved DNS-over-TLS to Quad9, no plain fallback; RTC in UTC like the host
+(LocalRTC=no); keymap us; LANG=en_US.UTF-8; book's profile/inputrc/shells; fstab by mapper names + ESP UUID;
+crypttab for /home with `/etc/cryptsetup-keys.d/autark-home.key` (0400, enrolled from the host and tested); zram
+service calling `/usr/lib/autark/zram-swap` (logic in a script: systemd expands `$VAR` inside ExecStart= itself).
+
+Kernel 7.1.8 (`scripts/lfs/ch10-kernel-inside.sh`): Ubuntu's config for this laptop → localmodconfig → required
+options → checked. 15 MB + 279 signed modules; key in `/root/kernel-keys/` (0600). The check caught, before compiling:
+- `KEXEC_FILE` forced back on by `KEXEC_HANDOVER` (select overrides disable) → also off: KEXEC_HANDOVER, CRASH_DUMP.
+- USB-net/Type-C drivers dropped: localmodconfig switched off their menus → `USB_NET_DRIVERS`, `TYPEC` added.
+- `DEBUG_INFO_NONE` didn't win its choice → other DWARF members turned off.
+Compile fixes: `GENDWARFKSYMS` off (needs libdw's dwarf.h). `yes '' | make localmodconfig` died of SIGPIPE under
+pipefail → `(yes '' || true) | …`.
+Hardware note: the NVMe sits behind Intel VMD, so `CONFIG_VMD=y` is what makes the root disk visible at all.
+
+Sources (all verified): linux-firmware-20260916 (kernel.org autosigner signature, key from kernel.org's pgpkeys git,
+sha256 f80dcb75…); Intel microcode-20260925 (unsigned tarball; the CPU only accepts Intel-signed microcode);
+cpio-2.15 (BLFS md5); dracut-ng 112 (GPG sig by Neal Gompa, key C5EC6EF7E1EA6B86 on release author `Conan-Kudo`'s
+GitHub); pyelftools-0.33 (PyPI sha256).
+
+Boot (`scripts/lfs/step6-boot-inside.sh`): this laptop's firmware only (graphics, Wi-Fi + WHENCE links, Bluetooth,
+Realtek NIC); microcode `06-ba-02` as an early cpio; dracut, not host-only (a chroot would detect the build loop
+device); `autark.efi` 34 MB = systemd-stub + kernel + initramfs (18.7 MB) + cmdline + osrel + SBAT, copied to
+`EFI/BOOT/BOOTX64.EFI`. Initramfs checked: systemd-cryptsetup(+generator), libcryptsetup, libtss2 esys/mu/rc/tcti-device.
+Fixes on the way, each failing at configure, before install:
+- dracut's journald module needs `systemd-sysusers` → systemd rebuilt with `sysusers=true`.
+- dracut's tpm2-tss module needs the tpm2-tools CLI → dropped; systemd dlopens the TSS libs, so they're `install_items`.
+  **Assumption until Step 7b proves it on the real TPM.**
+- ukify needs systemd-stub → systemd rebuilt with `bootloader=enabled` (needs pyelftools) and SBAT naming Autark.
+Cmdline: `rd.luks.name=33727520-…=autark root=/dev/mapper/autark rw console=tty0 console=ttyS0,115200`.
+
+Open before Step 7b:
+- [ ] **Signing**: the image is UNSIGNED. `sbctl` is Go (no Go here); pick sbsigntools (C) or sign from the host.
+- [ ] SOF audio firmware isn't in linux-firmware (sof-bin project).
+- [ ] Firewall (decisions.md: nftables, block incoming) — nothing listens yet.
+- [ ] Lockdown=integrity disables hibernation; decisions.md mentions an optional hibernate swap file. Your call.
+- [ ] The kernel's version string says root@Seukechi (chroot borrows the host name). Cosmetic.
