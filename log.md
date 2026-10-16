@@ -74,3 +74,13 @@ Since failed builds still ran their install steps, `$LFS` held partial installs.
 - Rebuild result: chapter 5 (incl. libstdc++ 71 s) and chapter 6 (17 packages; GCC pass 2 599 s) all done.
   Log scan for `make: ***` / `configure: error` / `fatal error`: zero hits in every log.
   Present in `$LFS/usr/bin`: gcc g++ cc ld as make bash sh tar xz sed gawk grep file patch m4; libstdc++ and libncursesw installed.
+
+## 2026-10-16 — Step 4 (chapter 7, chroot)
+
+- `sudo LFS=/mnt/lfs bash scripts/lfs/ch7-chroot.sh`: chown to root, kernfs mounts, chroot, inside phases, unmount.
+- dirs, files, gettext 278 s, bison 35 s, perl, zlib 2 s (checked: libz.so 1.3.2 + zlib.h installed, libz.a removed),
+  mpdecimal 8 s, Python 75 s, texinfo 62 s, util-linux 39 s, cleanup (`/tools` removed). Log scan: zero errors.
+- After exit only the image's own mounts remain (kernfs unmounted by the trap).
+- Chroot clock reads UTC (no timezone yet).
+- **Checkpoint:** `backup-ch7.tar.xz`, 1.2 GB, 20,690 entries, `xz -t` OK (git-ignored, in the repo folder).
+  Restore: wipe `$LFS` except `sources/`, then `tar -xpf backup-ch7.tar.xz -C $LFS` as root.
