@@ -112,9 +112,9 @@ This step is done when a test program compiled with the new toolchain links agai
 2. GCC, pass 1: a C/C++ compiler with no C library yet.
 3. Linux API headers: the kernel interface that glibc compiles against.
 4. Glibc: the C library, built with the pass-1 compiler. Then run the book's sanity check, and stop if it fails.
-5. Libstdc++: the C++ standard library. Since LFS 13.1 it's no longer a chapter 5 package: GCC pass 2 (Step 4) builds it along with libgcc.
+5. Libstdc++: the C++ standard library, so that later C++ packages can build. Without it, chapter 6's ncurses and GCC pass 2 fail with `fatal error: exception: No such file or directory`.
 
-The commands are the book's, verbatim, in [`scripts/lfs/ch5-cross-toolchain.sh`](../../scripts/lfs/ch5-cross-toolchain.sh). `lfs` can't read your home folder, so copy the script into `$LFS/sources` and run it with `scripts/as-lfs.sh 'bash $LFS/sources/ch5-cross-toolchain.sh'`. It stops if the sanity check's program doesn't ask for `$LFS`'s `/lib64/ld-linux-x86-64.so.2`.
+The commands are the book's, verbatim, in [`scripts/lfs/ch5-cross-toolchain.sh`](../../scripts/lfs/ch5-cross-toolchain.sh). `lfs` can't read your home folder, so copy the script into `$LFS/sources` and run it with `scripts/as-lfs.sh 'bash $LFS/sources/ch5-cross-toolchain.sh'`. It stops if the sanity check's program doesn't ask for `$LFS`'s `/lib64/ld-linux-x86-64.so.2`, and at the first failing command of any package. The chapter scripts share their unpack-build-clean helper, `scripts/lfs/build-lib.sh`, which must sit next to them.
 
 Why cross-compile on the same CPU: the new target name forces every tool to use `$LFS` instead of Ubuntu's files. That's what makes Autark independent of the host.
 
@@ -126,7 +126,7 @@ This step is done when you can `chroot` into `$LFS`, the temporary tools work th
 2. As root, change ownership of `$LFS` to root and mount the virtual filesystems (`/dev`, `/proc`, `/sys`, `/run`) inside it.
 3. Enter the chroot. From here on, Ubuntu's programs are out of the picture.
 4. Create the full directory tree and the essential files (`/etc/passwd`, `/etc/group`, log files).
-5. Build the last temporary tools inside the chroot: Gettext, Bison, Perl, Python, Texinfo and Util-linux.
+5. Build the last temporary tools inside the chroot: Gettext, Bison, Perl, Zlib, Mpdecimal, Python, Texinfo and Util-linux. As root: `sudo LFS=/mnt/lfs bash scripts/lfs/ch7-chroot.sh` does steps 2–5 and the cleanup inside, and always unmounts the virtual filesystems afterwards.
 6. Clean up, leave the chroot, and back up:
 
    ```

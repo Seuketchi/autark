@@ -51,4 +51,26 @@ Every package built, every change made, every error. Enough to repeat the build 
 - gcc-16.2.0 pass 1: 363 s (6.3 SBU). linux-7.1.8 headers: 2 s. glibc-2.44: 108 s (1.9 SBU).
 - Sanity check matches the book: interpreter `/lib64/ld-linux-x86-64.so.2`; Scrt1/crti/crtn from `$LFS/lib`;
   headers from `$LFS/tools` and `$LFS/usr/include`; libc from `$LFS/usr/lib/libc.so.6`.
-- LFS 13.1 has no libstdc++ in chapter 5; GCC pass 2 builds it (chapter 6).
+- ~~LFS 13.1 has no libstdc++ in chapter 5~~ WRONG, see the rebuild below: my page listing missed it.
+
+## 2026-10-16 — Chapters 5–6 rebuilt from scratch
+
+What went wrong, in order:
+1. **Missed two book pages.** I listed each chapter's pages with a regex allowing only `[a-z0-9-]`, which silently
+   dropped `gcc-libstdc++.html` (chapter 5) and `Python.html` (chapter 7). Without libstdc++, chapter 6's ncurses
+   (C++ binding) and GCC pass 2 failed: `fatal error: exception: No such file or directory`.
+2. **Failures weren't caught.** Each package ran as `if ! ( set -e; pkg ); then`, but bash ignores errexit for
+   everything inside a condition, subshells included. A failed `make` carried on; GCC pass 2's last command
+   (`ln -sv gcc cc`) succeeded, so it reported "done in 26s" and `/usr/bin/gcc` was missing.
+3. Earlier in chapter 6: build functions named after commands (`make`, `tar`…) shadowed them and recursed into a
+   segfault; and `tar -tf | head -1` died of SIGPIPE under pipefail, exiting silently. Neither touched `$LFS`.
+
+Since failed builds still ran their install steps, `$LFS` held partial installs. Wiped `usr etc var tools lib64`
+(sources kept) and rebuilt chapters 5 and 6 with:
+- `scripts/lfs/build-lib.sh`: one shared build helper; runs the package subshell as a plain command so errexit
+  works; tested with a deliberately failing package (stops at the failing line, script exits 1).
+- chapter 5 now includes `gcc-libstdc++`; chapter 7 now includes Python.
+- Checks: after each chapter, scan every log for `make: ***` and `configure: error`, and check key binaries exist.
+- Rebuild result: chapter 5 (incl. libstdc++ 71 s) and chapter 6 (17 packages; GCC pass 2 599 s) all done.
+  Log scan for `make: ***` / `configure: error` / `fatal error`: zero hits in every log.
+  Present in `$LFS/usr/bin`: gcc g++ cc ld as make bash sh tar xz sed gawk grep file patch m4; libstdc++ and libncursesw installed.

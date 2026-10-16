@@ -7,26 +7,11 @@ set -euo pipefail
 : "${LFS:?run through as-lfs.sh}" "${LFS_TGT:?run through as-lfs.sh}"
 logs=$LFS/sources/logs
 mkdir -p "$logs"
+srcdir=$LFS/sources
+source "$(dirname "$0")/build-lib.sh"
 
-# Unpack a tarball, run the build function inside it, then remove the source tree (book convention).
-build() {
-  local tarball=$1 fn=$2 dir start
-  dir=${tarball%.tar.*}
-  cd "$LFS/sources"
-  rm -rf "$dir"
-  tar -xf "$tarball"
-  cd "$dir"
-  start=$(date +%s)
-  echo "== $dir: started $(date +%T)"
-  if ! ( set -e; "$fn" ) > "$logs/$fn.log" 2>&1; then
-    echo "== $dir: FAILED; last lines of $logs/$fn.log:"; tail -25 "$logs/$fn.log"; exit 1
-  fi
-  echo "== $dir: done in $(( $(date +%s) - start ))s"
-  cd "$LFS/sources"
-  rm -rf "$dir"
-}
 
-binutils_pass1() {
+pkg_binutils_pass1() {
   mkdir -v build
   cd       build
   ../configure --prefix=$LFS/tools \
@@ -41,7 +26,7 @@ binutils_pass1() {
   make install
 }
 
-gcc_pass1() {
+pkg_gcc_pass1() {
   tar -xf ../mpfr-4.2.2.tar.xz
   mv -v mpfr-4.2.2 mpfr
   tar -xf ../gmp-6.3.0.tar.xz
@@ -83,14 +68,14 @@ gcc_pass1() {
     $($LFS_TGT-gcc -print-file-name=include)/limits.h
 }
 
-linux_headers() {
+pkg_linux_headers() {
   make mrproper
   make headers
   find usr/include -type f ! -name '*.h' -delete
   cp -rv usr/include $LFS/usr
 }
 
-glibc() {
+pkg_glibc() {
   case $(uname -m) in
       i?86)   ln -sfv ld-linux.so.2 $LFS/lib/ld-lsb.so.3
       ;;
@@ -115,8 +100,25 @@ glibc() {
   sed '/RTLDLIST=/s@/usr@@g' -i $LFS/usr/bin/ldd
 }
 
+pkg_gcc_libstdcxx() {
+  mkdir -v build
+  cd       build
+  ../libstdc++-v3/configure      \
+      --host=$LFS_TGT            \
+      --build=$(../config.guess) \
+      CXX=$LFS_TGT-gcc           \
+      --prefix=/usr              \
+      --disable-multilib         \
+      --disable-nls              \
+      --disable-libstdcxx-pch    \
+      --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/16.2.0
+  make
+  make DESTDIR=$LFS install
+  rm -v $LFS/usr/lib/lib{stdc++{,exp,fs},supc++}.la
+}
+
 # The book's sanity check after glibc: a test program must use $LFS's loader and start files.
-sanity_check() {
+pkg_sanity_check() {
   cd "$(mktemp -d)"
   echo 'int main(){}' | $LFS_TGT-gcc -x c - -v -Wl,--verbose &> dummy.log
   $LFS_TGT-readelf -l a.out | grep ': /lib'
@@ -130,14 +132,15 @@ sanity_check() {
   rm -v a.out dummy.log
 }
 
-packages=("${@:-binutils_pass1 gcc_pass1 linux_headers glibc sanity_check}")
+packages=("${@:-binutils_pass1 gcc_pass1 linux_headers glibc sanity_check gcc_libstdcxx}")
 for p in ${packages[@]}; do
   case $p in
-    binutils_pass1) build binutils-2.47.tar.xz binutils_pass1 ;;
-    gcc_pass1)      build gcc-16.2.0.tar.xz    gcc_pass1 ;;
-    linux_headers)  build linux-7.1.8.tar.xz   linux_headers ;;
-    glibc)          build glibc-2.44.tar.xz    glibc ;;
-    sanity_check)   echo "== sanity check"; sanity_check ;;
+    binutils_pass1) build binutils-2.47.tar.xz pkg_binutils_pass1 ;;
+    gcc_pass1)      build gcc-16.2.0.tar.xz    pkg_gcc_pass1 ;;
+    linux_headers)  build linux-7.1.8.tar.xz   pkg_linux_headers ;;
+    glibc)          build glibc-2.44.tar.xz    pkg_glibc ;;
+    sanity_check)   echo "== sanity check"; (set -e; pkg_sanity_check) ;;
+    gcc_libstdcxx)  build gcc-16.2.0.tar.xz    pkg_gcc_libstdcxx ;;
     *) echo "unknown package: $p" >&2; exit 2 ;;
   esac
 done
