@@ -24,6 +24,18 @@ Autark has two AI engines behind one daemon. Jev makes fast typed decisions in t
 | File manager | Search by meaning: candidates found by code, ranked by relevance | Jev (Score per candidate) |
 | Settings search | "my screen is too bright at night" opens Night light | Jev (Choice) |
 
+## Assistant
+
+The launcher grows into a personal assistant, like Grok, but split the Autark way. Jev decides, code acts, Ollama writes, and everything it remembers stays on the encrypted disk.
+
+| Capability | How it works | Default |
+| --- | --- | --- |
+| Conversation | The launcher continues into a chat panel. Each turn is routed (action, question or search), and Ollama answers with the earlier turns as context. History is kept in `~/.local/share/autark-ai/conversations/` | Kept 7 days, configurable |
+| Memory | Facts about you ("builds Autark in the evenings", "project lives in ~/autark"). The assistant proposes each one and you approve it; nothing is saved silently. Stored as plain TOML in `~/.config/autark-ai/memory.toml`, and viewable and editable in Settings › AI › Memory | On, approval required |
+| Suggestions | Code detects events (battery low, build finished, new Wi-Fi network). Jev scores whether each is worth interrupting you, given Focus and your memory. Suggestions appear as cards and never act on their own | At most 3 an hour; each has "don't suggest again" |
+
+Memory goes to Jev only as the specific fields a decision needs, and only for features where Jev is turned on.
+
 ## Daemon: `autark-ai`
 
 A Rust service on the session D-Bus, `org.autark.AI1`. Every shell piece talks to it instead of to the engines directly.
@@ -32,6 +44,9 @@ A Rust service on the session D-Bus, `org.autark.AI1`. Every shell piece talks t
 - `Rank(query, items)` returns relevance scores.
 - `Check(command)` returns a risk probability.
 - `Ask(prompt, context)` streams a generated answer.
+- `Chat(session, text)` streams one assistant turn, including any actions it proposes.
+- `ProposeMemory(fact)` asks you to approve a memory; `Forget(id)` removes one.
+- `Suggestion` is a signal the notification centre and assistant panel listen for.
 
 ## Rules
 
