@@ -1,6 +1,6 @@
 # Autark design
 
-The desktop design. This folder is the only copy: the original Claude canvas was deleted on 2026-10-16. `canvas/` holds every artboard as a `.dc.html` file, plus `canvas.json`, the layout index.
+The desktop design. This folder is the source of truth; the working copy is the [Autark Desktop canvas](https://claude.ai/artifact/XQn3xs2woGiqwjR34rtLrE), private to its owner. `canvas/` holds every artboard as a `.dc.html` file, plus `canvas.json`, the layout index.
 
 | Artboard | What it shows |
 | --- | --- |
@@ -10,6 +10,7 @@ The desktop design. This folder is the only copy: the original Claude canvas was
 | `Assistant` | Chat with Kith: suggestions, actions, answers, memory approval |
 | `Tasks` | Creating a scheduled task, and its result notification |
 | `Persona` | Kith's name and Visor face in four states |
+| `Notes` | Autark Notes: folders, note list, live preview with checklists and `[[links]]`, backlinks, graph view |
 | `Overview` | All windows and workspaces |
 | `NotificationCenter` | Quick settings and notifications |
 | `Lock` | Lock screen with fingerprint or password |

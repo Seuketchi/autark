@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark Notes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+input::placeholder{color:#7A736A}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; color: #24221E; background: #F6F4EF">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Wallpaper" hint-size="1440px,900px"></dc-import>
+  </div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 5">
+    <dc-import name="TopBar" app="Notes" hint-size="1440px,32px"></dc-import>
+  </div>
+
+  <section aria-label="Notes window" style="position: absolute; left: 100px; top: 56px; width: 1240px; height: 720px; display: flex; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 14px; box-shadow: 0 30px 80px rgba(70, 58, 40, 0.18); overflow: hidden">
+    <nav aria-label="Folders" style="width: 210px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 14px 10px; background: #EFECE5; border-right: 1px solid rgba(36, 34, 30, 0.08); font-size: 13px">
+      <div style="display: flex; gap: 8px; padding: 2px 6px 16px">
+        <button aria-label="Close" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #E5684F"></button>
+        <button aria-label="Minimize" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #E8B04A"></button>
+        <button aria-label="Maximize" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #6FAF7A"></button>
+      </div>
+      <div style="padding: 0 8px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">~/Notes</div>
+      <sc-for list="{{folders}}" as="f" hint-placeholder-count="4">
+        <button onClick="{{f.pick}}" aria-current="{{f.current}}" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px; border: none; border-radius: 8px; text-align: left; font: inherit; background: {{f.bg}}; color: {{f.fg}}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{f.icon}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+          <span style="flex: 1; font-weight: {{f.weight}}">{{f.label}}</span>
+          <span style="font-size: 11px; color: {{f.countColor}}">{{f.count}}</span>
+        </button>
+      </sc-for>
+      <div style="padding: 16px 8px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">TAGS</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 8px">
+        <span style="padding: 2px 8px; border-radius: 999px; background: #E1EDE6; color: #336650; font-size: 12px">#autark</span>
+        <span style="padding: 2px 8px; border-radius: 999px; background: #E1EDE6; color: #336650; font-size: 12px">#kith</span>
+        <span style="padding: 2px 8px; border-radius: 999px; background: #E1EDE6; color: #336650; font-size: 12px">#build</span>
+        <span style="padding: 2px 8px; border-radius: 999px; background: #E1EDE6; color: #336650; font-size: 12px">#weekly</span>
+      </div>
+    </nav>
+
+    <div style="width: 300px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid rgba(36, 34, 30, 0.08)">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 14px 14px 10px">
+        <label style="flex: 1; display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 8px; background: rgba(36, 34, 30, 0.06)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A736A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search notes</span>
+          <input type="text" placeholder="Search all notes" style="flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #24221E; font: inherit; font-size: 13px">
+        </label>
+        <button aria-label="New note" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 8px; background: #3F7A5F; color: #FFFFFF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        </button>
+      </div>
+      <div style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 0 8px 8px">
+        <sc-for list="{{list}}" as="n" hint-placeholder-count="5">
+          <sc-if value="{{n.heading}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 10px 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">{{n.group}}</div>
+          </sc-if>
+          <button onClick="{{n.pick}}" aria-current="{{n.current}}" style="display: flex; flex-direction: column; gap: 3px; padding: 10px 10px; border: none; border-radius: 10px; text-align: left; font: inherit; background: {{n.bg}}; color: {{n.fg}}">
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600">
+              <sc-if value="{{n.pinned}}" hint-placeholder-val="{{false}}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l-1 6l3 3H7l3-3zM12 13v7"></path></svg>
+              </sc-if>
+              {{n.title}}
+            </span>
+            <span style="display: flex; gap: 8px; font-size: 12px; color: {{n.sub}}">
+              <span style="flex-shrink: 0">{{n.date}}</span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{n.preview}}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+      <div style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.08)">
+        <span style="flex: 1; font-size: 12px; color: #7A736A; font-family: 'Geist Mono', ui-monospace, monospace">{{path}}</span>
+        <button aria-label="Add checklist" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 7px; background: transparent; color: #3E3A34">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l2 2l3-3M4 13l2 2l3-3M12 7h8M12 14h8M12 20h8"></path></svg>
+        </button>
+        <button aria-label="Insert link" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 7px; background: transparent; color: #3E3A34; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; font-weight: 600">[[ ]]</button>
+        <div role="group" aria-label="View" style="display: flex; padding: 2px; border-radius: 8px; background: rgba(36, 34, 30, 0.06)">
+          <button aria-pressed="{{editPressed}}" onClick="{{showEditor}}" style="height: 28px; padding: 0 12px; border: none; border-radius: 6px; font: inherit; font-size: 12px; background: {{editBg}}; color: #24221E">Note</button>
+          <button aria-pressed="{{graphPressed}}" onClick="{{showGraph}}" style="height: 28px; padding: 0 12px; border: none; border-radius: 6px; font: inherit; font-size: 12px; background: {{graphBg}}; color: #24221E">Graph</button>
+        </div>
+      </div>
+
+      <sc-if value="{{isEditor}}" hint-placeholder-val="{{true}}">
+        <article style="flex: 1; min-height: 0; overflow-y: auto; padding: 28px 44px 20px; display: flex; flex-direction: column; gap: 14px">
+          <h1 style="margin: 0; font-size: 30px; font-weight: 600; letter-spacing: -0.02em">{{current.title}}</h1>
+          <sc-for list="{{blocks}}" as="b" hint-placeholder-count="5">
+            <sc-if value="{{b.isP}}" hint-placeholder-val="{{true}}">
+              <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #24221E"><sc-for list="{{b.parts}}" as="s" hint-placeholder-count="2"><sc-if value="{{s.isLink}}" hint-placeholder-val="{{false}}"><button onClick="{{s.go}}" style="padding: 0 2px; border: none; border-radius: 4px; background: #E1EDE6; color: #336650; font: inherit; font-weight: 500">{{s.text}}</button></sc-if><sc-if value="{{s.isText}}" hint-placeholder-val="{{true}}"><span>{{s.text}}</span></sc-if></sc-for></p>
+            </sc-if>
+            <sc-if value="{{b.isH}}" hint-placeholder-val="{{false}}">
+              <h2 style="margin: 8px 0 0; font-size: 18px; font-weight: 600">{{b.text}}</h2>
+            </sc-if>
+            <sc-if value="{{b.isCheck}}" hint-placeholder-val="{{false}}">
+              <label style="display: flex; align-items: center; gap: 10px; font-size: 15px; color: {{b.color}}">
+                <button role="checkbox" aria-checked="{{b.checked}}" aria-label="{{b.text}}" onClick="{{b.toggle}}" style="width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 50%; border: 1.5px solid {{b.border}}; background: {{b.fill}}; color: #FFFFFF">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{b.tick}}"></path></svg>
+                </button>
+                <span style="text-decoration: {{b.strike}}">{{b.text}}</span>
+              </label>
+            </sc-if>
+            <sc-if value="{{b.isTags}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; gap: 6px">
+                <sc-for list="{{b.tags}}" as="t" hint-placeholder-count="2">
+                  <span style="padding: 2px 8px; border-radius: 999px; background: #E1EDE6; color: #336650; font-size: 12px">{{t}}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+          </sc-for>
+        </article>
+        <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px 44px 18px; border-top: 1px solid rgba(36, 34, 30, 0.08); background: #FBFAF7">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">LINKED FROM {{backCount}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{backlinks}}" as="k" hint-placeholder-count="2">
+              <button onClick="{{k.go}}" style="height: 28px; padding: 0 10px; border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 7px; background: #FFFFFF; color: #336650; font: inherit; font-size: 12px; font-weight: 500">{{k.title}}</button>
+            </sc-for>
+            <sc-if value="{{noBacklinks}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 12px; color: #7A736A">No other note links here yet</span>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isGraph}}" hint-placeholder-val="{{false}}">
+        <div role="group" aria-label="Note graph" style="position: relative; flex: 1; min-height: 0; background: #FBFAF7; overflow: hidden">
+          <sc-for list="{{edges}}" as="e" hint-placeholder-count="6">
+            <span aria-hidden="true" style="position: absolute; left: {{e.x}}px; top: {{e.y}}px; width: {{e.len}}px; height: 1.5px; transform-origin: 0 50%; transform: rotate({{e.angle}}deg); background: {{e.color}}"></span>
+          </sc-for>
+          <sc-for list="{{nodes}}" as="g" hint-placeholder-count="8">
+            <button onClick="{{g.go}}" aria-label="Open {{g.title}}" style="position: absolute; left: {{g.left}}px; top: {{g.top}}px; width: 120px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: none; background: transparent; font: inherit">
+              <span style="width: {{g.size}}px; height: {{g.size}}px; border-radius: 50%; background: {{g.fill}}; box-shadow: {{g.ring}}"></span>
+              <span style="font-size: 12px; font-weight: {{g.weight}}; color: {{g.label}}">{{g.title}}</span>
+            </button>
+          </sc-for>
+          <span style="position: absolute; left: 18px; bottom: 14px; font-size: 12px; color: #7A736A">{{graphCaption}}</span>
+        </div>
+      </sc-if>
+    </div>
+  </section>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; z-index: 5">
+    <dc-import name="Dock" hint-size="720px,112px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'kith', view: 'editor', folder: 'Autark', checks: { c1: true, c2: true, c3: false, c4: false } };
+  }
+  renderVals() {
+    const st = this.state;
+    const notes = [
+      { id: 'roadmap', title: 'Autark roadmap', folder: 'Autark', pinned: true, date: '16 Oct', links: ['kith', 'buildlog'], x: 330, y: 120, body: [{ p: 'Seven milestones, from host setup to daily driver. Assistant work is in [[kith]]; build progress lives in [[buildlog]].' }] },
+      { id: 'kith', title: 'Kith', folder: 'Autark', pinned: false, date: '16 Oct', links: ['hermes', 'memory', 'roadmap'], x: 330, y: 300, body: null },
+      { id: 'hermes', title: 'Hermes', folder: 'Autark', pinned: false, date: '16 Oct', links: ['kith'], x: 120, y: 420, body: [{ p: 'The open-source agent Kith runs on. Standalone on the laptop until [[kith]] gets its own box.' }] },
+      { id: 'memory', title: 'Memory rules', folder: 'Autark', pinned: false, date: '16 Oct', links: ['kith'], x: 540, y: 420, body: [{ p: 'Every memory is proposed and approved. Applies to [[kith]] on every device.' }] },
+      { id: 'buildlog', title: 'Build log', folder: 'Autark', pinned: false, date: '15 Oct', links: ['roadmap'], x: 560, y: 160, body: [{ p: 'Notes from each build step, linked from the [[roadmap]].' }] },
+      { id: 'linen', title: 'Linen palette', folder: 'Autark', pinned: false, date: '16 Oct', links: ['roadmap'], x: 120, y: 160, body: [{ p: 'Warm whites, sage accent #3F7A5F. Chosen for now; see [[roadmap]].' }] },
+      { id: 'weekly', title: 'Weekly review', folder: 'Personal', pinned: false, date: '12 Oct', links: ['buildlog'], x: 560, y: 40, body: [{ p: 'What moved this week. Build notes: [[buildlog]].' }] },
+      { id: 'reading', title: 'Reading list', folder: 'Personal', pinned: false, date: '9 Oct', links: [], x: 100, y: 40, body: [{ p: 'Books and papers to get to. Not linked to anything yet.' }] }
+    ];
+    const byId = {};
+    notes.forEach((n) => { byId[n.id] = n; });
+    const cur = byId[st.sel] || notes[0];
+    const go = (id) => () => this.setState({ sel: id, view: 'editor' });
+    const parts = (text) => text.split(/(\[\[[a-z]+\]\])/).filter((s) => s).map((s) => {
+      const m = s.match(/^\[\[([a-z]+)\]\]$/);
+      return m && byId[m[1]]
+        ? { isLink: true, isText: false, text: byId[m[1]].title, go: go(m[1]) }
+        : { isLink: false, isText: true, text: s, go: null };
+    });
+    const check = (id, text) => {
+      const on = st.checks[id];
+      return {
+        isP: false, isH: false, isCheck: true, isTags: false, text,
+        checked: on ? 'true' : 'false',
+        fill: on ? '#3F7A5F' : 'transparent',
+        border: on ? '#3F7A5F' : 'rgba(36, 34, 30, 0.35)',
+        tick: on ? 'M5 12l4.5 4.5L19 7' : 'M0 0',
+        strike: on ? 'line-through' : 'none',
+        color: on ? '#7A736A' : '#24221E',
+        toggle: () => this.setState({ checks: { ...st.checks, [id]: !on } })
+      };
+    };
+    const p = (text) => ({ isP: true, isH: false, isCheck: false, isTags: false, parts: parts(text) });
+    const kithBody = [
+      p('Kith is Autark’s assistant. It runs on [[hermes]], standalone on the laptop for now.'),
+      { isP: false, isH: true, isCheck: false, isTags: false, text: 'Next' },
+      check('c1', 'Spec the assistant'),
+      check('c2', 'Pick the name and face'),
+      check('c3', 'Write the autark-ai daemon'),
+      check('c4', 'Move Kith to its own box (M7)'),
+      p('What it may remember: [[memory]]. Timeline: [[roadmap]].'),
+      { isP: false, isH: false, isCheck: false, isTags: true, tags: ['#kith', '#autark'] }
+    ];
+    const blocks = cur.body ? cur.body.map((b) => p(b.p)) : kithBody;
+    const folderDefs = [
+      { label: 'All notes', id: 'All' },
+      { label: 'Autark', id: 'Autark' },
+      { label: 'Personal', id: 'Personal' }
+    ];
+    const folders = folderDefs.map((f) => {
+      const on = f.id === st.folder;
+      return {
+        ...f,
+        count: f.id === 'All' ? notes.length : notes.filter((n) => n.folder === f.id).length,
+        current: on ? 'page' : 'false',
+        bg: on ? '#3F7A5F' : 'transparent',
+        fg: on ? '#FFFFFF' : '#24221E',
+        icon: on ? '#FFFFFF' : '#3F7A5F',
+        countColor: on ? '#E1EDE6' : '#7A736A',
+        weight: on ? 600 : 400,
+        pick: () => this.setState({ folder: f.id })
+      };
+    });
+    const shown = notes.filter((n) => st.folder === 'All' || n.folder === st.folder);
+    const ordered = shown.filter((n) => n.pinned).concat(shown.filter((n) => !n.pinned));
+    const list = ordered.map((n, i) => {
+      const on = n.id === cur.id;
+      const firstText = n.body ? n.body[0].p.replace(/\[\[([a-z]+)\]\]/g, (m, id) => (byId[id] ? byId[id].title : id)) : 'Kith is Autark’s assistant. It runs on Hermes, standalone on the laptop for now.';
+      return {
+        ...n,
+        heading: i === 0 || ordered[i - 1].pinned !== n.pinned,
+        group: n.pinned ? 'PINNED' : 'NOTES',
+        current: on ? 'page' : 'false',
+        bg: on ? '#E1EDE6' : 'transparent',
+        fg: '#24221E',
+        sub: on ? '#336650' : '#7A736A',
+        preview: firstText,
+        pick: go(n.id)
+      };
+    });
+    const backlinks = notes.filter((n) => n.links.includes(cur.id)).map((n) => ({ title: n.title, go: go(n.id) }));
+    const seen = {};
+    const edges = [];
+    notes.forEach((n) => n.links.forEach((t) => {
+      const key = [n.id, t].sort().join('|');
+      if (seen[key] || !byId[t]) return;
+      seen[key] = true;
+      const a = byId[n.id], b = byId[t];
+      const ax = a.x + 60, ay = a.y + 14, bx = b.x + 60, by = b.y + 14;
+      const dx = bx - ax, dy = by - ay;
+      const touches = n.id === cur.id || t === cur.id;
+      edges.push({ x: ax, y: ay, len: Math.round(Math.sqrt(dx * dx + dy * dy)), angle: Math.round(Math.atan2(dy, dx) * 1800 / Math.PI) / 10, color: touches ? '#3F7A5F' : 'rgba(36, 34, 30, 0.18)' });
+    }));
+    const degree = (id) => notes.filter((n) => n.links.includes(id)).length + byId[id].links.length;
+    const neighbours = cur.links.concat(notes.filter((n) => n.links.includes(cur.id)).map((n) => n.id));
+    const nodes = notes.map((n) => {
+      const size = 12 + 3 * degree(n.id);
+      const isCur = n.id === cur.id;
+      const near = neighbours.includes(n.id);
+      return {
+        title: n.title,
+        left: n.x,
+        top: n.y + 14 - size / 2,
+        size,
+        fill: isCur ? '#3F7A5F' : (near ? '#7FB89A' : '#C9C2B6'),
+        ring: isCur ? '0 0 0 4px rgba(63, 122, 95, 0.20)' : 'none',
+        weight: isCur ? 600 : 400,
+        label: isCur || near ? '#24221E' : '#7A736A',
+        go: go(n.id)
+      };
+    });
+    return {
+      folders,
+      list,
+      current: cur,
+      path: '~/Notes/' + cur.folder + '/' + cur.title + '.md',
+      blocks,
+      backlinks,
+      backCount: '(' + backlinks.length + ')',
+      noBacklinks: backlinks.length === 0,
+      isEditor: st.view === 'editor',
+      isGraph: st.view === 'graph',
+      editPressed: st.view === 'editor' ? 'true' : 'false',
+      graphPressed: st.view === 'graph' ? 'true' : 'false',
+      editBg: st.view === 'editor' ? '#FFFFFF' : 'transparent',
+      graphBg: st.view === 'graph' ? '#FFFFFF' : 'transparent',
+      showEditor: () => this.setState({ view: 'editor' }),
+      showGraph: () => this.setState({ view: 'graph' }),
+      edges,
+      nodes,
+      graphCaption: notes.length + ' notes, ' + edges.length + ' links. Click a note to open it.'
+    };
+  }
+}
+</script>
+</body>
+</html>
