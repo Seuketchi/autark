@@ -100,6 +100,18 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Package manager | Our own `autark-pkg` in Rust, with apt-like commands (`install`, `remove`, `upgrade`, `search`, `rollback`), dependency handling, and every package signed with your key. It's built from the existing recipes (`scripts/pkg/`), file lists and archives | Wires together what the plan already has; apt and pacman are open source, so their good ideas can be read and borrowed |
 | Package sources | Compile locally by default; optionally a signed binary repository you host (later on Kith's box) | A reinstall or second machine installs instead of recompiling |
 | Apps we don't build | The vendor's binary in `/opt`, launched through our Rust sandbox launcher with a Landlock permission profile per app. Podman/Distrobox optional for difficult development tools. Flatpak and AppImage off by default, but can be enabled | Strong isolation with rules you write, using Landlock, which is already in the plan |
+| Screenshots | Our own Rust tool: Shift+Super+3 (full screen), 4 (area), 5 (options and recording), saved to `~/Pictures/Screenshots`; recording through PipeWire | Mac-style shortcuts, small to build |
+| Clipboard history | Super+V in the launcher; skips password-manager entries, clears after 24 hours, never syncs | Handy without leaking secrets |
+| Night light | Our own small Rust daemon (Wayland gamma control), scheduled from Settings | Tiny, and fits the rest of the shell |
+| Displays | Our own Rust display manager (Wayland output management): multiple monitors, fractional scaling, layouts that switch automatically when you dock, set in Settings › Displays | Same job as kanshi, but built into Settings |
+| Accessibility | Version 1: display scaling, larger text, reduced motion, a high-contrast Linen, full keyboard navigation. Screen reader (Orca) later | |
+| Screen sharing | xdg-desktop-portal with its wlroots backend and PipeWire, plus the standard file pickers | Video calls can share the screen |
+| VPN | WireGuard in the kernel; Tailscale once Kith's box exists | |
+| Passwords | oo7 (Rust) as the Secret Service keyring; KeePassXC as the local password manager | Nothing in a password cloud |
+| Default apps | imv (images), zathura (PDF), mpv (media); calculations in the launcher. Our own calendar and calculator later | Light and fast, replaceable |
+| Sleep | Lid close suspends, hibernate after 2 hours on battery into an encrypted swap file, lock on suspend; all configurable | |
+| First boot | A guided start: Wi-Fi, TPM PIN, Secure Boot keys, Kith opt-in, theme. A script in version 1, a GTK4 app later | |
+| Built-in help | The repo's `docs/` shipped as a read-only vault in Notes, searchable by Kith | The specs become the help |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected
