@@ -65,6 +65,7 @@ This laptop is the reference machine. Its full profile is in [`hardware/`](../..
 | AI: defaults | Opt-in, with a local-only mode | Nothing goes to the cloud unless you turn it on |
 | Logo | Loop: an "A" drawn as one closed stroke | Nothing borrowed |
 | Assistant | **Kith**, with a Visor face: dark glass with glowing sage eyes | Old English for the people you know and trust: a companion, not a servant. Abstract face, never a human likeness |
+| Assistant brain | Hermes on your own box (only you have root), Ollama on that box, Signal for the phone, Firecrawl self-hosted; Kith replaces Wren | One assistant and one memory on phone and laptop, without cloud models or unencrypted chat. All configurable for other setups |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected

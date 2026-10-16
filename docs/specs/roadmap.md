@@ -11,7 +11,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 | M2 | Desktop | System | 2026-12-06 | Step 8: Wayfire, Wi-Fi, sound, Firefox and work tools run on Autark | M1 |
 | M3 | Shell v1 | Shell | 2027-02-14 | Step 9, pieces 1–5: bar, dock, launcher, notification centre and lock screen, written in Rust and GTK4, run on Wayfire with nothing borrowed | Starts now on Ubuntu; moves to Autark after M2 |
 | M4 | Rust initramfs | System | 2027-01-17 | `autark-init` unlocks the disk with TPM plus PIN and replaces dracut; dracut stays as a hidden fallback | M1 |
-| M5 | Kith | Shell | 2027-04-18 | `autark-ai` daemon with Ollama and opt-in Jev: launcher actions, chat, approved memory, tasks and suggestions | M3 |
+| M5 | Kith | Shell | 2027-04-18 | Kith runs on Hermes on your own box with Ollama, reachable over Signal and from the laptop's `autark-ai` (launcher actions, chat, approved memory, tasks, suggestions, laptop MCP tools). Wren is migrated and retired | M3, and a box with about 16 GB of RAM |
 | M6 | Daily driver | System | 2027-05-16 | Autark installed on the target laptop with Secure Boot keys and TPM unlock enrolled; a full work week with no fallback to Ubuntu | M2–M5 |
 
 After M6, maintenance takes a few hours a month: security advisories, kernel updates, and the yearly LFS releases ([build guide](build-guide.md)).

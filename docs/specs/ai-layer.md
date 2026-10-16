@@ -1,6 +1,6 @@
 # Autark AI layer
 
-Autark has two AI engines behind one daemon. Jev makes fast typed decisions in the cloud. Ollama generates text locally, so nothing leaves the laptop. Code always does the actual work; AI only decides or explains. Settled on 2026-10-16.
+Autark has two AI engines behind one daemon. Jev makes fast typed decisions in the cloud. Ollama generates text on hardware you own. The assistant, Kith, runs on your own server so your phone and laptop share it. Code always does the actual work; AI only decides or explains. Settled on 2026-10-16.
 
 ## The two engines
 
@@ -30,22 +30,50 @@ The launcher grows into a personal assistant called **Kith**, like Grok, but spl
 
 | Capability | How it works | Default |
 | --- | --- | --- |
-| Conversation | The launcher continues into a chat panel. Each turn is routed (action, question or search), and Ollama answers with the earlier turns as context. History is kept in `~/.local/share/autark-ai/conversations/` | Kept 7 days, configurable |
-| Memory | Facts about you ("builds Autark in the evenings", "project lives in ~/autark"). The assistant proposes each one and you approve it; nothing is saved silently. Stored as plain TOML in `~/.config/autark-ai/memory.toml`, and viewable and editable in Settings › AI › Memory | On, approval required |
+| Conversation | The launcher continues into a chat panel. Each turn is routed (action, question or search), and Kith answers with the earlier turns as context. History lives with Kith's brain, so a chat started on the phone continues on the laptop | Kept 7 days, configurable |
+| Memory | Facts about you ("builds Autark in the evenings", "project lives in ~/autark"). The assistant proposes each one and you approve it; nothing is saved silently. Stored with Kith's brain (Hermes memory on your box), with a read-only copy on the laptop for standalone mode. Viewable and editable in Settings › AI › Memory | On, approval required |
 | Suggestions | Code detects events (battery low, build finished, new Wi-Fi network). Jev scores whether each is worth interrupting you, given Focus and your memory. Suggestions appear as cards and never act on their own | At most 3 an hour; each has "don't suggest again" |
 
 Memory goes to Jev only as the specific fields a decision needs, and only for features where Jev is turned on.
 
+## One Kith on every device
+
+Kith's brain is a Hermes agent (Nous Research's open-source agent, the same base as Wren) on a box where only you have root. Your phone reaches it over Signal. Your laptop reaches it through `autark-ai` over Tailscale. Kith replaces Wren: one memory, one personality, and Wren's scheduled jobs become Kith tasks.
+
+Everything is configurable, so someone else running Autark can point Kith at their own setup.
+
+| Part | Default | Configurable to |
+| --- | --- | --- |
+| Brain | Hermes on your own box, reached over Tailscale | Any Hermes host you run, or standalone on the laptop (no phone access) |
+| Model | Ollama on the same box; about 16 GB of RAM for a 7–8B model | Any Ollama or OpenAI-compatible endpoint |
+| Phone | Signal (end-to-end encrypted) | Telegram, Matrix or WhatsApp, which Hermes also supports |
+| Laptop | `autark-ai` talks to Hermes directly over Tailscale, with no chat app | |
+| Web | Firecrawl, self-hosted on your network, through `firecrawl-mcp` | Off, or another Firecrawl instance |
+| Fast decisions | Jev, opt-in per feature | Off |
+| Persona | Kith, defined in Hermes' `SOUL.md` | Your own name and voice |
+
+**Acting on the laptop.** `autark-ai` runs an MCP server, reachable only over Tailscale, that offers laptop actions to Kith. Each action has a tier, as in Wren: auto, ask or never. Anything the phone asks for that changes state needs a confirmation on the laptop, and destructive actions are never allowed remotely.
+
+**When the box is unreachable,** the laptop drops to standalone mode: local Ollama and the read-only memory copy. New memories wait until it reconnects.
+
+**Moving from Wren:**
+
+1. Rewrite Wren's persona as Kith's `SOUL.md`.
+2. Move Wren's jobs over as Kith tasks: morning report 07:30, learning digest 18:30, evening check 21:30, weekly review Sunday 20:00.
+3. Move the memory files and Wren's domain database.
+4. Switch the model from DeepSeek to the self-hosted Ollama, and the channel from Telegram to Signal.
+5. Retire Wren's gateway. Telegram allows only one poller anyway.
+
 ## Tasks
 
-Tasks are scheduled prompts, like Grok Tasks, but they run on the laptop instead of in a cloud. Example: "every morning at 8, summarise last night's build log".
+Tasks are scheduled prompts, like Grok Tasks, but they run on hardware you own instead of in a cloud. Example: "every morning at 8, summarise last night's build log".
 
 | Part | How it works |
 | --- | --- |
 | Creating | Tell the assistant, or add one in Settings › AI › Tasks. The sentence is turned into a task: name, schedule, prompt, the inputs it may read (files, URLs), and how to deliver it. You confirm before it's saved |
-| Scheduling | Code owns the schedule, not the AI. Each task is a systemd user timer (`autark-task@<id>.timer`) with `Persistent=true`, so runs missed while the laptop was asleep catch up |
-| Running | `autark-ai` fetches the inputs with code, then runs the prompt with Ollama locally. Each run is a sandboxed service that can only write its own result, and it's time-limited |
-| Delivery | A notification-centre card with action buttons. It shows as a banner only if it's rated urgent and Focus allows it, and the lock screen hides the content. The result is also saved in `~/.local/share/autark-ai/tasks/<id>/` |
+| Scheduling | Code owns the schedule, not the AI. By default tasks run as Hermes cron jobs on Kith's box, so they fire even while the laptop is asleep. In standalone mode each task is a systemd user timer (`autark-task@<id>.timer`) with `Persistent=true`, so missed runs catch up |
+| Running | Inputs are fetched with code; laptop files come through the laptop's MCP tools. The prompt runs on Ollama. Each run is sandboxed, can only write its own result, and is time-limited |
+| Delivery | A Signal message on the phone and a notification-centre card with action buttons on the laptop. It shows as a banner only if it's rated urgent and Focus allows it, and the lock screen hides the content. The result is also saved in `~/.local/share/autark-ai/tasks/<id>/` |
 | Limits | 20 tasks and 5 minutes per run by default, both configurable |
 
 Useful starting tasks are a morning build summary, a weekly check of [BLFS security advisories](https://www.linuxfromscratch.org/blfs/advisories/) against installed packages, and a monthly battery health report.
@@ -80,6 +108,8 @@ A Rust service on the session D-Bus, `org.autark.AI1`. Every shell piece talks t
 - A local-only mode switch.
 - A switch for each feature in the table above.
 - A link to the call log.
+- Kith's brain: a server address, or standalone on this laptop.
+- The phone channel and the Firecrawl address.
 
 ## Build
 
@@ -87,6 +117,9 @@ A Rust service on the session D-Bus, `org.autark.AI1`. Every shell piece talks t
 - **Step 9:** add `autark-ai` to the shell's Cargo workspace, next to the bar, dock and launcher.
 
 ## Open
+
+- [ ] A box for Kith with about 16 GB of RAM, where only you have root.
+- [ ] Migrate Wren to Kith (steps above).
 
 - [ ] TypeSafe API key and pricing ([Models](https://docs.typesafe.ai/models)).
 - [ ] Which Ollama model. Measure tokens per second on this laptop (i5-1135G7, 30 GB RAM) before choosing.
