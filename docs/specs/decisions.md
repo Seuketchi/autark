@@ -82,6 +82,10 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Locale | en_US.UTF-8, time zone Asia/Manila, US keyboard | |
 | Ollama model | llama3.2:3b; move to a 7–8B model only if the target measures at least 8 tokens per second | Usable speed on a CPU without a discrete GPU |
 | Updates | Kith checks BLFS security advisories weekly; you apply updates by hand with per-package scripts until a Rust `autark-pkg` tool exists | Nothing updates silently |
+| Disk layout (target) | EFI 1 GB, root A 80 GB, root B 80 GB (reserved for upgrades), encrypted `/home` with the rest, temporary Ubuntu 60 GB at the end | A/B upgrades need two roots; `/home` is shared by both and later grows into Ubuntu's space |
+| DNS | DNS over TLS to Quad9 | Lookups encrypted; non-profit, no logs, blocks malware domains |
+| Claude on the target | Claude Code with your personal Claude account | The company seat stays for company work |
+| Maintenance | Security fixes within a week, other updates monthly, A/B rebuilds for major upgrades, a weekly Kith health report, package scripts in the repo. See [maintenance.md](maintenance.md) | Secure without surprises, and every change can be undone |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected
@@ -97,4 +101,3 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 
 - [ ] Build start date. You chose to start later.
 - [ ] The target laptop: model, CPU, RAM, and what's on it now.
-- [ ] How Claude reaches the target laptop: Claude Code installed on it (recommended) or SSH from the work laptop. Your Claude seat is company-owned, so check that using it for Autark is okay.

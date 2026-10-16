@@ -6,7 +6,7 @@ Step by step, from an Ubuntu host to a running Autark with your own desktop shel
 
 Autark is built on the laptop it will run on, never on the work laptop. This step is done when the target laptop runs a temporary Ubuntu host, its hardware profile is in the repo, and the book's version check prints no errors. Book reference: chapter 2.2, "Host System Requirements".
 
-1. Install Ubuntu on the target laptop with manual partitioning. Put a 1 GB EFI partition first, leave the middle of the disk unallocated for Autark, and give Ubuntu 60 GB **at the end** of the disk. Autark's partition can then grow into Ubuntu's space once Ubuntu is gone.
+1. Install Ubuntu on the target laptop with manual partitioning. Put a 1 GB EFI partition first, leave the middle of the disk unallocated for Autark, and give Ubuntu 60 GB **at the end** of the disk. Autark's `/home` can then grow into Ubuntu's space once Ubuntu is gone.
 2. Clone this repo to `~/autark` and capture the hardware profile. It becomes the standard that the kernel and firmware steps use:
 
    ```
@@ -21,38 +21,47 @@ Autark is built on the laptop it will run on, never on the work laptop. This ste
    ```
 4. Make `/bin/sh` point to bash. Run `sudo dpkg-reconfigure dash` and answer No. Then check that `readlink -f /bin/sh` prints `/usr/bin/bash`.
 5. Copy the `version-check.sh` script from chapter 2.2 into `~/autark/` and run `bash ~/autark/version-check.sh`. Every line should say OK.
-6. Start the build log at `~/autark/log.md`. Write down every package you build, any changes you made, and every error. With it, the build can be repeated without Claude.
+6. Install Claude Code and sign in with your **personal** Claude account; the company seat stays on the work laptop.
+7. Start the build log at `~/autark/log.md`. Write down every package you build, any changes you made, and every error. With it, the build can be repeated without Claude.
 
 Why: LFS builds its first compiler with the host's tools, and the book's scripts use bash-only syntax. A missing tool shows up as a confusing failure an hour into the build.
 
 ## Step 1 — Create the encrypted Autark partition
 
-This step is done when the encrypted Autark partition is mounted at `/mnt/lfs`, with the EFI partition at `/mnt/lfs/boot/efi`. Book reference: chapters 2.4–2.7.
+This step is done when encrypted root A is mounted at `/mnt/lfs`, encrypted `/home` at `/mnt/lfs/home`, and the EFI partition at `/mnt/lfs/boot/efi`. Root B is created but left empty for the first major upgrade ([maintenance.md](maintenance.md)). Book reference: chapters 2.4–2.7.
 
 1. **You** add the temporary sudo rule, on the target laptop only. It's removed in Step 7:
 
    ```
    echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/autark-build && sudo visudo -c
    ```
-2. Check the disk's device name with `lsblk`, then create the Autark partition in the unallocated middle of the disk. There's no swap partition, because zram handles swap.
+2. Check the disk's device name with `lsblk`, then create three partitions in the unallocated middle of the disk: root A (80 GB), root B (80 GB) and `/home` (everything up to Ubuntu's partition). There's no swap partition, because zram handles swap.
 
    ```
    DISK=/dev/nvme0n1                      # from lsblk; may differ
-   sudo parted $DISK mkpart autark ext4 <start of free space> <start of Ubuntu's partition>
+   sudo parted $DISK mkpart autark-a ext4 <start of free space> +80GiB
+   sudo parted $DISK mkpart autark-b ext4 <end of autark-a> +80GiB
+   sudo parted $DISK mkpart autark-home ext4 <end of autark-b> <start of Ubuntu's partition>
    ```
-3. Encrypt it with LUKS2 and format it:
+3. Encrypt root A and `/home` with LUKS2 and format them. Root B stays unformatted until the first upgrade.
 
    ```
-   AUTARK=${DISK}p2                       # the partition just created; check with lsblk
+   AUTARK=${DISK}p2; HOME_PART=${DISK}p4  # check the numbers with lsblk
    sudo cryptsetup luksFormat --type luks2 $AUTARK
+   sudo cryptsetup luksFormat --type luks2 $HOME_PART
    sudo cryptsetup open $AUTARK autark
-   sudo mkfs.ext4 -L autark /dev/mapper/autark
+   sudo cryptsetup open $HOME_PART autark-home
+   sudo mkfs.ext4 -L autark-a /dev/mapper/autark
+   sudo mkfs.ext4 -L autark-home /dev/mapper/autark-home
    ```
+
+   At boot, `/home` unlocks with a key file stored inside the unlocked root (listed in `/etc/crypttab`), so you only enter the PIN once.
 4. Mount it and set `$LFS`, which every later step uses. Autark shares the EFI partition with the temporary Ubuntu:
 
    ```
    export LFS=/mnt/lfs
    sudo mkdir -p $LFS && sudo mount /dev/mapper/autark $LFS
+   sudo mkdir -p $LFS/home && sudo mount /dev/mapper/autark-home $LFS/home
    sudo mkdir -p $LFS/boot/efi && sudo mount ${DISK}p1 $LFS/boot/efi
    ```
 
@@ -154,7 +163,7 @@ This step is done when Autark has a hardened kernel built for the target laptop,
 
 This step is done when Autark boots from the target laptop's own disk, Secure Boot uses your keys, the disk unlocks with TPM plus PIN, and the temporary sudo rule is gone.
 
-1. Unmount and lock the partition: `sudo umount -R $LFS && sudo cryptsetup close autark`.
+1. Unmount and lock the partitions: `sudo umount -R $LFS && sudo cryptsetup close autark-home && sudo cryptsetup close autark`.
 2. Add firmware boot entries for Autark and its fallback. Ubuntu's entry stays as the way back:
 
    ```
@@ -165,7 +174,7 @@ This step is done when Autark boots from the target laptop's own disk, Secure Bo
 4. **Secure Boot:** put the firmware in setup mode and run `sbctl enroll-keys --microsoft`. Keeping Microsoft's keys alongside yours lets the temporary Ubuntu and firmware add-ons still boot.
 5. **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline.
 6. **You** remove the sudo rule from Ubuntu: `sudo rm /etc/sudoers.d/autark-build`.
-7. Later, at milestone M6, when Autark is the daily driver: delete the Ubuntu partition and its boot entry, then grow Autark into the freed space (`parted resizepart`, `cryptsetup resize autark`, `resize2fs /dev/mapper/autark`).
+7. Later, at milestone M6, when Autark is the daily driver: delete the Ubuntu partition and its boot entry, then grow `/home` into the freed space (`parted resizepart`, `cryptsetup resize autark-home`, `resize2fs /dev/mapper/autark-home`).
 
 Testing images in qemu (with OVMF) is still useful for the Rust initramfs and new kernels, before they go onto the real disk.
 
@@ -203,7 +212,7 @@ You can start this today on Ubuntu, without waiting for the build: install Wayfi
 Claude runs the build and you make the decisions. This guide and `~/autark/log.md` are the record, so the build can be repeated without Claude.
 
 - **You do:** the two sudo-rule commands (Steps 1 and 7), anything that needs a password or physical access (firmware settings, USB sticks), and every new decision.
-- **Claude does:** runs each step and adds every command to a script in `~/autark/scripts/`. It reports one line per finished step and stops at each checkpoint (end of Steps 4, 5 and 7).
+- **Claude does:** runs each step on the target laptop (Claude Code, your personal account) and records every package's build as `scripts/pkg/<name>.sh`, committed as it goes. It reports one line per finished step and stops at each checkpoint (end of Steps 4, 5 and 7).
 - **Decisions that come up mid-build** (a package option, a kernel setting) come to you with a recommendation. Nothing is chosen silently.
 - **Restore points:** `backup-ch7.tar.xz` and `backup-ch8.tar.xz` in `~/autark/`. A broken step means restoring and redoing, never patching over it.
 - **To learn a part,** ask "why" about any step and you'll get the full explanation.
