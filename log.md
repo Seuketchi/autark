@@ -126,3 +126,37 @@ Since failed builds still ran their install steps, `$LFS` held partial installs.
   Likely cause: libstdc++'s testsuite reuses the build's CXXFLAGS (`-D_FORTIFY_SOURCE=3 -fstack-protector-strong…`,
   visible in the log), which changes warning/memory-content tests. **Not verified per test** (build dir deleted).
   - [ ] After chapter 8: re-run a few of those libstdc++ tests without the hardening flags to confirm.
+
+## 2026-10-17 — Step 5 done (chapter 8)
+
+- 81/81 packages, exit 0. Per-package file lists in `/var/lib/autark/files/` (Autark root).
+- Test failures, each checked:
+  | Package | Failed | Verdict |
+  |---|---|---|
+  | glibc | io/tst-lchmod | book: known in chroot |
+  | binutils | tmpdir/gp-gmon | book: gprofng test known |
+  | acl | test/cp.run | book: known until coreutils has ACL |
+  | GCC | gcc 80, g++ 66 | **identical** to reference LFS 13.1 build log |
+  | GCC | libstdc++ 82 extra | likely our CXXFLAGS in its testsuite — not verified |
+  | libelf | 9 (reference: 0) | likely: our CFLAGS replace autoconf's `-g -O2`, so the "-self" DWARF tests have no DWARF — not verified |
+  | Python | test_urllib2, test_urllibnet | book: known (no DNS) |
+  | findutils | test-regex-el | book: known |
+  | groff | neqn-smoke-test.sh | book: known |
+  | tar | capabilities: binary store/restore | book: known (no selinux) |
+  | vim | log lacks "FAILED: 0" | **unverified**: vim-test.log was deleted with the build dir |
+  | systemd | core - systemd:test-namespace (1/1862) | book: known in chroot |
+  | e2fsprogs | m_assume_storage_prezeroed (1/394) | book: known |
+- Hardening scan (`scripts/lfs/hardening-scan.sh /mnt/lfs`, 1260 ELF files): PIE 100%, RELRO 100%, CET 94%,
+  BIND_NOW 69%. Gaps: glibc's own tools (no LDFLAGS by design), **Perl and everything built through it**
+  (Perl's Configure ignores CFLAGS/LDFLAGS), bzip2 (hard-coded flags). A Perl process runs without IBT,
+  because IBT needs every loaded object marked.
+- Image file had grown to 27 GB (deleted build files never released). Enabled discards on both LUKS volumes
+  (`cryptsetup refresh --allow-discards`) and ran `fstrim`: 27 GB → 3.1 GB, Ubuntu back to 80 GB free.
+  Trade-off: discards reveal which blocks are used (not their contents). Re-run fstrim after big builds.
+- **Checkpoint:** `backup-ch8.tar.xz`, 895 MB, 52,571 entries, `xz -t` OK.
+
+Open after chapter 8:
+- [ ] Rebuild Perl with `-Dccflags`/`-Dlddlflags` carrying Autark's flags; rebuild bzip2 with them too.
+- [ ] Keep `-g` out of shipped binaries but confirm the libelf and libstdc++ test theories once (rebuild with `-g`
+      / without hardening flags, re-run just those tests).
+- [ ] Build failures should keep the source dir's test logs: copy `*.log`/`*.sum` to `/sources/logs/<pkg>/` before deleting.
