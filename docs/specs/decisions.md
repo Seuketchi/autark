@@ -11,6 +11,18 @@ Every decision is judged against these, in this order when they conflict:
 3. **Performance:** fast boot, a responsive desktop, and builds tuned for this CPU.
 4. **Aesthetics:** a Mac-like feel, built on top of the first three, never at their expense.
 
+**Everything is configurable.** Each hardening, power and AI choice below is a secure default, not a lock. You can change it in Settings or in a plain config file under `/etc/autark/`, and per-package build flags can be overridden.
+
+| Area | Default | Why |
+| --- | --- | --- |
+| CPU target | `-march=x86-64-v3 -O2` | Most of the speed gain, and still runs on any AVX2 CPU (about 2015 onward), including the second laptop |
+| Build hardening | Stack protector (strong), `_FORTIFY_SOURCE=3`, stack-clash protection, CET (`-fcf-protection=full`), PIE, full RELRO, on every package | Blocks whole classes of exploits for roughly 1–3% performance |
+| Kernel hardening | Lockdown, signed modules only, `init_on_alloc`, slab hardening, no kexec, unused subsystems removed | Small cost, and fits a kernel already trimmed to this hardware |
+| Sandboxing | systemd sandboxing on every service, plus Landlock for apps | Built into the kernel and systemd, with no separate policy language to maintain alone |
+| Network | Block all incoming connections (nftables), no services listening, DNS over TLS (systemd-resolved) | A laptop has no reason to accept incoming connections |
+| Power | CPU energy setting switches automatically between battery and charger; device power saving tuned at boot | Battery life, measured with powertop rather than guessed |
+| AI | Local-only (Ollama); Jev opt-in per feature | Text goes to the cloud only when you choose |
+
 ## Hardware standard
 
 This laptop is the reference machine. Its full profile is in [`hardware/`](../../hardware/).
