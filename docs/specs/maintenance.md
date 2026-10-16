@@ -13,7 +13,7 @@ Autark stays secure with a weekly check and a monthly update session, and every 
 | Firmware and microcode | Checked in the monthly batch | `fwupd` for BIOS, SSD and dock firmware; microcode updates arrive with linux-firmware and Intel's microcode releases |
 | Out-of-tree drivers | On every kernel update | Their `kmod-<name>.sh` scripts rebuild and sign them before the reboot |
 
-Nothing updates itself. Kith reports, you decide, and the scripts do the work.
+Nothing updates itself. Kith reports, you decide, and the scripts (later `autark-pkg`) do the work.
 
 ## Undo
 

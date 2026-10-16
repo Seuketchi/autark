@@ -213,6 +213,8 @@ This step is done when the shell pieces you wrote run on Wayfire and nothing bor
 10. Task manager: apps and processes with CPU, memory, disk, network and energy impact, and the Ctrl+Alt+Esc force-quit window. It reads from `autark-stats`.
 11. Widgets: calendar and clock, battery (including Bluetooth devices), resources, Kith's tasks and suggestions, and a pinned note, shown in the notification centre and optionally on the desktop. Weather is opt-in.
 12. Files app: our own, after Notes, sharing its file code.
+13. `autark-pkg`: the package manager, turning `scripts/pkg/` recipes into signed packages with install, remove, upgrade, search and rollback.
+14. Sandbox launcher: runs vendor binaries from `/opt` under a per-app Landlock profile.
 
 You can start this today on Ubuntu, without waiting for the build: install Wayfire and gtk4-layer-shell from apt and develop the pieces in a Cargo workspace. The same code moves to Autark unchanged.
 

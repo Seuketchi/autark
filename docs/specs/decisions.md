@@ -81,7 +81,7 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | LFS version | The stable release current on the start day, pinned and recorded in `log.md` | Rebuilds come out the same |
 | Locale | en_US.UTF-8, time zone Asia/Manila, US keyboard | |
 | Ollama model | llama3.2:3b; move to a 7–8B model only if the target measures at least 8 tokens per second | Usable speed on a CPU without a discrete GPU |
-| Updates | Kith checks BLFS security advisories weekly; you apply updates by hand with per-package scripts until a Rust `autark-pkg` tool exists | Nothing updates silently |
+| Updates | Kith checks BLFS security advisories weekly; you apply updates by hand, first with the per-package scripts and then with `autark-pkg` (milestone M10) | Nothing updates silently |
 | Disk layout (target) | EFI 1 GB, root A 80 GB, root B 80 GB (reserved for upgrades), encrypted `/home` with the rest, temporary Ubuntu 60 GB at the end | A/B upgrades need two roots; `/home` is shared by both and later grows into Ubuntu's space |
 | DNS | DNS over TLS to Quad9 | Lookups encrypted; non-profit, no logs, blocks malware domains |
 | Claude on the target | Claude Code with your personal Claude account | The company seat stays for company work |
@@ -97,6 +97,9 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Widgets | In the notification centre, plus optional desktop widgets. Version 1: calendar and clock, battery (including Bluetooth devices), resources, Kith's upcoming tasks and suggestions, a pinned note. Weather is opt-in, since it sends your location (Open-Meteo, no account) | Useful at a glance; nothing leaves the laptop by default |
 | Widget sources | Only our own built-in Rust widgets in version 1; a sandboxed widget system can come later | No third-party code inside the shell |
 | System metrics | One Rust service, `autark-stats`, shares metrics over D-Bus with the task manager, widgets and Kith; it polls only while something is displaying them | Gathered once, and battery saved when nobody's looking |
+| Package manager | Our own `autark-pkg` in Rust, with apt-like commands (`install`, `remove`, `upgrade`, `search`, `rollback`), dependency handling, and every package signed with your key. It's built from the existing recipes (`scripts/pkg/`), file lists and archives | Wires together what the plan already has; apt and pacman are open source, so their good ideas can be read and borrowed |
+| Package sources | Compile locally by default; optionally a signed binary repository you host (later on Kith's box) | A reinstall or second machine installs instead of recompiling |
+| Apps we don't build | The vendor's binary in `/opt`, launched through our Rust sandbox launcher with a Landlock permission profile per app. Podman/Distrobox optional for difficult development tools. Flatpak and AppImage off by default, but can be enabled | Strong isolation with rules you write, using Landlock, which is already in the plan |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected
@@ -105,6 +108,7 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 - **Writing your own kernel:** it would mean writing every driver yourself, and it couldn't replace a daily system.
 - **Remastering Ubuntu (Cubic, live-build):** not built from scratch.
 - **Off-the-shelf shell pieces (Waybar, nwg-dock, Walker), Quickshell, AGS:** you'll write your own instead.
+- **Flatpak and AppImage by default:** large runtimes and broad permissions (Flatpak), or no sandbox at all (AppImage). Both can still be enabled.
 - **GRUB, systemd-boot:** they add code to the chain of trust that a firmware-started signed image doesn't need.
 - **A custom bootloader, for now:** it mostly buys a boot menu, which is aesthetics. You can revisit it later as a small Rust project (the `uefi` crate).
 
