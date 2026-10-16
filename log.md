@@ -103,9 +103,9 @@ Since failed builds still ran their install steps, `$LFS` held partial installs.
 - Root has no password yet (`passwd root` skipped; locked until you set it, before the first boot).
 
 **Open for Steps 6–7 (found reading chapter 8):**
-- [ ] The book builds systemd with `-D ukify=disabled` (needs the Python `pefile` module). Step 6 uses `ukify`
+- [x] The book builds systemd with `-D ukify=disabled` (needs the Python `pefile` module). Step 6 uses `ukify`
   to build the signed boot image: build pefile (BLFS) and rebuild, or run the host's ukify.
-- [ ] The book's systemd has no `systemd-cryptsetup` / `systemd-cryptenroll`: no libcryptsetup or tpm2-tss.
+- [x] The book's systemd has no `systemd-cryptsetup` / `systemd-cryptenroll`: no libcryptsetup or tpm2-tss.
   Autark's boot needs both (LUKS unlock, TPM+PIN enroll). Build cryptsetup (+ its deps) and tpm2-tss from
   BLFS, then rebuild systemd with them, before Step 6's initramfs.
 
@@ -177,3 +177,8 @@ Deviations: CMake `--no-system-libs` (no curl/libarchive/libuv/nghttp2); LVM2 an
 `tss` user/group created by hand (sysusers=false); systemd rebuilt with `ukify`, `libcryptsetup`, `tpm2` enabled.
 - [ ] Step 6 kernel needs (cryptsetup page): BLK_DEV_DM, DM_CRYPT, CRYPTO_AES, CRYPTO_XTS, CRYPTO_SHA256,
   CRYPTO_USER_API_SKCIPHER; plus TPM: TCG_TPM, TCG_TIS / TCG_CRB (from hardware/target).
+- Built (exit 0, no test failures): libaio 1 s, LVM2 23 s, popt 12 s, CMake 337 s, json-c 9 s, cryptsetup 16 s,
+  tpm2-tss 32 s, pefile 1 s, systemd rebuild 71 s. All tracked in /var/lib/autark/files/.
+- Verified inside the chroot: `systemctl --version` shows `+LIBCRYPTSETUP +TPM2 +OPENSSL`;
+  `systemd-cryptsetup`, `systemd-cryptenroll`, `ukify` (261.2) run; `cryptsetup 2.8.7`; `import pefile` works;
+  group `tss` (998). Both Step 6 blockers (ukify, cryptsetup/TPM in systemd) are closed.
