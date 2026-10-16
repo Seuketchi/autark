@@ -118,3 +118,11 @@ Since failed builds still ran their install steps, `$LFS` held partial installs.
 - glibc-2.44: 976 s. Tests: 6815 PASS, **1 FAIL (io/tst-lchmod, the book's first known failure)**, 16 XFAIL,
   582 UNSUPPORTED, 0 timed out.
 - Checked: libc.so.6 carries `x86 feature: IBT, SHSTK`; `/etc/localtime` → Asia/Manila; 1861 files tracked.
+- binutils: 1 FAIL (`tmpdir/gp-gmon`; book: "one test related to gprofng is known to fail"). acl: 1 FAIL
+  (`test/cp.run`; book: known until coreutils has ACL support).
+- GCC 16.2.0: 4789 s with tests. Compared with the reference LFS 13.1 build log (i7-14700K, test-logs/830-gcc-16.2.0):
+  unexpected failures gcc 80 = 80, g++ 66 = 66; every reference FAIL also fails here. Extra: libstdc++ 82
+  (reference 0), all libstdc++ tests (`*/nonnull.cc`, `*/overwrite.cc`, `*/default_init.cc`…).
+  Likely cause: libstdc++'s testsuite reuses the build's CXXFLAGS (`-D_FORTIFY_SOURCE=3 -fstack-protector-strong…`,
+  visible in the log), which changes warning/memory-content tests. **Not verified per test** (build dir deleted).
+  - [ ] After chapter 8: re-run a few of those libstdc++ tests without the hardening flags to confirm.
