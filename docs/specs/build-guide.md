@@ -199,6 +199,7 @@ This step is done when the five shell pieces you wrote run on Wayfire and nothin
 5. Lock screen: uses the `ext-session-lock` Wayland protocol (check that your Wayfire version supports it) and PAM for the password.
 6. AI daemon `autark-ai`: a session D-Bus service that the other pieces call for Jev decisions and Ollama answers. See [ai-layer.md](ai-layer.md).
 7. Rust initramfs `autark-init`: it asks for the PIN, unlocks the disk through libcryptsetup and tpm2-tss (via their Rust bindings, with no home-made crypto), mounts root and hands over to systemd. It replaces dracut once it boots reliably. The dracut image stays as a hidden fallback boot entry until then.
+8. Notes app: Apple Notes on the surface, Obsidian underneath, with plain Markdown files, `[[links]]`, backlinks and a graph view. See [notes.md](notes.md).
 
 You can start this today on Ubuntu, without waiting for the build: install Wayfire and gtk4-layer-shell from apt and develop the pieces in a Cargo workspace. The same code moves to Autark unchanged.
 

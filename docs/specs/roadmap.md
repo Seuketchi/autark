@@ -14,6 +14,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 | M5 | Kith | Shell | 2027-04-18 | Kith runs standalone on the laptop (Hermes and Ollama): launcher actions, chat, approved memory, tasks and suggestions | M3 |
 | M6 | Daily driver | System | 2027-05-16 | Autark installed on the target laptop with Secure Boot keys and TPM unlock enrolled; a full work week with no fallback to Ubuntu | M2–M5 |
 | M7 | Kith everywhere | Shell | When the box exists | Kith moves to your own box: reachable over Signal from the phone, laptop actions through MCP, Wren migrated and retired | M5, and a box with about 16 GB of RAM where only you have root |
+| M8 | Notes v1 | Shell | 2027-03-14 | Autark Notes opens a vault with three panes, checklists, pins, live preview, `[[links]]`, backlinks, search, tags and graph view ([notes.md](notes.md)) | M3 |
 
 After M6, maintenance takes a few hours a month: security advisories, kernel updates, and the yearly LFS releases ([build guide](build-guide.md)).
 
