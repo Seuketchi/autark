@@ -3,11 +3,13 @@
 # Changes $LFS's owner to root (7.2), mounts the virtual filesystems (7.3), runs ch7-inside.sh in the
 # chroot (7.4–7.14), unmounts them whatever happens, and with `backup` writes the chapter 7 checkpoint.
 # Usage: sudo LFS=/mnt/lfs bash scripts/lfs/ch7-chroot.sh [inside phase...]
+#        sudo LFS=/mnt/lfs INSIDE=ch8-inside.sh bash scripts/lfs/ch7-chroot.sh [package...]   (chapter 8)
 #        sudo LFS=/mnt/lfs bash scripts/lfs/ch7-chroot.sh backup <file.tar.xz>
 set -euo pipefail
 
 LFS=${LFS:?set LFS=/mnt/lfs}
 here=$(cd "$(dirname "$0")" && pwd)
+inside=${INSIDE:-ch7-inside.sh}
 [ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 1; }
 mountpoint -q "$LFS" || { echo "$LFS is not mounted (see build guide Step 1)" >&2; exit 1; }
 
@@ -51,11 +53,11 @@ else
 fi
 
 # 7.4: the book's chroot command, running the inside script instead of an interactive login shell.
-install -m 0755 "$here/ch7-inside.sh" $LFS/sources/ch7-inside.sh
+install -m 0755 "$here/$inside" "$here/build-lib.sh" $LFS/sources/
 chroot "$LFS" /usr/bin/env -i   \
     HOME=/root                  \
     TERM="${TERM:-xterm}"       \
     PATH=/usr/bin:/usr/sbin     \
     MAKEFLAGS="-j$(nproc)"      \
     TESTSUITEFLAGS="-j$(nproc)" \
-    /bin/bash /sources/ch7-inside.sh "$@"
+    /bin/bash "/sources/$inside" "$@"
