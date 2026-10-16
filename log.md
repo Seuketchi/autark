@@ -32,3 +32,13 @@ Every package built, every change made, every error. Enough to repeat the build 
   - [ ] Before 7b: remove the key-file slot from both (`cryptsetup luksKillSlot`), then `shred -u /root/autark-build.key`.
 - Mounted at `/mnt/lfs`, `/mnt/lfs/home`, `/mnt/lfs/boot/efi`. Image uses 367 MB on disk after formatting.
 - After a reboot: `LOOP=$(sudo losetup -fP --show ~/personal/autark/autark.img)`, `cryptsetup open --key-file /root/autark-build.key` both, mount again.
+
+## 2026-10-16 — Step 2 (sources and build user)
+
+- Sources: LFS 13.1-systemd `wget-list-systemd` + `md5sums`: 94/94 downloaded and md5 OK, 628 MB in `$LFS/sources`.
+- Layout per chapter 4.2 (usr-merge symlinks, `lib64`, `tools`), owned by `lfs`.
+- `lfs` user per 4.3, **no password set** (locked; reached only through sudo).
+- `.bash_profile` / `.bashrc` per 4.4, with `MAKEFLAGS=-j$(nproc)` (12).
+- Host change: `/etc/bash.bashrc` → `/etc/bash.bashrc.NOUSE` (book 4.4). **Restore after the build.**
+- `su - lfs -c '…'` hangs: the book's `.bash_profile` execs an interactive bash and `su -` starts a full user session.
+  Scripts run as lfs through `scripts/as-lfs.sh` instead (same `env -i` + `.bashrc`, no login).
