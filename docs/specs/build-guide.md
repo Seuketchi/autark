@@ -176,6 +176,7 @@ This step is done when Autark boots into Wayfire with Wi-Fi, sound and Firefox w
 6. Toolkit and fonts: GTK4 and Rust (both needed for your shell), Inter and a monospace font.
 7. Work tools: Firefox, git, Node.js, Python packages, adb (Android platform-tools), and Wine.
 8. Fingerprint: libfprint and fprintd, plus your out-of-tree ELAN 04f3:0c6c driver, built into the system this time so that updates stop breaking it.
+9. Local AI: Ollama, built from source, plus one small model. See [ai-layer.md](ai-layer.md).
 
 ## Step 9 — Your own desktop shell
 
@@ -186,6 +187,7 @@ This step is done when the five shell pieces you wrote run on Wayfire and nothin
 3. Spotlight-style launcher: reads `.desktop` files and opens on a hotkey.
 4. Notification centre: implements the `org.freedesktop.Notifications` D-Bus service.
 5. Lock screen: uses the `ext-session-lock` Wayland protocol (check that your Wayfire version supports it) and PAM for the password.
+6. AI daemon `autark-ai`: a session D-Bus service that the other pieces call for Jev decisions and Ollama answers. See [ai-layer.md](ai-layer.md).
 
 You can start this today on Ubuntu, without waiting for the build: install Wayfire and gtk4-layer-shell from apt and develop the pieces in a Cargo workspace. The same code moves to Autark unchanged.
 

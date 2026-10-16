@@ -2,6 +2,15 @@
 
 Autark is a Linux From Scratch system, systemd edition, with a Mac-like desktop whose shell you write yourself. It will replace the OS on a second laptop. Claude runs the build and you make every decision. Settled on 2026-10-16.
 
+## Goals
+
+Every decision is judged against these, in this order when they conflict:
+
+1. **Security:** a small attack surface, hardened builds, and nothing running or listening that isn't needed.
+2. **Efficiency:** low idle CPU and memory use, and long battery life.
+3. **Performance:** fast boot, a responsive desktop, and builds tuned for this CPU.
+4. **Aesthetics:** a Mac-like feel, built on top of the first three, never at their expense.
+
 ## Hardware standard
 
 This laptop is the reference machine. Its full profile is in [`hardware/`](../../hardware/).
@@ -36,6 +45,10 @@ This laptop is the reference machine. Its full profile is in [`hardware/`](../..
 | Compositor | Wayfire | Stacking by design, with Mission Control–style and Spaces-style plugins and touchpad gestures |
 | Desktop shell | Your own, written in GTK4 and Rust from scratch | A Mac feel from software you wrote, not substitutes |
 | Day-one apps | A blank slate, with work tools added in Step 8 | Firefox, git, Node, Python, adb, Wine and the fingerprint driver come later |
+| AI: fast decisions | Jev (TypeSafe), in the cloud | Typed decisions in about 150 ms for routing, urgency, safety and ranking. See [ai-layer.md](ai-layer.md) |
+| AI: generation | Ollama, on the laptop | Private, works offline, and handles explanations and summaries |
+| AI: defaults | Opt-in, with a local-only mode | Nothing goes to the cloud unless you turn it on |
+| Logo | Loop: an "A" drawn as one closed stroke | Nothing borrowed |
 
 ## Rejected
 
