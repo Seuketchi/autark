@@ -2,58 +2,63 @@
 
 Step by step, from an Ubuntu host to a running Autark with your own desktop shell. Decisions behind each step are in [decisions.md](decisions.md).
 
-## Step 0 — Prepare the Ubuntu host
+## Step 0 — Prepare the target laptop
 
-This step is done when the book's version check prints no errors. Book reference: chapter 2.2, "Host System Requirements".
+Autark is built on the laptop it will run on, never on the work laptop. This step is done when the target laptop runs a temporary Ubuntu host, its hardware profile is in the repo, and the book's version check prints no errors. Book reference: chapter 2.2, "Host System Requirements".
 
-1. Install the missing build tools, plus qemu and its UEFI firmware for test boots:
-
-   ```
-   sudo apt install bison gawk m4 texinfo qemu-system-x86 ovmf
-   ```
-2. Make `/bin/sh` point to bash. Run `sudo dpkg-reconfigure dash` and answer No. Then check that `readlink -f /bin/sh` prints `/usr/bin/bash`.
-3. Copy the `version-check.sh` script from chapter 2.2 into `~/autark/` and run `bash ~/autark/version-check.sh`. Every line should say OK.
-4. Start the build log at `~/autark/log.md`. Write down every package you build, any changes you made, and every error. With it, the build can be repeated without Claude.
-
-Why: LFS builds its first compiler with your Ubuntu tools, and the book's scripts use bash-only syntax. A missing tool shows up as a confusing failure an hour into the build.
-
-## Step 1 — Create the disk image
-
-This step is done when an empty ext4 root and an EFI partition are mounted at `/mnt/lfs`. Book reference: chapters 2.4–2.7.
-
-1. **You** add the temporary sudo rule (it's removed in Step 7):
+1. Install Ubuntu on the target laptop with manual partitioning. Put a 1 GB EFI partition first, leave the middle of the disk unallocated for Autark, and give Ubuntu 60 GB **at the end** of the disk. Autark's partition can then grow into Ubuntu's space once Ubuntu is gone.
+2. Clone this repo to `~/autark` and capture the hardware profile. It becomes the standard that the kernel and firmware steps use:
 
    ```
-   echo 'tan ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/autark-build && sudo visudo -c
+   bash ~/autark/scripts/capture-hardware.sh target
    ```
-2. Create an 80 GB sparse image. It only uses disk space as files are written into it:
+
+   Commit `hardware/target/`. The work laptop's profile stays in `hardware/work-laptop/` as a reference.
+3. Install the missing build tools, plus qemu and its UEFI firmware for testing images:
 
    ```
-   mkdir -p ~/autark && truncate -s 80G ~/autark/autark.img
-   LOOP=$(sudo losetup -fP --show ~/autark/autark.img)
+   sudo apt install bison gawk m4 texinfo cryptsetup efibootmgr qemu-system-x86 ovmf
    ```
-3. Partition it with GPT. A 512 MB EFI partition comes first and the rest is root. There's no swap partition, because zram handles swap.
+4. Make `/bin/sh` point to bash. Run `sudo dpkg-reconfigure dash` and answer No. Then check that `readlink -f /bin/sh` prints `/usr/bin/bash`.
+5. Copy the `version-check.sh` script from chapter 2.2 into `~/autark/` and run `bash ~/autark/version-check.sh`. Every line should say OK.
+6. Start the build log at `~/autark/log.md`. Write down every package you build, any changes you made, and every error. With it, the build can be repeated without Claude.
+
+Why: LFS builds its first compiler with the host's tools, and the book's scripts use bash-only syntax. A missing tool shows up as a confusing failure an hour into the build.
+
+## Step 1 — Create the encrypted Autark partition
+
+This step is done when the encrypted Autark partition is mounted at `/mnt/lfs`, with the EFI partition at `/mnt/lfs/boot/efi`. Book reference: chapters 2.4–2.7.
+
+1. **You** add the temporary sudo rule, on the target laptop only. It's removed in Step 7:
 
    ```
-   sudo parted -s $LOOP mklabel gpt \
-     mkpart ESP fat32 1MiB 513MiB set 1 esp on \
-     mkpart autark ext4 513MiB 100%
-   sudo mkfs.vfat -F32 -n EFI ${LOOP}p1
-   sudo cryptsetup luksFormat --type luks2 ${LOOP}p2
-   sudo cryptsetup open ${LOOP}p2 autark
+   echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/autark-build && sudo visudo -c
+   ```
+2. Check the disk's device name with `lsblk`, then create the Autark partition in the unallocated middle of the disk. There's no swap partition, because zram handles swap.
+
+   ```
+   DISK=/dev/nvme0n1                      # from lsblk; may differ
+   sudo parted $DISK mkpart autark ext4 <start of free space> <start of Ubuntu's partition>
+   ```
+3. Encrypt it with LUKS2 and format it:
+
+   ```
+   AUTARK=${DISK}p2                       # the partition just created; check with lsblk
+   sudo cryptsetup luksFormat --type luks2 $AUTARK
+   sudo cryptsetup open $AUTARK autark
    sudo mkfs.ext4 -L autark /dev/mapper/autark
    ```
-4. Mount it and set `$LFS`, which every later step uses:
+4. Mount it and set `$LFS`, which every later step uses. Autark shares the EFI partition with the temporary Ubuntu:
 
    ```
    export LFS=/mnt/lfs
    sudo mkdir -p $LFS && sudo mount /dev/mapper/autark $LFS
-   sudo mkdir -p $LFS/boot/efi && sudo mount ${LOOP}p1 $LFS/boot/efi
+   sudo mkdir -p $LFS/boot/efi && sudo mount ${DISK}p1 $LFS/boot/efi
    ```
 
-The root partition is encrypted with LUKS2. In the image it unlocks with a passphrase. TPM-plus-PIN unlocking is added on the target laptop in Step 7, because the TPM chip belongs to the machine.
+The partition unlocks with a passphrase for now. TPM-plus-PIN unlocking is added in Step 7.
 
-After a reboot, re-attach the image with `losetup -fP`, unlock it with `cryptsetup open`, and run the two mount commands again before continuing.
+After a reboot, unlock it with `cryptsetup open` and run the two mount commands again before continuing.
 
 ## Step 2 — Get the sources and set up the build user
 
@@ -68,7 +73,7 @@ This step is done when every source tarball passes its md5 check and you are log
    ```
 2. Create the top-level directory layout (`etc`, `var`, `usr/{bin,lib,sbin}`, `tools`) and the usr-merge symlinks, as in chapter 4.2.
 3. Create the unprivileged `lfs` user that owns the build. The toolchain chapters run as `lfs`, so a mistake there can't damage the host.
-4. Give `lfs` a clean shell: the book's `.bash_profile` and `.bashrc`, plus `export MAKEFLAGS=-j8` to use all 8 threads.
+4. Give `lfs` a clean shell: the book's `.bash_profile` and `.bashrc`, plus `export MAKEFLAGS=-j$(nproc)` to use every CPU thread.
 
 Why a separate user: the cross-toolchain must not pick up Ubuntu's libraries or environment variables. A fresh login with an almost-empty environment is the simplest guarantee.
 
@@ -122,26 +127,18 @@ Why track: to upgrade or remove a package later, you need to know exactly which 
 
 ## Step 6 — Configure, kernel and signed boot image
 
-This step is done when the image has a hardened kernel built for this laptop, its firmware, zram swap, and a signed unified kernel image that the firmware starts directly. Book reference: chapters 9–10.
+This step is done when Autark has a hardened kernel built for the target laptop, its firmware, zram swap, and a signed unified kernel image that the firmware starts directly. Book reference: chapters 9–10.
 
 1. System identity and config (chapter 9): hostname `autark`, `/etc/os-release` with `NAME="Autark"` and `ID=autark`, systemd-networkd for Ethernet, and locale, timezone and keyboard copied from your Ubuntu settings.
-2. Kernel, trimmed to this laptop. Start from Ubuntu's config and keep only the modules your hardware loads:
+2. Kernel, trimmed to the target laptop. Start from its Ubuntu config and keep only the modules its hardware loads:
 
    ```
-   cp ~/autark/hardware/kernel.config .config
-   make localmodconfig LSMOD=~/autark/hardware/lsmod.txt
+   cp ~/autark/hardware/target/kernel.config .config
+   make localmodconfig LSMOD=~/autark/hardware/target/lsmod.txt
    ```
 
-   Then build everything the unlock path needs into the kernel (`=y`, not a module): `CONFIG_VMD` (your NVMe sits behind Intel VMD), `CONFIG_BLK_DEV_NVME`, `CONFIG_DM_CRYPT`, `CONFIG_EXT4_FS`, `CONFIG_EFI_STUB`, and the TPM drivers (`CONFIG_TCG_TPM`, `CONFIG_TCG_CRB`). Add the kernel hardening defaults from [decisions.md](decisions.md), including signed modules. Also check that the systemd options from chapter 10.3 are set.
-3. Firmware from linux-firmware, copied into `/lib/firmware`. These are the exact files this laptop loads:
-
-   | Device | Firmware file |
-   | --- | --- |
-   | Iris Xe graphics | `i915/tgl_dmc_ver2_12.bin` (plus the tgl GuC/HuC files) |
-   | AX201 Wi-Fi | `iwlwifi-QuZ-a0-hr-b0-77.ucode` |
-   | Bluetooth | `intel/ibt-19-0-4.sfi` |
-   | Audio (SOF) | `intel/sof/sof-tgl.ri` plus its topology files |
-
+   Then build everything the unlock path needs into the kernel (`=y`, not a module): the storage controller from `hardware/target/lspci.txt` (for NVMe, `CONFIG_BLK_DEV_NVME`, plus `CONFIG_VMD` if it sits behind Intel VMD, as on the work laptop), `CONFIG_DM_CRYPT`, `CONFIG_EXT4_FS`, `CONFIG_EFI_STUB`, and the TPM drivers (`CONFIG_TCG_TPM`, `CONFIG_TCG_CRB`). Add the kernel hardening defaults from [decisions.md](decisions.md), including signed modules. Also check that the systemd options from chapter 10.3 are set.
+3. Firmware from linux-firmware, copied into `/lib/firmware`: exactly the files listed in `hardware/target/firmware.txt`, which Step 0 captured. For comparison, the work laptop needs four (`hardware/work-laptop/firmware.txt`).
 4. zram (your memory-management choice): build `CONFIG_ZRAM` with zstd compression, then add a systemd unit that creates a zstd zram device sized at half of RAM with `zramctl` and turns it on as swap.
 5. Initramfs and signed boot image. The first boot uses dracut, with its systemd and TPM2 modules. Our Rust initramfs replaces it in Step 9. Combine the kernel, the initramfs and the kernel command line (`rd.luks.name=<LUKS UUID>=autark root=/dev/mapper/autark`) into one unified kernel image with `ukify`. Then create your Secure Boot keys and sign the image:
 
@@ -151,28 +148,26 @@ This step is done when the image has a hardened kernel built for this laptop, it
    sbctl sign /boot/efi/EFI/Linux/autark.efi
    ```
 
-   There's no bootloader: the firmware starts the signed image directly. Also copy it to `EFI/BOOT/BOOTX64.EFI`, so it boots in qemu and from a USB stick without firmware boot entries. Keep the previous image as `autark-previous.efi`; it becomes the fallback boot entry.
+   There's no bootloader: the firmware starts the signed image directly, through boot entries added in Step 7. Leave `EFI/BOOT/BOOTX64.EFI` alone, since it's the temporary Ubuntu's fallback. Keep the previous image as `autark-previous.efi`; it becomes the fallback boot entry.
 
 ## Step 7 — Boot it
 
-This step is done when Autark boots on this laptop's real hardware from a USB stick, and the temporary sudo rule is gone.
+This step is done when Autark boots from the target laptop's own disk, Secure Boot uses your keys, the disk unlocks with TPM plus PIN, and the temporary sudo rule is gone.
 
-1. Unmount the image and detach the loop device, then boot it in a VM:
+1. Unmount and lock the partition: `sudo umount -R $LFS && sudo cryptsetup close autark`.
+2. Add firmware boot entries for Autark and its fallback. Ubuntu's entry stays as the way back:
 
    ```
-   sudo umount -R $LFS && sudo losetup -d $LOOP
-   qemu-system-x86_64 -enable-kvm -m 4G -smp 4 -bios /usr/share/ovmf/OVMF.fd \
-     -drive file=~/autark/autark.img,format=raw
+   sudo efibootmgr --create --disk $DISK --part 1 --label "Autark" --loader '\EFI\Linux\autark.efi'
+   sudo efibootmgr --create --disk $DISK --part 1 --label "Autark (previous)" --loader '\EFI\Linux\autark-previous.efi'
    ```
+3. Reboot and pick Autark from the firmware boot menu. Check that it asks for the disk passphrase, you can log in, the network comes up, `zramctl` shows the swap device, and the Wi-Fi, audio and graphics firmware all load (`journalctl -k`).
+4. **Secure Boot:** put the firmware in setup mode and run `sbctl enroll-keys --microsoft`. Keeping Microsoft's keys alongside yours lets the temporary Ubuntu and firmware add-ons still boot.
+5. **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline.
+6. **You** remove the sudo rule from Ubuntu: `sudo rm /etc/sudoers.d/autark-build`.
+7. Later, at milestone M6, when Autark is the daily driver: delete the Ubuntu partition and its boot entry, then grow Autark into the freed space (`parted resizepart`, `cryptsetup resize autark`, `resize2fs /dev/mapper/autark`).
 
-   Check that the firmware starts Autark, it asks for the disk passphrase, you can log in, the network comes up, and `zramctl` shows the swap device.
-2. Real hardware without touching Ubuntu: write the image to a USB stick of 64 GB or more and boot it from the firmware boot menu. Turn Secure Boot off just for this test, so this work laptop's firmware keys stay unchanged. Check that Wi-Fi firmware, audio and graphics all load (`journalctl -k`), because qemu can't test those.
-3. **You** remove the sudo rule: `sudo rm /etc/sudoers.d/autark-build`.
-4. Later, to move to the other laptop: write the image to its disk from a live USB, then grow the root partition to fill the disk (`sgdisk -e`, `growpart`, `cryptsetup resize`, `resize2fs`). Then lock it down:
-    - **Secure Boot:** put the firmware in setup mode and run `sbctl enroll-keys --microsoft`. Keeping Microsoft's keys alongside yours means firmware add-ons still load.
-    - **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline.
-
-   Any hardware that differs from this laptop needs its own modules and firmware added first.
+Testing images in qemu (with OVMF) is still useful for the Rust initramfs and new kernels, before they go onto the real disk.
 
 ## Step 8 — BLFS: from console to desktop
 

@@ -59,9 +59,9 @@ cmac                   12288  3
 algif_hash             20480  1
 algif_skcipher         12288  1
 af_alg                 32768  6 algif_hash,algif_skcipher
-nf_tables             401408  693 nft_queue,nft_ct,nft_compat,nft_chain_nat
+nf_tables             401408  663 nft_queue,nft_ct,nft_compat,nft_chain_nat
 nfnetlink              20480  13 nfnetlink_queue,nft_compat,nfnetlink_acct,nf_conntrack_netlink,nf_tables,ip_set
-overlay               233472  27
+overlay               233472  22
 qrtr                   53248  2
 bnep                   32768  2
 snd_soc_skl_hda_dsp    16384  4
@@ -187,7 +187,7 @@ i2c_mux                20480  1 i2c_i801
 soundcore              16384  2 snd_ctl_led,snd
 processor_thermal_wt_hint    16384  1 processor_thermal_device
 platform_temperature_control    20480  1 processor_thermal_device
-i915                 5128192  431
+i915                 5128192  458
 processor_thermal_soc_slider    16384  1 processor_thermal_device
 processor_thermal_rfim    40960  1 processor_thermal_device
 processor_thermal_rapl    16384  1 processor_thermal_device
@@ -219,7 +219,7 @@ igen6_edac             36864  0
 joydev                 32768  0
 input_leds             12288  0
 mac_hid                12288  0
-sch_fq_codel           28672  5
+sch_fq_codel           28672  4
 efi_pstore             12288  0
 zstd                   12288  0
 rtsx_usb_sdmmc         36864  0

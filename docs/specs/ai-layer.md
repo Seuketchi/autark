@@ -136,4 +136,4 @@ A Rust service on the session D-Bus, `org.autark.AI1`. Every shell piece talks t
 - [ ] Migrate Wren to Kith (steps above).
 
 - [ ] TypeSafe API key and pricing ([Models](https://docs.typesafe.ai/models)).
-- [ ] Which Ollama model. Measure tokens per second on this laptop (i5-1135G7, 30 GB RAM) before choosing.
+- [ ] Which Ollama model. Measure tokens per second on the target laptop before choosing.

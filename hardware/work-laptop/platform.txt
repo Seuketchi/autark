@@ -1,0 +1,3 @@
+UEFI
+SecureBoot enabled
+TPM: present

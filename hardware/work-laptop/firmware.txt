@@ -1,0 +1,4 @@
+i915/tgl_dmc_ver2_12.bin
+intel/ibt-19-0-4.sfi
+intel/sof/sof-tgl.ri
+QuZ-a0-hr-b0-77.ucode

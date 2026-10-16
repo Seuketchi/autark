@@ -14,7 +14,8 @@ The name comes from *autarky*, meaning self-sufficient: every package chosen and
 | [`docs/specs/notes.md`](docs/specs/notes.md) | Autark Notes: Apple Notes feel, Obsidian files, links and graph |
 | [`docs/specs/ai-layer.md`](docs/specs/ai-layer.md) | AI in the OS: Jev for fast decisions, Ollama for local generation |
 | [`design/`](design/) | Desktop design mockups: every screen, Kith, icons, logo and colours |
-| [`hardware/`](hardware/) | Reference laptop profile: kernel config, loaded modules, PCI and USB devices |
+| [`hardware/`](hardware/) | Laptop profiles (kernel config, modules, devices, firmware): `target/` once captured, `work-laptop/` as reference |
+| [`scripts/`](scripts/) | `capture-hardware.sh`, which records a laptop's profile |
 
 The disk image, source tarballs and backups stay local and are never committed (see `.gitignore`).
 

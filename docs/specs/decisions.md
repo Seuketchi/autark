@@ -1,6 +1,6 @@
 # Autark decisions
 
-Autark is a Linux From Scratch system, systemd edition, with a Mac-like desktop whose shell you write yourself. It will replace the OS on a second laptop. Claude runs the build and you make every decision. Settled on 2026-10-16.
+Autark is a Linux From Scratch system, systemd edition, with a Mac-like desktop whose shell you write yourself. It is built on, and will replace the OS of, a second laptop, so the work laptop is never touched. Claude runs the build and you make every decision. Settled on 2026-10-16.
 
 ## Goals
 
@@ -25,7 +25,9 @@ Every decision is judged against these, in this order when they conflict:
 
 ## Hardware standard
 
-This laptop is the reference machine. Its full profile is in [`hardware/`](../../hardware/).
+The **target laptop** is the standard. Its profile is captured in build guide Step 0 into [`hardware/target/`](../../hardware/target/), with `scripts/capture-hardware.sh`. The kernel config and firmware list come from there.
+
+Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardware/work-laptop/) is the reference example:
 
 | Part | Device | Firmware |
 | --- | --- | --- |
@@ -37,7 +39,7 @@ This laptop is the reference machine. Its full profile is in [`hardware/`](../..
 | Ethernet | Intel I219-V (8086:15fc) | — |
 | Storage | SanDisk/WD SN530 NVMe, behind Intel VMD | — (kernel needs `CONFIG_VMD=y`) |
 | Fingerprint | ELAN 04f3:0c6c | Out-of-tree libfprint driver |
-| Firmware | UEFI, Secure Boot on (to be turned off for Autark) | — |
+| Platform | UEFI, Secure Boot on, TPM present | — |
 | RAM | 30 GB | — |
 
 ## Decisions
@@ -55,8 +57,8 @@ This laptop is the reference machine. Its full profile is in [`hardware/`](../..
 | Initramfs | dracut for the first boot, then our own in Rust (`autark-init`) | We build our own code in Rust; the cryptography stays in libcryptsetup and tpm2-tss |
 | Own code | Rust | Anything we write ourselves: shell, AI daemon, initramfs, tools |
 | Package tracking | DESTDIR staging and file lists, from chapter 8 onward | So packages can be cleanly upgraded or removed later |
-| Build host | This laptop, into an 80 GB sparse disk image | Leaves your work system untouched |
-| Root access | Temporary passwordless sudo rule, removed after the build | Chapters 7 to 10 run as root in a chroot |
+| Build host | The target laptop itself, from a temporary 60 GB Ubuntu partition at the end of its disk; Autark is built straight onto the rest | The work laptop stays untouched (no sudo rule, no CPU load), and the kernel is tuned to the hardware that runs Autark |
+| Root access | Temporary passwordless sudo rule on the target laptop only, removed in Step 7 | Chapters 7 to 10 run as root in a chroot |
 | Compositor | Wayfire | Stacking by design, with Mission Control–style and Spaces-style plugins and touchpad gestures |
 | Desktop shell | Your own, written in GTK4 and Rust from scratch | A Mac feel from software you wrote, not substitutes |
 | Day-one apps | A blank slate, with work tools added in Step 8 | Firefox, git, Node, Python, adb, Wine and the fingerprint driver come later |
@@ -80,3 +82,5 @@ This laptop is the reference machine. Its full profile is in [`hardware/`](../..
 ## Open
 
 - [ ] Build start date. You chose to start later.
+- [ ] The target laptop: model, CPU, RAM, and what's on it now.
+- [ ] How Claude reaches the target laptop: Claude Code installed on it (recommended) or SSH from the work laptop. Your Claude seat is company-owned, so check that using it for Autark is okay.
