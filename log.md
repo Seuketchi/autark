@@ -270,3 +270,30 @@ Open before Step 7b: [x] signing. [ ] SOF audio firmware. [ ] firewall. [ ] remo
 root A and /home's build key) and shred /root/autark-build.key. [ ] Secure Boot on the real MSI firmware: append
 `autark-db.der` to db from the setup screen (keeps MSI/Microsoft keys, Windows and Ubuntu boot) vs. replacing all
 keys. [ ] ovpn-dco on the host (yours).
+
+## 2026-10-17 — Firewall and audio firmware (before Step 7b)
+
+Script: `scripts/lfs/step7-prep-inside.sh`.
+- Kernel gap found first: localmodconfig had kept nf_tables but dropped `NFT_CT` (Ubuntu's rules at capture time
+  didn't use conntrack), so "allow replies" was impossible. Added NF_TABLES(_INET), NF_CONNTRACK, NFT_CT,
+  NFT_REJECT(_INET), NFT_LIMIT, NFT_LOG; kernel rebuilt (285 modules). The kernel script now deletes
+  /usr/lib/modules/7.1.8 before installing: every build makes a new signing key and MODULE_SIG_FORCE would refuse
+  any stale module.
+- Sources: libmnl-1.0.5 (BLFS md5 match + upstream sig); libnftnl-1.3.2, nftables-1.1.7 (not in BLFS).
+  netfilter.org returns 403 to automated downloads, so all three are Debian's `.orig` tarballs (= upstream) with
+  the upstream `.asc`: "Good signature from Netfilter Core Team". Keys: 8C5F7146…6ACF2B21 (libnftnl, nftables) is
+  in Debian's packaged signing-key.asc and on keys.openpgp.org; 37D964AC…8A1420E4 (libmnl) from Debian's
+  packaged key, and libmnl also matches BLFS's md5.
+- nftables 1.1.7 defaults its CLI to libedit (not installed) → `--with-cli=readline`.
+- Ruleset `/etc/nftables.conf`, table `inet autark`: input policy drop; accept established/related, loopback,
+  essential ICMPv6 (ND, RA, too-big, unreachable, time-exceeded, param-problem, MLD query), ICMPv4 errors,
+  DHCPv6 replies from fe80::/10; drop invalid. Forward drop. Output accept. Local additions: one file per purpose in
+  `/etc/nftables.d/*.nft`. `nftables.service` (before network-pre.target) enabled.
+  Checked: `nft -c` dry run valid; no table appeared on the host.
+- SOF audio: sof-bin v2026.09.2 (GitHub, unsigned tarball, sha256 5f7bc30b…; a retail DSP only runs Intel-signed
+  firmware). Intel-signed: IPC3 `intel/sof/sof-adl.ri` + link `sof-rpl.ri` (Raptor Lake runs Alder Lake's; the
+  first try extracted only the link), IPC4 `intel/sof-ipc4/rpl/sof-rpl.ri`, both `sof-hda-generic-2ch.tplg`.
+- Boot image rebuilt and signed; autark.efi, BOOTX64.EFI and autark-previous.efi all "Signature verification OK".
+
+Open before Step 7b: [x] signing [x] SOF firmware [x] firewall. [ ] remove the build key (last, right before the
+copy). [ ] Secure Boot enrollment method on the MSI firmware. [ ] backup + shrink + copy.

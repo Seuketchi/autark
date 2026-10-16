@@ -55,9 +55,10 @@ pkg_libnftnl() {
   make install
 }
 
-# No man pages (need asciidoc), no JSON (needs jansson); the interactive shell uses readline.
+# No man pages (need asciidoc), no JSON (needs jansson); the interactive shell uses readline (1.1.7 defaults
+# to libedit, which Autark doesn't have).
 pkg_nftables() {
-  ./configure --prefix=/usr --sysconfdir=/etc --disable-static --disable-debug --disable-man-doc
+  ./configure --prefix=/usr --sysconfdir=/etc --disable-static --disable-debug --disable-man-doc --with-cli=readline
   make
   make install
 }
@@ -130,9 +131,11 @@ EOF
 step_sof() {
   local t S; t=$(mktemp -d); S=sof-bin-2026.09.2
   tar -xzf /sources/$S.tar.gz -C "$t" \
-    $S/sof/intel-signed/sof-rpl.ri $S/sof-ipc4/rpl/intel-signed/sof-rpl.ri \
+    $S/sof/intel-signed/sof-adl.ri $S/sof-ipc4/rpl/intel-signed/sof-rpl.ri \
     $S/sof-tplg/sof-hda-generic-2ch.tplg $S/sof-ipc4-tplg/sof-hda-generic-2ch.tplg
-  install -vDm644 "$t/$S/sof/intel-signed/sof-rpl.ri"            /usr/lib/firmware/intel/sof/sof-rpl.ri
+  # IPC3: Raptor Lake runs Alder Lake's firmware; sof-bin ships sof-rpl.ri as a link to sof-adl.ri, kept as such.
+  install -vDm644 "$t/$S/sof/intel-signed/sof-adl.ri"            /usr/lib/firmware/intel/sof/sof-adl.ri
+  ln -sfv sof-adl.ri                                              /usr/lib/firmware/intel/sof/sof-rpl.ri
   install -vDm644 "$t/$S/sof-ipc4/rpl/intel-signed/sof-rpl.ri"   /usr/lib/firmware/intel/sof-ipc4/rpl/sof-rpl.ri
   install -vDm644 "$t/$S/sof-tplg/sof-hda-generic-2ch.tplg"      /usr/lib/firmware/intel/sof-tplg/sof-hda-generic-2ch.tplg
   install -vDm644 "$t/$S/sof-ipc4-tplg/sof-hda-generic-2ch.tplg" /usr/lib/firmware/intel/sof-ipc4-tplg/sof-hda-generic-2ch.tplg
