@@ -21,3 +21,14 @@ Every package built, every change made, every error. Enough to repeat the build 
 - `version-check.sh`: all OK, 12 cores.
 - Freed 32 GB of caches (Gradle, pip, Chrome, JetBrains, Dart). Plan changed: build into an image file first,
   test in qemu, shrink Ubuntu and move to a partition only once it boots.
+
+## 2026-10-16 — Step 1 (disk image)
+
+- Temporary sudo rule `/etc/sudoers.d/autark-build` installed via pkexec (validated with `visudo -cf` first). Remove in Step 7.
+- `autark.img`: 90 GiB sparse, GPT: p1 ESP 1 GiB (vfat, AUTARK-ESP), p2 root A 40 GiB, p3 root B 40 GiB (empty), p4 /home 9 GiB.
+- Root A and /home: LUKS2, unlocked for now by a **random key file `/root/autark-build.key`** (root-only, 0400), no passphrase yet.
+  Root A LUKS UUID: 33727520-d460-4861-b27f-bef08d44c11f.
+  - [ ] Before 7a: add your passphrase to both (`sudo cryptsetup luksAddKey --key-file /root/autark-build.key /dev/loopNp2`, same for p4).
+  - [ ] Before 7b: remove the key-file slot from both (`cryptsetup luksKillSlot`), then `shred -u /root/autark-build.key`.
+- Mounted at `/mnt/lfs`, `/mnt/lfs/home`, `/mnt/lfs/boot/efi`. Image uses 367 MB on disk after formatting.
+- After a reboot: `LOOP=$(sudo losetup -fP --show ~/personal/autark/autark.img)`, `cryptsetup open --key-file /root/autark-build.key` both, mount again.
