@@ -36,6 +36,20 @@ The launcher grows into a personal assistant, like Grok, but split the Autark wa
 
 Memory goes to Jev only as the specific fields a decision needs, and only for features where Jev is turned on.
 
+## Tasks
+
+Tasks are scheduled prompts, like Grok Tasks, but they run on the laptop instead of in a cloud. Example: "every morning at 8, summarise last night's build log".
+
+| Part | How it works |
+| --- | --- |
+| Creating | Tell the assistant, or add one in Settings › AI › Tasks. The sentence is turned into a task: name, schedule, prompt, the inputs it may read (files, URLs), and how to deliver it. You confirm before it's saved |
+| Scheduling | Code owns the schedule, not the AI. Each task is a systemd user timer (`autark-task@<id>.timer`) with `Persistent=true`, so runs missed while the laptop was asleep catch up |
+| Running | `autark-ai` fetches the inputs with code, then runs the prompt with Ollama locally. Each run is a sandboxed service that can only write its own result, and it's time-limited |
+| Delivery | A notification-centre card with action buttons. It shows as a banner only if it's rated urgent and Focus allows it, and the lock screen hides the content. The result is also saved in `~/.local/share/autark-ai/tasks/<id>/` |
+| Limits | 20 tasks and 5 minutes per run by default, both configurable |
+
+Useful starting tasks are a morning build summary, a weekly check of [BLFS security advisories](https://www.linuxfromscratch.org/blfs/advisories/) against installed packages, and a monthly battery health report.
+
 ## Daemon: `autark-ai`
 
 A Rust service on the session D-Bus, `org.autark.AI1`. Every shell piece talks to it instead of to the engines directly.
@@ -47,6 +61,7 @@ A Rust service on the session D-Bus, `org.autark.AI1`. Every shell piece talks t
 - `Chat(session, text)` streams one assistant turn, including any actions it proposes.
 - `ProposeMemory(fact)` asks you to approve a memory; `Forget(id)` removes one.
 - `Suggestion` is a signal the notification centre and assistant panel listen for.
+- `CreateTask(spec)`, `ListTasks()` and `RunTask(id)` manage tasks; `TaskFinished` is a signal carrying the result.
 
 ## Rules
 
