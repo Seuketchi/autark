@@ -199,7 +199,7 @@ This step is done when Autark boots into Wayfire with Wi-Fi, sound and Firefox w
 
 ## Step 9 — Your own desktop shell
 
-This step is done when the shell pieces you wrote run on Wayfire and nothing borrowed fills their places. Pieces 1–5 come first (milestone M3); the rest follow on the roadmap. They're written in Rust with gtk4-rs, and gtk4-layer-shell pins them to screen edges.
+All of this code lives in the separate `autark-tools` repo (a Rust workspace), and Autark's package recipes build it from there. This step is done when the shell pieces you wrote run on Wayfire and nothing borrowed fills their places. Pieces 1–5 come first (milestone M3); the rest follow on the roadmap. They're written in Rust with gtk4-rs, and gtk4-layer-shell pins them to screen edges.
 
 1. Top bar, the macOS-style menu bar: clock, Wi-Fi (iwd over D-Bus), battery (UPower) and volume (PipeWire).
 2. Dock: app icons with magnification on hover and indicators for running apps.

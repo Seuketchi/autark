@@ -112,6 +112,9 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Sleep | Lid close suspends, hibernate after 2 hours on battery into an encrypted swap file, lock on suspend; all configurable | |
 | First boot | A guided start: Wi-Fi, TPM PIN, Secure Boot keys, Kith opt-in, theme. A script in version 1, a GTK4 app later | |
 | Built-in help | The repo's `docs/` shipped as a read-only vault in Notes, searchable by Kith | The specs become the help |
+| Tools repo | All our Rust tools live in one separate repo, `autark-tools`: a Cargo workspace with one crate per tool (`autark-shell`, `autark-ai`, `autark-stats`, `autark-init`, `autark-pkg`, `autark-notes`, `autark-files`, the task manager, screenshots, night light, displays, the sandbox launcher). This `autark` repo keeps the specs, recipes, design and hardware profiles, and its recipes build the tools from `autark-tools` | Shared code and one CI; each crate releases on its own; other distros can use the tools |
+| Tools license | Private until the first working release, then public under MIT or Apache-2.0 (dual) | Easiest for other distros to adopt, and open to security audits |
+| Tools portability | Any wlroots compositor (sway, Hyprland, labwc, river, Wayfire) with systemd and D-Bus; `autark-init` on any systemd distro with LUKS2 and a TPM; `autark-pkg` stays Autark-only; GNOME and KDE not targeted. Paths and settings are configurable, never hard-coded | Useful beyond Autark without extra work |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected
