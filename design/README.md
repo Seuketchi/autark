@@ -1,6 +1,6 @@
 # Autark design
 
-The desktop design. This folder is the source of truth; the working copy is the [Autark Desktop canvas](https://claude.ai/artifact/XQn3xs2woGiqwjR34rtLrE), private to its owner. `canvas/` holds every artboard as a `.dc.html` file, plus `canvas.json`, the layout index.
+The desktop design. This folder is the only copy; the Claude canvas used to edit it has been deleted, and can be republished from these files when needed. `canvas/` holds every artboard as a `.dc.html` file, plus `canvas.json`, the layout index.
 
 | Artboard | What it shows |
 | --- | --- |
