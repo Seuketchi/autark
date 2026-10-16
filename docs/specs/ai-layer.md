@@ -44,8 +44,8 @@ Everything is configurable, so someone else running Autark can point Kith at the
 
 | Part | Default | Configurable to |
 | --- | --- | --- |
-| Brain | Hermes on your own box, reached over Tailscale | Any Hermes host you run, or standalone on the laptop (no phone access) |
-| Model | Ollama on the same box; about 16 GB of RAM for a 7–8B model | Any Ollama or OpenAI-compatible endpoint |
+| Brain | **For now:** standalone Hermes on the laptop, with no phone access while it sleeps. **Later:** Hermes on your own box, reached over Tailscale | Any Hermes host you run |
+| Model | Ollama wherever the brain runs (the laptop for now). A box needs about 16 GB of RAM for a 7–8B model | Any Ollama or OpenAI-compatible endpoint |
 | Phone | Signal (end-to-end encrypted) | Telegram, Matrix or WhatsApp, which Hermes also supports |
 | Laptop | `autark-ai` talks to Hermes directly over Tailscale, with no chat app | |
 | Web | Firecrawl, self-hosted on your network, through `firecrawl-mcp` | Off, or another Firecrawl instance |
@@ -56,7 +56,8 @@ Everything is configurable, so someone else running Autark can point Kith at the
 
 **When the box is unreachable,** the laptop drops to standalone mode: local Ollama and the read-only memory copy. New memories wait until it reconnects.
 
-**Moving from Wren:**
+**Moving from Wren** happens once Kith has its own box. Until then Wren keeps running unchanged on `tristan-hermes`, which isn't suitable for Kith: the host's owner has root on it, and it has only 3 GB of RAM.
+
 
 1. Rewrite Wren's persona as Kith's `SOUL.md`.
 2. Move Wren's jobs over as Kith tasks: morning report 07:30, learning digest 18:30, evening check 21:30, weekly review Sunday 20:00.
