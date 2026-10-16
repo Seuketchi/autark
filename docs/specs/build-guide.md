@@ -178,8 +178,8 @@ This step is done when Autark boots into Wayfire with Wi-Fi, sound and Firefox w
 3. Graphics: libdrm, Mesa (the Iris driver for your Iris Xe), Wayland, wayland-protocols and libinput.
 4. Compositor: wlroots and Wayfire, built from upstream because BLFS doesn't cover them.
 5. Sound: PipeWire and WirePlumber, with your SOF audio firmware.
-6. Toolkit and fonts: GTK4 and Rust (both needed for your shell), Inter and a monospace font.
-7. Work tools: Firefox, git, Node.js, Python packages, adb (Android platform-tools), and Wine.
+6. Toolkit, fonts and basics: GTK4 and Rust (both needed for your shell), Geist and Geist Mono (Inter as an option), sudo-rs, foot, and rustic for backups.
+7. Work tools: Firefox (hardened defaults, uBlock Origin), git, Node.js, Python packages, adb (Android platform-tools), Wine, and WebKitGTK so Galley runs.
 8. Fingerprint: libfprint and fprintd, plus your out-of-tree ELAN 04f3:0c6c driver, built into the system this time so that updates stop breaking it.
 9. Local AI: Ollama, built from source, plus one small model. See [ai-layer.md](ai-layer.md).
 

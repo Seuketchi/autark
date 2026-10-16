@@ -68,6 +68,20 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Logo | Loop: an "A" drawn as one closed stroke | Nothing borrowed |
 | Assistant | **Kith**, with a Visor face: dark glass with glowing sage eyes | Old English for the people you know and trust: a companion, not a servant. Abstract face, never a human likeness |
 | Assistant brain | Hermes on your own box (only you have root), Ollama on that box, Signal for the phone, Firecrawl self-hosted; Kith replaces Wren | One assistant and one memory on phone and laptop, without cloud models or unencrypted chat. All configurable for other setups |
+| Login | Automatic login after the disk's TPM-plus-PIN unlock; the lock screen guards resume. A greeter (greetd plus our own Rust greeter) can be turned on for multi-user setups | The PIN at boot already proves it's you |
+| Admin rights | sudo-rs | Same as sudo to use, without sudo's class of memory bugs |
+| Terminal | foot | Writing a terminal is a large, security-sensitive job (escape sequences, Unicode, fonts); foot is the lightest Wayland terminal. Our own can come later |
+| Files app | Our own in Rust, built right after Notes, which shares its file code | Matches the design; nothing borrowed in the shell |
+| Code editor | Galley, your own IDE (Rust and Svelte), improved for Autark | Your own tool. As a webview app it needs WebKitGTK from BLFS |
+| Command-line shell | bash | What LFS and all the build scripts use |
+| System font | Geist and Geist Mono; Inter selectable in Settings | Used in the designs |
+| Browser | Firefox with hardened defaults and uBlock Origin, all adjustable | Privacy without breaking sites |
+| Backups | rustic (Rust, encrypted, restic-compatible) to an external drive, later also to Kith's box | Encryption protects the disk; only a backup protects the data |
+| Kernel | The newest long-term-support kernel at build time | Longer security support and newer hardware drivers than the book's pinned version |
+| LFS version | The stable release current on the start day, pinned and recorded in `log.md` | Rebuilds come out the same |
+| Locale | en_US.UTF-8, time zone Asia/Manila, US keyboard | |
+| Ollama model | llama3.2:3b; move to a 7–8B model only if the target measures at least 8 tokens per second | Usable speed on a CPU without a discrete GPU |
+| Updates | Kith checks BLFS security advisories weekly; you apply updates by hand with per-package scripts until a Rust `autark-pkg` tool exists | Nothing updates silently |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected
