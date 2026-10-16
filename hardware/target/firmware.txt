@@ -1,0 +1,6 @@
+i915/adlp_dmc.bin
+i915/adlp_guc_70.bin
+i915/tgl_huc.bin
+intel/ibt-0040-0041.sfi
+intel/sof/sof-rpl.ri
+so-a0-gf-a0-89.ucode

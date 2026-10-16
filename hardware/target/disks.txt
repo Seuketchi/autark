@@ -1,0 +1,37 @@
+NAME          SIZE TYPE FSTYPE   MOUNTPOINT
+loop0         442M loop squashfs /snap/code/248
+loop1           4K loop squashfs /snap/bare/5
+loop2        63.8M loop squashfs /snap/core20/2866
+loop3          74M loop squashfs /snap/core22/2411
+loop4        66.8M loop squashfs /snap/core24/1643
+loop5        66.8M loop squashfs /snap/core24/2124
+loop6        14.2M loop squashfs /snap/desktop-security-center/188
+loop7        55.5M loop squashfs /snap/core18/2999
+loop8       150.3M loop squashfs /snap/figma-linux/197
+loop9        14.2M loop squashfs /snap/desktop-security-center/206
+loop10      273.7M loop squashfs /snap/firefox/8107
+loop11      252.7M loop squashfs /snap/firefox/8585
+loop12      614.5M loop squashfs /snap/gnome-46-2404/164
+loop13       12.7M loop squashfs /snap/firmware-updater/258
+loop14      164.8M loop squashfs /snap/gnome-3-28-1804/198
+loop15      606.1M loop squashfs /snap/gnome-46-2404/153
+loop16       16.5M loop squashfs /snap/firmware-updater/226
+loop17       91.7M loop squashfs /snap/gtk-common-themes/1535
+loop18        1.7M loop squashfs /snap/gnome-system-monitor/193
+loop19       54.2M loop squashfs /snap/icon-theme-papirus/171
+loop20         55M loop squashfs /snap/icon-theme-papirus/187
+loop21        395M loop squashfs /snap/mesa-2404/1165
+loop22       18.8M loop squashfs /snap/prompting-client/222
+loop23       18.4M loop squashfs /snap/prompting-client/228
+loop24       50.1M loop squashfs /snap/snapd/27406
+loop25       15.7M loop squashfs /snap/snap-store/1367
+loop26        828K loop squashfs /snap/snapd-desktop-integration/387
+loop27       44.7M loop squashfs /snap/snapd/28254
+loop28        580K loop squashfs /snap/snapd-desktop-integration/361
+zram0        11.3G disk swap     [SWAP]
+nvme0n1     476.9G disk          
+├─nvme0n1p1   100M part vfat     /boot/efi
+├─nvme0n1p2    16M part          
+├─nvme0n1p3 185.3G part ntfs     
+├─nvme0n1p4   994M part ntfs     
+└─nvme0n1p5 289.7G part ext4     /
