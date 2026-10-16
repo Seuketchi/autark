@@ -84,3 +84,27 @@ Since failed builds still ran their install steps, `$LFS` held partial installs.
 - Chroot clock reads UTC (no timezone yet).
 - **Checkpoint:** `backup-ch7.tar.xz`, 1.2 GB, 20,690 entries, `xz -t` OK (git-ignored, in the repo folder).
   Restore: wipe `$LFS` except `sources/`, then `tar -xpf backup-ch7.tar.xz -C $LFS` as root.
+
+## 2026-10-17 — Step 5 (chapter 8) setup
+
+- `scripts/lfs/ch8-inside.sh`, generated from the book (`scripts/lfs/ch8-gen/`). 81 packages; GRUB left out
+  (Autark has no bootloader). 25 blocks skipped: optional docs, upgrade-only (nscd), alternatives
+  (install-locales), interactive (`tzselect`, `passwd root`, `vim -c ':options'`, `exec bash --login`).
+- Replacements: timezone Asia/Manila; groff paper `letter` (change via /etc/papersize); libffi
+  `--with-gcc-arch=x86-64-v3` instead of `native` (decisions.md CPU target); glibc gets `en_PH.UTF-8`
+  and `--enable-fortify-source=3`.
+- Flags from here on (your decision, 2026-10-17): CFLAGS/CXXFLAGS `-O2 -march=x86-64-v3 -pipe
+  -fstack-protector-strong -fstack-clash-protection -fcf-protection=full -D_FORTIFY_SOURCE=3`,
+  LDFLAGS `-Wl,-O1 -Wl,-z,relro -Wl,-z,now`. glibc: no FORTIFY in CFLAGS, no LDFLAGS (it refuses / links ld.so itself).
+  Known gaps: bzip2 hard-codes its flags; GMP tunes to the build CPU (book default, not x86-64-v3).
+  Verify coverage after the build by scanning binaries for stack protector, FORTIFY and BIND_NOW.
+- Tracking (your decision): before/after snapshot per package → `/var/lib/autark/files/<package>`.
+- Tests: logged, not fatal (`/sources/logs/test-failures.txt`), except GMP (≥199 PASS) and MPFR (FAIL 0).
+- Root has no password yet (`passwd root` skipped; locked until you set it, before the first boot).
+
+**Open for Steps 6–7 (found reading chapter 8):**
+- [ ] The book builds systemd with `-D ukify=disabled` (needs the Python `pefile` module). Step 6 uses `ukify`
+  to build the signed boot image: build pefile (BLFS) and rebuild, or run the host's ukify.
+- [ ] The book's systemd has no `systemd-cryptsetup` / `systemd-cryptenroll`: no libcryptsetup or tpm2-tss.
+  Autark's boot needs both (LUKS unlock, TPM+PIN enroll). Build cryptsetup (+ its deps) and tpm2-tss from
+  BLFS, then rebuild systemd with them, before Step 6's initramfs.
