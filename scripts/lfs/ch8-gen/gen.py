@@ -22,7 +22,7 @@ SKIP = {
  'vim': ["vim -c ':options'"], 'util-linux': ['bash tests/run.sh'], 'e2fsprogs': ['makeinfo -o',"sed 's/metadata_csum_seed"],
 }
 REPLACE = {  # (page, old, new): each must match exactly once
- ('glibc','             --enable-stack-protector=strong \\\n','             --enable-stack-protector=strong \\\n             --enable-fortify-source=3       \\\n'),
+ ('glibc','             --enable-stack-protector=strong \\\n','             --enable-stack-protector=strong \\\n             --enable-fortify-source=3       \\\n             --enable-cet                    \\\n'),
  ('glibc','localedef -i zh_TW -f UTF-8 zh_TW.UTF-8','localedef -i zh_TW -f UTF-8 zh_TW.UTF-8\nlocaledef -i en_PH -f UTF-8 en_PH.UTF-8'),
  ('glibc','/usr/share/zoneinfo/<xxx>','/usr/share/zoneinfo/Asia/Manila'),
  ('libffi','--with-gcc-arch=native','--with-gcc-arch=x86-64-v3'),
@@ -53,7 +53,7 @@ for p in pages:
     if p in EXTRA_AFTER: body.append(EXTRA_AFTER[p])
     fn = 'pkg_' + p.lower().replace('-', '_')
     if p == 'glibc':
-        body.insert(0, '# Autark flags without FORTIFY/LDFLAGS: glibc refuses forced _FORTIFY_SOURCE and links ld.so itself.\n# Fortification comes from --enable-fortify-source=3 below. Runs in build()\'s subshell, so this is local.\nexport CFLAGS="-O2 -march=x86-64-v3 -pipe -fstack-clash-protection -fcf-protection=full" CXXFLAGS="-O2 -march=x86-64-v3 -pipe -fstack-clash-protection -fcf-protection=full"\nunset LDFLAGS')
+        body.insert(0, '# Autark flags without FORTIFY/LDFLAGS: glibc refuses forced _FORTIFY_SOURCE and links ld.so itself.\n# Fortification and CET come from --enable-fortify-source=3 and --enable-cet below (CET via CFLAGS\n# alone leaves ld.so without _dl_cet_* and the link fails). Runs in build()\'s subshell, so this is local.\nexport CFLAGS="-O2 -march=x86-64-v3 -pipe -fstack-clash-protection" CXXFLAGS="-O2 -march=x86-64-v3 -pipe -fstack-clash-protection"\nunset LDFLAGS')
     fns.append(f'{fn}() {{\n' + '\n'.join(body) + '\n}\n')
     order.append((p, fn, None if p in NOSRC else tarball(p)))
 missing = [r for r in REPLACE if (r[0], r[1]) not in used]

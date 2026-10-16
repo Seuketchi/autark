@@ -108,3 +108,13 @@ Since failed builds still ran their install steps, `$LFS` held partial installs.
 - [ ] The book's systemd has no `systemd-cryptsetup` / `systemd-cryptenroll`: no libcryptsetup or tpm2-tss.
   Autark's boot needs both (LUKS unlock, TPM+PIN enroll). Build cryptsetup (+ its deps) and tpm2-tss from
   BLFS, then rebuild systemd with them, before Step 6's initramfs.
+
+## 2026-10-17 — Step 5: glibc
+
+- First try failed at `make`, before install: with `-fcf-protection=full` in CFLAGS but no `--enable-cet`,
+  ld.so links without `_dl_cet_open_check`/`_dl_cet_check`/`_dl_cet_setup_features`. Fix: glibc's CFLAGS drop
+  `-fcf-protection`, configure gets `--enable-cet` (rule in `ch8-gen/gen.py`).
+- Also: background commands run under zsh, so `${PIPESTATUS[0]}` was empty. Exit codes are now read without a pipe.
+- glibc-2.44: 976 s. Tests: 6815 PASS, **1 FAIL (io/tst-lchmod, the book's first known failure)**, 16 XFAIL,
+  582 UNSUPPORTED, 0 timed out.
+- Checked: libc.so.6 carries `x86 feature: IBT, SHSTK`; `/etc/localtime` → Asia/Manila; 1861 files tracked.

@@ -64,8 +64,9 @@ cp -v services protocols /etc
 
 pkg_glibc() {
 # Autark flags without FORTIFY/LDFLAGS: glibc refuses forced _FORTIFY_SOURCE and links ld.so itself.
-# Fortification comes from --enable-fortify-source=3 below. Runs in build()'s subshell, so this is local.
-export CFLAGS="-O2 -march=x86-64-v3 -pipe -fstack-clash-protection -fcf-protection=full" CXXFLAGS="-O2 -march=x86-64-v3 -pipe -fstack-clash-protection -fcf-protection=full"
+# Fortification and CET come from --enable-fortify-source=3 and --enable-cet below (CET via CFLAGS
+# alone leaves ld.so without _dl_cet_* and the link fails). Runs in build()'s subshell, so this is local.
+export CFLAGS="-O2 -march=x86-64-v3 -pipe -fstack-clash-protection" CXXFLAGS="-O2 -march=x86-64-v3 -pipe -fstack-clash-protection"
 unset LDFLAGS
 patch -Np1 -i ../glibc-fhs-1.patch
 patch -Np1 -i ../glibc-2.44-upstream_fixes-1.patch
@@ -77,6 +78,7 @@ cd       build
              libc_cv_slibdir=/usr/lib        \
              --enable-stack-protector=strong \
              --enable-fortify-source=3       \
+             --enable-cet                    \
              --enable-kernel=5.10
 make
 {
