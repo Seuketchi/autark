@@ -7,7 +7,7 @@ Step by step, from an Ubuntu host to a running Autark with your own desktop shel
 Autark is built on the laptop it will run on, never on the work laptop. This step is done when the target laptop runs a temporary Ubuntu host, its hardware profile is in the repo, and the book's version check prints no errors. Book reference: chapter 2.2, "Host System Requirements".
 
 1. Install Ubuntu on the target laptop with manual partitioning. Put a 1 GB EFI partition first, leave the middle of the disk unallocated for Autark, and give Ubuntu 60 GB **at the end** of the disk. Autark's `/home` can then grow into Ubuntu's space once Ubuntu is gone.
-2. Clone this repo to `~/autark` and capture the hardware profile. It becomes the standard that the kernel and firmware steps use:
+2. Clone this repo to `~/autark`. Plug in and use every device you own first (dock, external monitor, headset, phone, USB drives, webcam, Bluetooth devices), so their drivers are loaded. Then capture the hardware profile, which becomes the standard the kernel and firmware steps use:
 
    ```
    bash ~/autark/scripts/capture-hardware.sh target
@@ -147,12 +147,16 @@ This step is done when Autark has a hardened kernel built for the target laptop,
    ```
 
    Then build everything the unlock path needs into the kernel (`=y`, not a module): the storage controller from `hardware/target/lspci.txt` (for NVMe, `CONFIG_BLK_DEV_NVME`, plus `CONFIG_VMD` if it sits behind Intel VMD, as on the work laptop), `CONFIG_DM_CRYPT`, `CONFIG_EXT4_FS`, `CONFIG_EFI_STUB`, and the TPM drivers (`CONFIG_TCG_TPM`, `CONFIG_TCG_CRB`). Add the kernel hardening defaults from [decisions.md](decisions.md), including signed modules. Also check that the systemd options from chapter 10.3 are set.
-3. Firmware from linux-firmware, copied into `/lib/firmware`: exactly the files listed in `hardware/target/firmware.txt`, which Step 0 captured. For comparison, the work laptop needs four (`hardware/work-laptop/firmware.txt`).
+
+   Then add a baseline of common drivers as loadable modules, so devices plugged in later still work: USB storage (`usb-storage`, `uas`), input (`usbhid`, `hid-generic`, `hid-multitouch`), USB networking and serial (`cdc_ether`, `r8152`, `cdc_acm`), webcams (`uvcvideo`), USB audio (`snd-usb-audio`), Bluetooth (`btusb`), USB-C and Thunderbolt (`typec_ucsi`, `thunderbolt`), and filesystems (`vfat`, `exfat`, `ntfs3`, `iso9660`, `udf`, `fuse`).
+
+   If the target needs an out-of-tree driver, build it with its own script (`scripts/pkg/kmod-<name>.sh`), which signs it with your module key. The script reruns on every kernel update.
+3. Firmware from linux-firmware, copied into `/lib/firmware`: exactly the files listed in `hardware/target/firmware.txt`, which Step 0 captured, plus the firmware for the baseline drivers above and the CPU microcode (Intel's microcode repository, or `amd-ucode` from linux-firmware). For comparison, the work laptop needs four (`hardware/work-laptop/firmware.txt`).
 4. zram (your memory-management choice): build `CONFIG_ZRAM` with zstd compression, then add a systemd unit that creates a zstd zram device sized at half of RAM with `zramctl` and turns it on as swap.
-5. Initramfs and signed boot image. The first boot uses dracut, with its systemd and TPM2 modules. Our Rust initramfs replaces it in Step 9. Combine the kernel, the initramfs and the kernel command line (`rd.luks.name=<LUKS UUID>=autark root=/dev/mapper/autark`) into one unified kernel image with `ukify`. Then create your Secure Boot keys and sign the image:
+5. Initramfs and signed boot image. The first boot uses dracut, with its systemd and TPM2 modules. Our Rust initramfs replaces it in Step 9. Combine the kernel, the CPU microcode (first, so it loads before anything else), the initramfs and the kernel command line (`rd.luks.name=<LUKS UUID>=autark root=/dev/mapper/autark`) into one unified kernel image with `ukify`. Then create your Secure Boot keys and sign the image:
 
    ```
-   ukify build --linux=vmlinuz --initrd=initramfs.img --cmdline=@cmdline --output=/boot/efi/EFI/Linux/autark.efi
+   ukify build --linux=vmlinuz --initrd=microcode.img --initrd=initramfs.img --cmdline=@cmdline --output=/boot/efi/EFI/Linux/autark.efi
    sbctl create-keys
    sbctl sign /boot/efi/EFI/Linux/autark.efi
    ```
@@ -184,13 +188,14 @@ This step is done when Autark boots into Wayfire with Wi-Fi, sound and Firefox w
 
 1. Basics: make-ca (TLS certificates), sudo, and OpenSSH.
 2. Networking: iwd for Wi-Fi with systemd-networkd, and systemd-resolved for DNS.
-3. Graphics: libdrm, Mesa (the Iris driver for your Iris Xe), Wayland, wayland-protocols and libinput.
+3. Graphics: libdrm, Mesa with the open driver for the target's GPU (iris/anv for Intel, radeonsi/radv for AMD, nouveau/NVK for NVIDIA), Wayland, wayland-protocols and libinput.
 4. Compositor: wlroots and Wayfire, built from upstream because BLFS doesn't cover them.
-5. Sound: PipeWire and WirePlumber, with your SOF audio firmware.
+5. Sound, camera and Bluetooth: PipeWire and WirePlumber (with the target's audio firmware), BlueZ, and V4L2 webcam support, plus libcamera if the target has a newer Intel laptop camera.
 6. Toolkit, fonts and basics: GTK4 and Rust (both needed for your shell), Geist and Geist Mono (Inter as an option), sudo-rs, foot, and rustic for backups.
 7. Work tools: Firefox (hardened defaults, uBlock Origin), git, Node.js, Python packages, adb (Android platform-tools), Wine, and WebKitGTK so Galley runs.
 8. Fingerprint: libfprint and fprintd, plus your out-of-tree ELAN 04f3:0c6c driver, built into the system this time so that updates stop breaking it.
-9. Local AI: Ollama, built from source, plus one small model. See [ai-layer.md](ai-layer.md).
+9. Local AI: Ollama, built from source, plus one small model.
+10. Devices and firmware updates: Android udev rules for adb, and fwupd for BIOS, SSD and dock firmware from LVFS. Printing (CUPS) is optional, for later. See [ai-layer.md](ai-layer.md).
 
 ## Step 9 — Your own desktop shell
 

@@ -86,6 +86,12 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | DNS | DNS over TLS to Quad9 | Lookups encrypted; non-profit, no logs, blocks malware domains |
 | Claude on the target | Claude Code with your personal Claude account | The company seat stays for company work |
 | Maintenance | Security fixes within a week, other updates monthly, A/B rebuilds for major upgrades, a weekly Kith health report, package scripts in the repo. See [maintenance.md](maintenance.md) | Secure without surprises, and every change can be undone |
+| Kernel driver coverage | Modules the target loads at capture time (with every device you own plugged in and used first), plus a baseline of common USB, storage, audio, video, Bluetooth and filesystem drivers as loadable modules | A device you plug in later still works |
+| CPU microcode | Loaded first at boot, inside the signed kernel image | CPU security fixes (the Spectre family) |
+| Firmware updates | fwupd with LVFS, applied by hand | Outdated BIOS, SSD or dock firmware is a security hole |
+| Out-of-tree drivers | Only when the target's hardware needs one; signed with your module key and rebuilt by script on every kernel update | Signed-modules-only enforcement refuses anything unsigned |
+| Graphics drivers | Open source only: Mesa iris/anv (Intel), radeonsi/radv (AMD), nouveau/NVK (NVIDIA) | No closed code in the kernel, and nothing to re-sign by hand |
+| Peripherals in v1 | Bluetooth (BlueZ), webcams (V4L2, plus libcamera for newer Intel laptop cameras, through PipeWire), Android udev rules for adb. Printing (CUPS) later, optional | What a laptop needs day to day |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected

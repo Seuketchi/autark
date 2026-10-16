@@ -10,6 +10,8 @@ Autark stays secure with a weekly check and a monthly update session, and every 
 | Everything else | One monthly batch | Rebuild changed packages, then reboot once for a new kernel |
 | Major upgrades | Each new LFS release you choose to adopt, about once a year | A/B rebuild (below) |
 | Health report | Weekly, from Kith | A task notification (below) |
+| Firmware and microcode | Checked in the monthly batch | `fwupd` for BIOS, SSD and dock firmware; microcode updates arrive with linux-firmware and Intel's microcode releases |
+| Out-of-tree drivers | On every kernel update | Their `kmod-<name>.sh` scripts rebuild and sign them before the reboot |
 
 Nothing updates itself. Kith reports, you decide, and the scripts do the work.
 
