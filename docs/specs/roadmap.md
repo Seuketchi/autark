@@ -15,6 +15,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 | M6 | Daily driver | System | 2027-05-16 | A full week on Autark with no fallback; then the temporary Ubuntu partition is deleted and Autark grows into its space | M2–M5 |
 | M7 | Kith everywhere | Shell | When the box exists | Kith moves to your own box: reachable over Signal from the phone, laptop actions through MCP, Wren migrated and retired | M5, and a box with about 16 GB of RAM where only you have root |
 | M8 | Notes v1 | Shell | 2027-03-14 | Autark Notes opens a vault with three panes, checklists, pins, live preview, `[[links]]`, backlinks, search, tags and graph view ([notes.md](notes.md)) | M3 |
+| M9 | System apps | Shell | 2027-06-13 | Files app, task manager with energy impact and force quit, widgets, and the `autark-stats` service ([decisions.md](decisions.md)) | M8 |
 
 After M6, maintenance takes a few hours a month: security advisories, kernel updates, and the yearly LFS releases ([build guide](build-guide.md)).
 

@@ -199,7 +199,7 @@ This step is done when Autark boots into Wayfire with Wi-Fi, sound and Firefox w
 
 ## Step 9 — Your own desktop shell
 
-This step is done when the five shell pieces you wrote run on Wayfire and nothing borrowed fills their places. They're written in Rust with gtk4-rs, and gtk4-layer-shell pins them to screen edges.
+This step is done when the shell pieces you wrote run on Wayfire and nothing borrowed fills their places. Pieces 1–5 come first (milestone M3); the rest follow on the roadmap. They're written in Rust with gtk4-rs, and gtk4-layer-shell pins them to screen edges.
 
 1. Top bar, the macOS-style menu bar: clock, Wi-Fi (iwd over D-Bus), battery (UPower) and volume (PipeWire).
 2. Dock: app icons with magnification on hover and indicators for running apps.
@@ -209,6 +209,10 @@ This step is done when the five shell pieces you wrote run on Wayfire and nothin
 6. AI daemon `autark-ai`: a session D-Bus service that the other pieces call for Jev decisions and Ollama answers. See [ai-layer.md](ai-layer.md).
 7. Rust initramfs `autark-init`: it asks for the PIN, unlocks the disk through libcryptsetup and tpm2-tss (via their Rust bindings, with no home-made crypto), mounts root and hands over to systemd. It replaces dracut once it boots reliably. The dracut image stays as a hidden fallback boot entry until then.
 8. Notes app: Apple Notes on the surface, Obsidian underneath, with plain Markdown files, `[[links]]`, backlinks and a graph view. See [notes.md](notes.md).
+9. `autark-stats`: a D-Bus service for system metrics (CPU, memory, disk, network, energy per app from cgroups and RAPL, battery health), polling only while something displays them.
+10. Task manager: apps and processes with CPU, memory, disk, network and energy impact, and the Ctrl+Alt+Esc force-quit window. It reads from `autark-stats`.
+11. Widgets: calendar and clock, battery (including Bluetooth devices), resources, Kith's tasks and suggestions, and a pinned note, shown in the notification centre and optionally on the desktop. Weather is opt-in.
+12. Files app: our own, after Notes, sharing its file code.
 
 You can start this today on Ubuntu, without waiting for the build: install Wayfire and gtk4-layer-shell from apt and develop the pieces in a Cargo workspace. The same code moves to Autark unchanged.
 

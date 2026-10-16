@@ -32,7 +32,7 @@ The launcher grows into a personal assistant called **Kith**, like Grok, but spl
 | --- | --- | --- |
 | Conversation | The launcher continues into a chat panel. Each turn is routed (action, question or search), and Kith answers with the earlier turns as context. History lives with Kith's brain, so a chat started on the phone continues on the laptop | Kept 7 days, configurable |
 | Memory | Facts about you ("builds Autark in the evenings", "project lives in ~/autark"). The assistant proposes each one and you approve it; nothing is saved silently. Stored with Kith's brain (Hermes memory on your box), with a read-only copy on the laptop for standalone mode. Viewable and editable in Settings › AI › Memory | On, approval required |
-| Suggestions | Code detects events (battery low, build finished, new Wi-Fi network). Jev scores whether each is worth interrupting you, given Focus and your memory. Suggestions appear as cards and never act on their own | At most 3 an hour; each has "don't suggest again" |
+| Suggestions | Code detects events (battery low, build finished, new Wi-Fi network, an app using high CPU or draining the battery for minutes, read from `autark-stats`). Jev scores whether each is worth interrupting you, given Focus and your memory. Suggestions appear as cards and never act on their own | At most 3 an hour; each has "don't suggest again" |
 
 Memory goes to Jev only as the specific fields a decision needs, and only for features where Jev is turned on.
 

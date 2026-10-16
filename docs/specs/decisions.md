@@ -92,6 +92,11 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Out-of-tree drivers | Only when the target's hardware needs one; signed with your module key and rebuilt by script on every kernel update | Signed-modules-only enforcement refuses anything unsigned |
 | Graphics drivers | Open source only: Mesa iris/anv (Intel), radeonsi/radv (AMD), nouveau/NVK (NVIDIA) | No closed code in the kernel, and nothing to re-sign by hand |
 | Peripherals in v1 | Bluetooth (BlueZ), webcams (V4L2, plus libcamera for newer Intel laptop cameras, through PipeWire), Android udev rules for adb. Printing (CUPS) later, optional | What a laptop needs day to day |
+| Task manager | Our own in Rust and GTK4, like Activity Monitor: apps and processes with CPU, memory, disk, network and energy impact, plus a force-quit window (Ctrl+Alt+Esc). btop stays available in the terminal | Energy impact supports the efficiency goal |
+| Resources day to day | A clean top bar, with meters as an option. Kith suggests quitting runaway apps (high CPU for minutes, or battery drain). Storage breakdown in Settings › About | Mac-like calm, without missing problems |
+| Widgets | In the notification centre, plus optional desktop widgets. Version 1: calendar and clock, battery (including Bluetooth devices), resources, Kith's upcoming tasks and suggestions, a pinned note. Weather is opt-in, since it sends your location (Open-Meteo, no account) | Useful at a glance; nothing leaves the laptop by default |
+| Widget sources | Only our own built-in Rust widgets in version 1; a sandboxed widget system can come later | No third-party code inside the shell |
+| System metrics | One Rust service, `autark-stats`, shares metrics over D-Bus with the task manager, widgets and Kith; it polls only while something is displaying them | Gathered once, and battery saved when nobody's looking |
 | Colour system | Linen (for now): warm whites #F6F4EF / #FFFFFF, text #24221E, sage accent #3F7A5F; dark-mode accent #7FC1A1 | Calm and light; white text on the accent stays readable |
 
 ## Rejected
