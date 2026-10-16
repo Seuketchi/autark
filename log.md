@@ -239,3 +239,34 @@ Open before Step 7b:
 - Not testable in qemu: Wi-Fi, Ethernet (emulated NIC has no driver here), graphics, audio, TPM, Secure Boot.
 
 Milestone M1 (bootable base): booted in qemu. Done on the real disk at the end of Step 7b.
+
+## 2026-10-17 — Signing, tested with Secure Boot on (before Step 7b)
+
+- No sbctl (Go) or sbsigntools needed: systemd 261 already built `systemd-sbsign` and `systemd-keyutil` (with the
+  bootloader=enabled rebuild), and ukify signs through it.
+- Key (`step6-boot-inside.sh`, `step_secureboot_key`): RSA-2048 (widest firmware support), SHA-256, 10 years,
+  CN "Autark Secure Boot db 2026", sha256 fingerprint 21:7D:B0:99:…:43:A5:75:CF. Private key
+  `/etc/autark/secureboot/db.key` (dir 0700, key 0400, encrypted root); public cert on the ESP at
+  `EFI/autark/autark-db.der` for enrolling from the firmware setup screen. Trade-off: any root process can sign.
+- ukify: `--signtool=systemd-sbsign --no-sign-kernel` (systemd-sbsign can't yet check whether the inner kernel is
+  signed; the outer signature covers the whole image anyway).
+- Bug fixed: the old script renamed autark.efi → autark-previous.efi *before* building, so a failed build left no
+  autark.efi. Now builds to `.new`, rotates only after success.
+- Independent check (host's `sbverify`, another project): autark.efi and BOOTX64.EFI "Signature verification OK";
+  the old unsigned image "Signature verification failed".
+- **Secure Boot boot test** (host `python3-virt-firmware`, your OK): OVMF secboot build; variables = Microsoft's
+  standard KEK/db + Autark's cert appended to db (mirrors the plan for the dual-boot laptop). Disks read with
+  snapshot=on (autark.img untouched).
+  - Signed autark.efi: **accepted** — "Secure boot enabled", kernel loaded "Autark Secure Boot db 2026" from db,
+    lockdown on, reached the passphrase prompt.
+  - Unsigned image on a separate test disk: **refused** — "Access Denied -- rejected probably by Secure Boot".
+
+Host note (not Autark's): an Ubuntu kernel update to 7.0.0-38 started 06:04 today and can't finish: the
+`openvpn-dco-dkms` module (ovpn-dco) fails to compile against it (API change in setup_udp_tunnel_sock / TCP recvmsg).
+Not caused by the /bin/sh change (it's a C compile error). Ubuntu still boots -34: grub.cfg (25 Sep) has no -38.
+Your call: wait for a fixed openvpn-dco-dkms, or drop it (kernels ≥ 6.16 carry an in-tree `ovpn`).
+
+Open before Step 7b: [x] signing. [ ] SOF audio firmware. [ ] firewall. [ ] remove the build key file (slot 0 of
+root A and /home's build key) and shred /root/autark-build.key. [ ] Secure Boot on the real MSI firmware: append
+`autark-db.der` to db from the setup screen (keeps MSI/Microsoft keys, Windows and Ubuntu boot) vs. replacing all
+keys. [ ] ovpn-dco on the host (yours).
