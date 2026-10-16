@@ -42,3 +42,13 @@ Every package built, every change made, every error. Enough to repeat the build 
 - Host change: `/etc/bash.bashrc` → `/etc/bash.bashrc.NOUSE` (book 4.4). **Restore after the build.**
 - `su - lfs -c '…'` hangs: the book's `.bash_profile` execs an interactive bash and `su -` starts a full user session.
   Scripts run as lfs through `scripts/as-lfs.sh` instead (same `env -i` + `.bashrc`, no login).
+
+## 2026-10-16 — Step 3 (cross-toolchain, chapter 5)
+
+- Script: `scripts/lfs/ch5-cross-toolchain.sh` (book commands verbatim), run from a copy in `$LFS/sources`
+  because `/home/tan` is 750 and `lfs` can't read the repo. Per-package logs in `$LFS/sources/logs/`.
+- binutils-2.47 pass 1: 58 s → **1 SBU = 58 s** on this laptop (12 threads).
+- gcc-16.2.0 pass 1: 363 s (6.3 SBU). linux-7.1.8 headers: 2 s. glibc-2.44: 108 s (1.9 SBU).
+- Sanity check matches the book: interpreter `/lib64/ld-linux-x86-64.so.2`; Scrt1/crti/crtn from `$LFS/lib`;
+  headers from `$LFS/tools` and `$LFS/usr/include`; libc from `$LFS/usr/lib/libc.so.6`.
+- LFS 13.1 has no libstdc++ in chapter 5; GCC pass 2 builds it (chapter 6).

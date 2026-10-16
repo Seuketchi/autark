@@ -112,7 +112,9 @@ This step is done when a test program compiled with the new toolchain links agai
 2. GCC, pass 1: a C/C++ compiler with no C library yet.
 3. Linux API headers: the kernel interface that glibc compiles against.
 4. Glibc: the C library, built with the pass-1 compiler. Then run the book's sanity check, and stop if it fails.
-5. Libstdc++: the C++ standard library, so that later C++ packages can build.
+5. Libstdc++: the C++ standard library. Since LFS 13.1 it's no longer a chapter 5 package: GCC pass 2 (Step 4) builds it along with libgcc.
+
+The commands are the book's, verbatim, in [`scripts/lfs/ch5-cross-toolchain.sh`](../../scripts/lfs/ch5-cross-toolchain.sh). `lfs` can't read your home folder, so copy the script into `$LFS/sources` and run it with `scripts/as-lfs.sh 'bash $LFS/sources/ch5-cross-toolchain.sh'`. It stops if the sanity check's program doesn't ask for `$LFS`'s `/lib64/ld-linux-x86-64.so.2`.
 
 Why cross-compile on the same CPU: the new target name forces every tool to use `$LFS` instead of Ubuntu's files. That's what makes Autark independent of the host.
 
