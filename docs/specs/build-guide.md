@@ -1,6 +1,6 @@
 # Autark build guide
 
-Step by step, from an Ubuntu host to a running Autark with your own desktop shell. Decisions behind each step are in [decisions.md](decisions.md). Living copy: [Autark Build Guide](https://claude.ai/code/artifact/e1199097-7d66-41a3-90e9-4fb6ac08964e).
+Step by step, from an Ubuntu host to a running Autark with your own desktop shell. Decisions behind each step are in [decisions.md](decisions.md).
 
 ## Step 0 — Prepare the Ubuntu host
 

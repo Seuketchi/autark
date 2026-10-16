@@ -2,8 +2,6 @@
 
 Autark is a Linux From Scratch system, systemd edition, with a Mac-like desktop whose shell you write yourself. It will replace the OS on a second laptop. Claude runs the build and you make every decision. Settled on 2026-10-16.
 
-Living copy: [Autark Build Guide](https://claude.ai/code/artifact/e1199097-7d66-41a3-90e9-4fb6ac08964e)
-
 ## Hardware standard
 
 This laptop is the reference machine. Its full profile is in [`hardware/`](../../hardware/).
