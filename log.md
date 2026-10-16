@@ -222,3 +222,20 @@ Open before Step 7b:
 - [ ] Firewall (decisions.md: nftables, block incoming) — nothing listens yet.
 - [ ] Lockdown=integrity disables hibernation; decisions.md mentions an optional hibernate swap file. Your call.
 - [ ] The kernel's version string says root@Seukechi (chroot borrows the host name). Cosmetic.
+
+## 2026-10-17 — Step 7a: first boot in qemu ✅
+
+- Your disk passphrase added to root A (slot 1; slot 0 is still the build key file). Root password set.
+- `passwd` in a bare `chroot` failed instantly ("Please use a combination…") without ever prompting: no `/dev/tty`
+  inside the chroot, so it read an empty password. Fix: `mount --bind /dev /mnt/lfs/dev` just for that command.
+  (Shadow's OBSCURE_CHECKS also rejects all-lowercase passwords: mix case and a digit.)
+- Image fully released on the host first (unmounted, both LUKS closed, loop detached), then
+  `scripts/qemu-boot.sh`: OVMF, emulated NVMe, serial console in the terminal, recorded to qemu-boot.log.
+- Boot, from the VM's own journal (read afterwards from the host, read-only): OVMF started `autark.efi` directly
+  (no bootloader) → kernel locked down → initramfs found the NVMe disk → passphrase → root unlocked → /home
+  unlocked by its key file → zram 2 GB swap (half of 4 GB) → multi-user → login as root → clean poweroff.
+  Errors: only `virt/tdx: TDX not supported by the host platform` (qemu; harmless). No failed units.
+  Confirmed: "Lockdown: hibernation is restricted" (the open hibernate item).
+- Not testable in qemu: Wi-Fi, Ethernet (emulated NIC has no driver here), graphics, audio, TPM, Secure Boot.
+
+Milestone M1 (bootable base): booted in qemu. Done on the real disk at the end of Step 7b.
