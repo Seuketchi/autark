@@ -65,6 +65,18 @@ Everything is configurable, so someone else running Autark can point Kith at the
 4. Switch the model from DeepSeek to the self-hosted Ollama, and the channel from Telegram to Signal.
 5. Retire Wren's gateway. Telegram allows only one poller anyway.
 
+## Work tasks: Kith to Claude Code
+
+Kith dispatches company work but never does it. Your Claude account is company-owned (the reason Wren runs on Hermes), so company code goes to Claude Code and personal work stays with Kith. Hermes ships a `claude-code` skill for exactly this handoff.
+
+1. **Recognise.** You tell Kith something like "build this feature in the mobile app". Kith classifies it as work for a known repo, using a project map in config (for example `the-mobile-app` → `~/projects/the-mobile-app`).
+2. **Confirm.** Kith asks before starting: "Start Claude Code in `~/projects/the-mobile-app` with: …?" Starting a work task is always an *ask* action.
+3. **Run on the laptop.** Kith calls the laptop's MCP tool `start_coding_task(repo, prompt)`. Claude Code runs there, with the company login, in a terminal you can watch and step into. Small, read-only jobs can use headless mode (`claude -p`). This holds even after Kith moves to its own box: company code and credentials never leave the laptop.
+4. **Keep the boundary.** Only your request text goes to Claude Code. Kith gets back a short status (running, needs your input, PR ready, failed) and a link, never the code or the transcript. Claude Code never sees Kith's memory.
+5. **Report back.** A Claude Code hook tells `autark-ai` when the session stops or needs you. Kith then notifies you on the laptop, and over Signal once it has its own box.
+
+Claude Code's own commands still pass the terminal safety check: a hook that runs before each command asks `autark-ai` `Check(command)`, so destructive commands get confirmed and logged like yours. Claude Code's file access is governed by its own permission settings, and Autark can sandbox it to project folders. Anything it reads, including notes, goes to Anthropic.
+
 ## Tasks
 
 Tasks are scheduled prompts, like Grok Tasks, but they run on hardware you own instead of in a cloud. Example: "every morning at 8, summarise last night's build log".
@@ -91,6 +103,7 @@ A Rust service on the session D-Bus, `org.autark.AI1`. Every shell piece talks t
 - `ProposeMemory(fact)` asks you to approve a memory; `Forget(id)` removes one.
 - `Suggestion` is a signal the notification centre and assistant panel listen for.
 - `CreateTask(spec)`, `ListTasks()` and `RunTask(id)` manage tasks; `TaskFinished` is a signal carrying the result.
+- `StartCodingTask(repo, prompt)` starts a Claude Code session after you confirm; `CodingTaskStatus` is a signal (running, needs input, PR ready, failed).
 
 ## Rules
 
