@@ -3,3 +3,4 @@
 *.tar.xz
 sources/
 version-check.sh
+ovmf-vars.fd

@@ -4,10 +4,10 @@ Step by step, from an Ubuntu host to a running Autark with your own desktop shel
 
 ## Step 0 — Prepare the target laptop
 
-Autark is built on the laptop it will run on, never on the work laptop. This step is done when the target laptop runs a temporary Ubuntu host, its hardware profile is in the repo, and the book's version check prints no errors. Book reference: chapter 2.2, "Host System Requirements".
+Autark is built on the laptop it will run on, never on the work laptop. This step is done when the target laptop runs an Ubuntu host, its hardware profile is in the repo, and the book's version check prints no errors. Book reference: chapter 2.2, "Host System Requirements".
 
-1. Install Ubuntu on the target laptop with manual partitioning. Put a 1 GB EFI partition first, leave the middle of the disk unallocated for Autark, and give Ubuntu 60 GB **at the end** of the disk. Autark's `/home` can then grow into Ubuntu's space once Ubuntu is gone.
-2. Clone this repo to `~/autark`. Plug in and use every device you own first (dock, external monitor, headset, phone, USB drives, webcam, Bluetooth devices), so their drivers are loaded. Then capture the hardware profile, which becomes the standard the kernel and firmware steps use:
+1. Use the Ubuntu the target laptop already runs; nothing is repartitioned yet. Autark is built into a disk image file (Step 1), boots in qemu first, and moves onto the real disk only once it works (Step 7). The image is sparse, so it only takes the space actually written: keep about 60 GB free for it and the sources. A laptop with no Ubuntu gets one installed normally first.
+2. Clone this repo to `~/autark` (if it lives elsewhere, use that path in every command below). Plug in and use every device you own first (dock, external monitor, headset, phone, USB drives, webcam, Bluetooth devices), so their drivers are loaded. Then capture the hardware profile, which becomes the standard the kernel and firmware steps use:
 
    ```
    bash ~/autark/scripts/capture-hardware.sh target
@@ -19,55 +19,73 @@ Autark is built on the laptop it will run on, never on the work laptop. This ste
    ```
    sudo apt install bison gawk m4 texinfo cryptsetup efibootmgr qemu-system-x86 ovmf
    ```
-4. Make `/bin/sh` point to bash. Run `sudo dpkg-reconfigure dash` and answer No. Then check that `readlink -f /bin/sh` prints `/usr/bin/bash`.
+4. Make `/bin/sh` point to bash. On Ubuntu 26.04 `dpkg-reconfigure dash` no longer does this: the dash package ships `/usr/bin/sh` itself and ignores the answer. Divert dash's link instead, so dash updates can't put it back, then check that `readlink -f /bin/sh` prints `/usr/bin/bash`:
+
+   ```
+   sudo dpkg-divert --local --add --rename --divert /usr/bin/sh.dash /usr/bin/sh && sudo ln -s bash /usr/bin/sh
+   ```
+
+   To undo it after the build: `sudo rm /usr/bin/sh && sudo dpkg-divert --remove --rename /usr/bin/sh`.
 5. Copy the `version-check.sh` script from chapter 2.2 into `~/autark/` and run `bash ~/autark/version-check.sh`. Every line should say OK.
 6. Install Claude Code and sign in with your **personal** Claude account; the company seat stays on the work laptop.
 7. Start the build log at `~/autark/log.md`. Write down every package you build, any changes you made, and every error. With it, the build can be repeated without Claude.
 
 Why: LFS builds its first compiler with the host's tools, and the book's scripts use bash-only syntax. A missing tool shows up as a confusing failure an hour into the build.
 
-## Step 1 — Create the encrypted Autark partition
+## Step 1 — Create the encrypted Autark disk image
 
-This step is done when encrypted root A is mounted at `/mnt/lfs`, encrypted `/home` at `/mnt/lfs/home`, and the EFI partition at `/mnt/lfs/boot/efi`. Root B is created but left empty for the first major upgrade ([maintenance.md](maintenance.md)). Book reference: chapters 2.4–2.7.
+This step is done when the image's encrypted root A is mounted at `/mnt/lfs`, its encrypted `/home` at `/mnt/lfs/home`, and its own EFI partition at `/mnt/lfs/boot/efi`. Root B is created but left empty for the first major upgrade ([maintenance.md](maintenance.md)). Book reference: chapters 2.4–2.7.
+
+The image is laid out exactly like the real disk will be: the same four partitions, so Step 7 copies them across one by one. LFS only needs *something* mounted at `$LFS`; a loop device (an image file the kernel treats as a disk) works the same as a partition.
 
 1. **You** add the temporary sudo rule, on the target laptop only. It's removed in Step 7:
 
    ```
    echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/autark-build && sudo visudo -c
    ```
-2. Check the disk's device name with `lsblk`, then create three partitions in the unallocated middle of the disk: root A (80 GB), root B (80 GB) and `/home` (everything up to Ubuntu's partition). There's no swap partition, because zram handles swap.
+2. Create the image with four partitions. It's sparse: its size is a ceiling, and only written blocks use space on Ubuntu's disk. Root B stays unwritten, so it costs nothing until the first upgrade. There's no swap partition, because zram handles swap.
 
    ```
-   DISK=/dev/nvme0n1                      # from lsblk; may differ
-   sudo parted $DISK mkpart autark-a ext4 <start of free space> +80GiB
-   sudo parted $DISK mkpart autark-b ext4 <end of autark-a> +80GiB
-   sudo parted $DISK mkpart autark-home ext4 <end of autark-b> <start of Ubuntu's partition>
+   IMG=~/autark/autark.img
+   truncate -s 90G $IMG
+   parted -s $IMG mklabel gpt \
+     mkpart autark-esp fat32 1MiB 1GiB set 1 esp on \
+     mkpart autark-a ext4 1GiB 41GiB \
+     mkpart autark-b ext4 41GiB 81GiB \
+     mkpart autark-home ext4 81GiB 100%
    ```
-3. Encrypt root A and `/home` with LUKS2 and format them. Root B stays unformatted until the first upgrade.
+
+   The sizes are the ceiling for the real partitions too, so pick them for the disk Autark will move to. 40 GB per root is an estimate, not a measurement: the installed system should stay well under it, and the biggest builds in Step 8 (Firefox, Rust, WebKitGTK) need their room only while compiling, since each package's build folder is deleted once it's installed. Before each of those, check its "Required disk space" in BLFS against `df -h /`. The spec's earlier 80 GB was sized for keeping build folders around.
+3. Attach the image as a disk. Its partitions show up as `${LOOP}p1` to `${LOOP}p4`:
 
    ```
-   AUTARK=${DISK}p2; HOME_PART=${DISK}p4  # check the numbers with lsblk
-   sudo cryptsetup luksFormat --type luks2 $AUTARK
-   sudo cryptsetup luksFormat --type luks2 $HOME_PART
-   sudo cryptsetup open $AUTARK autark
-   sudo cryptsetup open $HOME_PART autark-home
+   LOOP=$(sudo losetup -fP --show $IMG)    # e.g. /dev/loop40
+   ```
+4. Format the EFI partition, then encrypt root A and `/home` with LUKS2 and format them. Root B stays unformatted until the first upgrade.
+
+   ```
+   sudo mkfs.vfat -F 32 -n AUTARK-ESP ${LOOP}p1
+   sudo cryptsetup luksFormat --type luks2 ${LOOP}p2
+   sudo cryptsetup luksFormat --type luks2 ${LOOP}p4
+   sudo cryptsetup open ${LOOP}p2 autark
+   sudo cryptsetup open ${LOOP}p4 autark-home
    sudo mkfs.ext4 -L autark-a /dev/mapper/autark
    sudo mkfs.ext4 -L autark-home /dev/mapper/autark-home
    ```
 
-   At boot, `/home` unlocks with a key file stored inside the unlocked root (listed in `/etc/crypttab`), so you only enter the PIN once.
-4. Mount it and set `$LFS`, which every later step uses. Autark shares the EFI partition with the temporary Ubuntu:
+   At boot, `/home` unlocks with a key file stored inside the unlocked root (listed in `/etc/crypttab`), so you only enter the PIN once. The LUKS UUIDs travel with the partitions when Step 7 copies them, so the kernel command line and `/etc/crypttab` stay valid on the real disk.
+5. Mount it and set `$LFS`, which every later step uses. Autark has its own EFI partition, so nothing touches Ubuntu's or Windows' boot files:
 
    ```
    export LFS=/mnt/lfs
    sudo mkdir -p $LFS && sudo mount /dev/mapper/autark $LFS
    sudo mkdir -p $LFS/home && sudo mount /dev/mapper/autark-home $LFS/home
-   sudo mkdir -p $LFS/boot/efi && sudo mount ${DISK}p1 $LFS/boot/efi
+   sudo mkdir -p $LFS/boot/efi && sudo mount ${LOOP}p1 $LFS/boot/efi
    ```
 
-The partition unlocks with a passphrase for now. TPM-plus-PIN unlocking is added in Step 7.
+The partitions unlock with a passphrase for now. TPM-plus-PIN unlocking is added in Step 7, on the real disk.
 
-After a reboot, unlock it with `cryptsetup open` and run the two mount commands again before continuing.
+After a reboot, attach the image again (`LOOP=$(sudo losetup -fP --show $IMG)`), unlock both partitions with `cryptsetup open`, and run the three mount commands again before continuing.
 
 ## Step 2 — Get the sources and set up the build user
 
@@ -161,24 +179,62 @@ This step is done when Autark has a hardened kernel built for the target laptop,
    sbctl sign /boot/efi/EFI/Linux/autark.efi
    ```
 
-   There's no bootloader: the firmware starts the signed image directly, through boot entries added in Step 7. Leave `EFI/BOOT/BOOTX64.EFI` alone, since it's the temporary Ubuntu's fallback. Keep the previous image as `autark-previous.efi`; it becomes the fallback boot entry.
+   There's no bootloader: the firmware starts the signed image directly, through boot entries added in Step 7. Also copy it to `EFI/BOOT/BOOTX64.EFI`, the path firmware tries on a disk with no boot entries; that's how qemu finds it in Step 7. This is Autark's own EFI partition, so the copy can't overwrite Ubuntu's or Windows' fallback. Keep the previous image as `autark-previous.efi`; it becomes the fallback boot entry.
+
+   Keep a few kernel options the trimmed config would otherwise drop, so the image also boots in qemu: `CONFIG_SERIAL_8250_CONSOLE` (a serial console) and `CONFIG_DRM_SIMPLEDRM` (a basic screen from the firmware's framebuffer). qemu boots it through the same `nvme` driver the laptop uses.
 
 ## Step 7 — Boot it
 
-This step is done when Autark boots from the target laptop's own disk, Secure Boot uses your keys, the disk unlocks with TPM plus PIN, and the temporary sudo rule is gone.
+This step is done when Autark boots from the target laptop's own disk, Secure Boot uses your keys, the disk unlocks with TPM plus PIN, and the temporary sudo rule is gone. It happens in two parts: boot the image in qemu, then move it onto the disk.
 
-1. Unmount and lock the partitions: `sudo umount -R $LFS && sudo cryptsetup close autark-home && sudo cryptsetup close autark`.
-2. Add firmware boot entries for Autark and its fallback. Ubuntu's entry stays as the way back:
+### 7a — In qemu
+
+1. Unmount, lock and detach the image: `sudo umount -R $LFS && sudo cryptsetup close autark-home && sudo cryptsetup close autark && sudo losetup -d $LOOP`.
+2. Boot it with UEFI firmware (OVMF), on an emulated NVMe disk. The firmware's settings are kept in a copy, so the original stays clean:
 
    ```
-   sudo efibootmgr --create --disk $DISK --part 1 --label "Autark" --loader '\EFI\Linux\autark.efi'
-   sudo efibootmgr --create --disk $DISK --part 1 --label "Autark (previous)" --loader '\EFI\Linux\autark-previous.efi'
+   cp /usr/share/OVMF/OVMF_VARS_4M.fd ~/autark/ovmf-vars.fd
+   qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m 4G \
+     -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd \
+     -drive if=pflash,format=raw,file=$HOME/autark/ovmf-vars.fd \
+     -drive file=$HOME/autark/autark.img,format=raw,if=none,id=disk \
+     -device nvme,drive=disk,serial=autark \
+     -serial mon:stdio
    ```
-3. Reboot and pick Autark from the firmware boot menu. Check that it asks for the disk passphrase, you can log in, the network comes up, `zramctl` shows the swap device, and the Wi-Fi, audio and graphics firmware all load (`journalctl -k`).
-4. **Secure Boot:** put the firmware in setup mode and run `sbctl enroll-keys --microsoft`. Keeping Microsoft's keys alongside yours lets the temporary Ubuntu and firmware add-ons still boot.
-5. **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline.
-6. **You** remove the sudo rule from Ubuntu: `sudo rm /etc/sudoers.d/autark-build`.
-7. Later, at milestone M6, when Autark is the daily driver: delete the Ubuntu partition and its boot entry, then grow `/home` into the freed space (`parted resizepart`, `cryptsetup resize autark-home`, `resize2fs /dev/mapper/autark-home`).
+3. Check that it asks for the disk passphrase, unlocks `/home`, you can log in, and `zramctl` shows the swap device. qemu has none of the laptop's devices, so Wi-Fi, Ethernet, audio and graphics are checked in 7b. Secure Boot is unsigned here (OVMF without keys); your own keys go on the real firmware.
+
+A boot failure here costs a reboot of a window, not of the laptop. Fix it from Ubuntu (attach, unlock, mount, `chroot`), rebuild the image in Step 6, and try again.
+
+### 7b — Onto the laptop's disk
+
+The disk has Windows, its recovery partition and Ubuntu, with no free space. Ubuntu is last, so shrinking it frees space at the end of the disk, and Autark goes there. Partition order doesn't matter to the firmware.
+
+1. Back up everything Ubuntu holds that can't be re-downloaded: uncommitted and unpushed git work, datasets, documents. A shrink that's interrupted (power, crash) can corrupt the filesystem.
+2. Boot GParted Live from a USB stick, so Ubuntu isn't running, and shrink Ubuntu's partition from its end until the free space after it is at least the image's size (90 GB). ext4 can only shrink while unmounted, which is why this runs from the stick.
+3. Back in Ubuntu, create four partitions in the free space with the same sizes as the image's (Step 1), then copy each one across. Root B is empty, so it's created but not copied. Check every device name with `lsblk` first: `dd` overwrites whatever it's pointed at.
+
+   ```
+   DISK=/dev/nvme0n1                       # from lsblk; may differ
+   LOOP=$(sudo losetup -rfP --show ~/autark/autark.img)   # read-only
+   sudo dd if=${LOOP}p1 of=<new ESP>    bs=4M status=progress conv=fsync
+   sudo dd if=${LOOP}p2 of=<new root A> bs=4M status=progress conv=fsync
+   sudo dd if=${LOOP}p4 of=<new /home>  bs=4M status=progress conv=fsync
+   ```
+
+   Mark the new ESP as an EFI partition (`parted $DISK set <n> esp on`). Copying whole partitions keeps the LUKS UUIDs, so the kernel command line and `/etc/crypttab` need no edits.
+4. Add firmware boot entries for Autark and its fallback, on Autark's own EFI partition. Ubuntu's and Windows' entries stay as the way back:
+
+   ```
+   sudo efibootmgr --create --disk $DISK --part <new ESP number> --label "Autark" --loader '\EFI\Linux\autark.efi'
+   sudo efibootmgr --create --disk $DISK --part <new ESP number> --label "Autark (previous)" --loader '\EFI\Linux\autark-previous.efi'
+   ```
+
+   A second EFI partition is allowed by the UEFI spec, but whether this laptop's firmware lists entries from it isn't verified yet. If Autark's entry doesn't appear in the boot menu, copy `EFI/Linux/` to the first EFI partition instead, if it has room.
+5. Reboot and pick Autark from the firmware boot menu. Check that it asks for the disk passphrase, you can log in, the network comes up, `zramctl` shows the swap device, and the Wi-Fi, audio and graphics firmware all load (`journalctl -k`).
+6. **Secure Boot:** put the firmware in setup mode and run `sbctl enroll-keys --microsoft`. Keeping Microsoft's keys alongside yours lets Ubuntu, Windows and firmware add-ons still boot.
+7. **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline.
+8. **You** remove the sudo rule from Ubuntu: `sudo rm /etc/sudoers.d/autark-build`. Once Autark has booted from the disk for a week, delete `autark.img`.
+9. Later, at milestone M6, when Autark is the daily driver: Ubuntu's space sits *before* Autark's partitions, so `/home` can't simply grow into it. Decide then: a second encrypted volume there, or moving `/home` into it.
 
 Testing images in qemu (with OVMF) is still useful for the Rust initramfs and new kernels, before they go onto the real disk.
 
