@@ -122,6 +122,17 @@ DEBUG_INFO_DWARF4 n
 DEBUG_INFO_DWARF5 n
 DEBUG_INFO_NONE y
 
+# Firewall (decisions.md: nftables, block all incoming). localmodconfig kept nf_tables but dropped conntrack
+# matching (Ubuntu's rules at capture time didn't use it); without NFT_CT, "allow replies" is impossible.
+NF_TABLES m
+NF_TABLES_INET y
+NF_CONNTRACK m
+NFT_CT m
+NFT_REJECT m
+NFT_REJECT_INET m
+NFT_LIMIT m
+NFT_LOG m
+
 # qemu test boot (build guide 7a): serial console; the screen comes from SIMPLEDRM above
 SERIAL_8250 y
 SERIAL_8250_CONSOLE y
@@ -201,6 +212,9 @@ set +e
   check
   echo "== config checked: every required option is set"
   make -j"$(nproc)"
+  # Each build makes a new module-signing key, and MODULE_SIG_FORCE refuses modules signed by an old one,
+  # so no module from a previous build may survive.
+  rm -rf /usr/lib/modules/$KVER
   make INSTALL_MOD_STRIP=1 modules_install
   install -d /boot
   cp -v arch/x86/boot/bzImage /boot/vmlinuz-$KVER-autark
