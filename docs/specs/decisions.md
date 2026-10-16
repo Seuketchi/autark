@@ -49,8 +49,11 @@ This laptop is the reference machine. Its full profile is in [`hardware/`](../..
 | Init | systemd | Familiar from Ubuntu, and expected by desktop software |
 | Root filesystem | ext4 | Supported by the book with no extra steps |
 | Swap | zram, plus an optional swap file for hibernate | Compressed RAM swap suits a laptop |
-| Bootloader | GRUB, UEFI, installed on the removable-media path | Covered step by step in the LFS and BLFS books |
-| Secure Boot | Off on the target | Saves signing every kernel you build |
+| Disk encryption | The whole root disk (LUKS2), unlocked by the TPM chip plus a PIN, with a recovery key kept offline | Protects everything if the laptop is stolen |
+| Bootloader | None: the firmware starts a signed unified kernel image directly, with the previous image as the fallback entry | The smallest attack surface, with nothing between the firmware and your signed kernel |
+| Secure Boot | On, with your own keys (sbctl) | Only kernels you signed can boot |
+| Initramfs | dracut for the first boot, then our own in Rust (`autark-init`) | We build our own code in Rust; the cryptography stays in libcryptsetup and tpm2-tss |
+| Own code | Rust | Anything we write ourselves: shell, AI daemon, initramfs, tools |
 | Package tracking | DESTDIR staging and file lists, from chapter 8 onward | So packages can be cleanly upgraded or removed later |
 | Build host | This laptop, into an 80 GB sparse disk image | Leaves your work system untouched |
 | Root access | Temporary passwordless sudo rule, removed after the build | Chapters 7 to 10 run as root in a chroot |
@@ -68,6 +71,8 @@ This laptop is the reference machine. Its full profile is in [`hardware/`](../..
 - **Writing your own kernel:** it would mean writing every driver yourself, and it couldn't replace a daily system.
 - **Remastering Ubuntu (Cubic, live-build):** not built from scratch.
 - **Off-the-shelf shell pieces (Waybar, nwg-dock, Walker), Quickshell, AGS:** you'll write your own instead.
+- **GRUB, systemd-boot:** they add code to the chain of trust that a firmware-started signed image doesn't need.
+- **A custom bootloader, for now:** it mostly buys a boot menu, which is aesthetics. You can revisit it later as a small Rust project (the `uefi` crate).
 
 ## Open
 

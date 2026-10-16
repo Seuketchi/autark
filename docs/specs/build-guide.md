@@ -39,17 +39,21 @@ This step is done when an empty ext4 root and an EFI partition are mounted at `/
      mkpart ESP fat32 1MiB 513MiB set 1 esp on \
      mkpart autark ext4 513MiB 100%
    sudo mkfs.vfat -F32 -n EFI ${LOOP}p1
-   sudo mkfs.ext4 -L autark ${LOOP}p2
+   sudo cryptsetup luksFormat --type luks2 ${LOOP}p2
+   sudo cryptsetup open ${LOOP}p2 autark
+   sudo mkfs.ext4 -L autark /dev/mapper/autark
    ```
 4. Mount it and set `$LFS`, which every later step uses:
 
    ```
    export LFS=/mnt/lfs
-   sudo mkdir -p $LFS && sudo mount ${LOOP}p2 $LFS
+   sudo mkdir -p $LFS && sudo mount /dev/mapper/autark $LFS
    sudo mkdir -p $LFS/boot/efi && sudo mount ${LOOP}p1 $LFS/boot/efi
    ```
 
-After a reboot, re-attach the image with `losetup -fP` and run the two mount commands again before continuing.
+The root partition is encrypted with LUKS2. In the image it unlocks with a passphrase. TPM-plus-PIN unlocking is added on the target laptop in Step 7, because the TPM chip belongs to the machine.
+
+After a reboot, re-attach the image with `losetup -fP`, unlock it with `cryptsetup open`, and run the two mount commands again before continuing.
 
 ## Step 2 — Get the sources and set up the build user
 
@@ -116,9 +120,9 @@ This step is done when all chapter 8 packages are installed, the toolchain test 
 
 Why track: to upgrade or remove a package later, you need to know exactly which files it owns. LFS records nothing on its own.
 
-## Step 6 — Configure, kernel and bootloader
+## Step 6 — Configure, kernel and signed boot image
 
-This step is done when the image has a kernel built for this laptop, its firmware, zram swap and a GRUB that boots from the EFI partition. Book reference: chapters 9–10, plus BLFS for UEFI GRUB.
+This step is done when the image has a hardened kernel built for this laptop, its firmware, zram swap, and a signed unified kernel image that the firmware starts directly. Book reference: chapters 9–10.
 
 1. System identity and config (chapter 9): hostname `autark`, `/etc/os-release` with `NAME="Autark"` and `ID=autark`, systemd-networkd for Ethernet, and locale, timezone and keyboard copied from your Ubuntu settings.
 2. Kernel, trimmed to this laptop. Start from Ubuntu's config and keep only the modules your hardware loads:
@@ -128,7 +132,7 @@ This step is done when the image has a kernel built for this laptop, its firmwar
    make localmodconfig LSMOD=~/autark/hardware/lsmod.txt
    ```
 
-   Then build the boot path into the kernel (`=y`, not a module), so no initramfs is needed: `CONFIG_VMD` (your NVMe sits behind Intel VMD), `CONFIG_BLK_DEV_NVME`, `CONFIG_EXT4_FS` and `CONFIG_EFI_STUB`. Also check that the systemd options from chapter 10.3 are set.
+   Then build everything the unlock path needs into the kernel (`=y`, not a module): `CONFIG_VMD` (your NVMe sits behind Intel VMD), `CONFIG_BLK_DEV_NVME`, `CONFIG_DM_CRYPT`, `CONFIG_EXT4_FS`, `CONFIG_EFI_STUB`, and the TPM drivers (`CONFIG_TCG_TPM`, `CONFIG_TCG_CRB`). Add the kernel hardening defaults from [decisions.md](decisions.md), including signed modules. Also check that the systemd options from chapter 10.3 are set.
 3. Firmware from linux-firmware, copied into `/lib/firmware`. These are the exact files this laptop loads:
 
    | Device | Firmware file |
@@ -139,13 +143,15 @@ This step is done when the image has a kernel built for this laptop, its firmwar
    | Audio (SOF) | `intel/sof/sof-tgl.ri` plus its topology files |
 
 4. zram (your memory-management choice): build `CONFIG_ZRAM` with zstd compression, then add a systemd unit that creates a zstd zram device sized at half of RAM with `zramctl` and turns it on as swap.
-5. GRUB for UEFI (BLFS): build popt, efivar and efibootmgr, then GRUB with `--with-platform=efi`. Install it on the removable-media path so it boots in qemu and on any machine without firmware boot entries:
+5. Initramfs and signed boot image. The first boot uses dracut, with its systemd and TPM2 modules. Our Rust initramfs replaces it in Step 9. Combine the kernel, the initramfs and the kernel command line (`rd.luks.name=<LUKS UUID>=autark root=/dev/mapper/autark`) into one unified kernel image with `ukify`. Then create your Secure Boot keys and sign the image:
 
    ```
-   grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable
+   ukify build --linux=vmlinuz --initrd=initramfs.img --cmdline=@cmdline --output=/boot/efi/EFI/Linux/autark.efi
+   sbctl create-keys
+   sbctl sign /boot/efi/EFI/Linux/autark.efi
    ```
 
-   In `grub.cfg`, boot with `root=PARTUUID=<root partition>`. With no initramfs, the kernel can't look up a filesystem label.
+   There's no bootloader: the firmware starts the signed image directly. Also copy it to `EFI/BOOT/BOOTX64.EFI`, so it boots in qemu and from a USB stick without firmware boot entries. Keep the previous image as `autark-previous.efi`; it becomes the fallback boot entry.
 
 ## Step 7 — Boot it
 
@@ -159,10 +165,14 @@ This step is done when Autark boots on this laptop's real hardware from a USB st
      -drive file=~/autark/autark.img,format=raw
    ```
 
-   Check that GRUB shows Autark, you can log in, the network comes up, and `zramctl` shows the swap device.
-2. Real hardware without touching Ubuntu: write the image to a USB stick of 64 GB or more, turn off Secure Boot, and boot the stick from the firmware boot menu. Check that Wi-Fi firmware, audio and graphics all load (`journalctl -k`), because qemu can't test those.
+   Check that the firmware starts Autark, it asks for the disk passphrase, you can log in, the network comes up, and `zramctl` shows the swap device.
+2. Real hardware without touching Ubuntu: write the image to a USB stick of 64 GB or more and boot it from the firmware boot menu. Turn Secure Boot off just for this test, so this work laptop's firmware keys stay unchanged. Check that Wi-Fi firmware, audio and graphics all load (`journalctl -k`), because qemu can't test those.
 3. **You** remove the sudo rule: `sudo rm /etc/sudoers.d/autark-build`.
-4. Later, to move to the other laptop: write the image to its disk from a live USB, then grow the root partition to fill the disk (`sgdisk -e`, `growpart`, `resize2fs`). Any hardware that differs from this laptop needs its own modules and firmware added first.
+4. Later, to move to the other laptop: write the image to its disk from a live USB, then grow the root partition to fill the disk (`sgdisk -e`, `growpart`, `cryptsetup resize`, `resize2fs`). Then lock it down:
+    - **Secure Boot:** put the firmware in setup mode and run `sbctl enroll-keys --microsoft`. Keeping Microsoft's keys alongside yours means firmware add-ons still load.
+    - **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline.
+
+   Any hardware that differs from this laptop needs its own modules and firmware added first.
 
 ## Step 8 — BLFS: from console to desktop
 
@@ -188,6 +198,7 @@ This step is done when the five shell pieces you wrote run on Wayfire and nothin
 4. Notification centre: implements the `org.freedesktop.Notifications` D-Bus service.
 5. Lock screen: uses the `ext-session-lock` Wayland protocol (check that your Wayfire version supports it) and PAM for the password.
 6. AI daemon `autark-ai`: a session D-Bus service that the other pieces call for Jev decisions and Ollama answers. See [ai-layer.md](ai-layer.md).
+7. Rust initramfs `autark-init`: it asks for the PIN, unlocks the disk through libcryptsetup and tpm2-tss (via their Rust bindings, with no home-made crypto), mounts root and hands over to systemd. It replaces dracut once it boots reliably. The dracut image stays as a hidden fallback boot entry until then.
 
 You can start this today on Ubuntu, without waiting for the build: install Wayfire and gtk4-layer-shell from apt and develop the pieces in a Cargo workspace. The same code moves to Autark unchanged.
 
