@@ -1,0 +1,10 @@
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 003 Device 002: ID 1ea7:0066 SHARKOON Technologies GmbH [Mediatrack Edge Mini Keyboard]
+Bus 003 Device 003: ID 0bda:0129 Realtek Semiconductor Corp. RTS5129 Card Reader Controller
+Bus 003 Device 004: ID 13d3:56a2 IMC Networks USB2.0 HD UVC WebCam
+Bus 003 Device 005: ID 04f3:0c6c Elan Microelectronics Corp. ELAN:ARM-M4
+Bus 003 Device 006: ID 8087:0026 Intel Corp. AX201 Bluetooth
+Bus 003 Device 057: ID 05ac:12a8 Apple, Inc. iPhone 5/5C/5S/6/SE/7/8/X/XR
+Bus 004 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub

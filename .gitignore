@@ -1,0 +1,5 @@
+# Build artifacts: large and machine-local
+*.img
+*.tar.xz
+sources/
+version-check.sh
