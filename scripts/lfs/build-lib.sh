@@ -9,7 +9,10 @@
 # Unpack a tarball, run the build function inside it, then remove the source tree (book convention).
 build() {
   local tarball=$1 fn=$2 dir start rc
-  dir=$(tar -tf "$srcdir/$tarball" | sed -n "1s|/.*||p")
+  # First entry's top folder. Print it always: "name/", "name/file", "./name/…" and a bare "name" (OpenSSH lists its
+  # folder without the slash, which a print-only-on-substitution sed turned into an empty name).
+  dir=$(tar -tf "$srcdir/$tarball" | sed -n '1{s|^\./||;s|/.*||;p}')
+  [ -n "$dir" ] || { echo "== $fn: can't tell $tarball's top folder"; exit 1; }
   cd "$srcdir"
   rm -rf "$dir"
   tar -xf "$tarball"

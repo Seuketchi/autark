@@ -16,11 +16,17 @@ md5sum --quiet -c "$REPO/sources-8a/md5sums"
 sha256sum --quiet -c "$REPO/sources-8a/sha256sums"
 echo "   all checksums OK"
 
-echo "== kernel"
-LFS=$LFS INSIDE=ch10-kernel-inside.sh bash "$REPO/scripts/lfs/ch7-chroot.sh"
-rm -f $LFS/sources/.done/boot-initramfs $LFS/sources/.done/boot-uki
-echo "== initramfs + signed image"
-LFS=$LFS INSIDE=step6-boot-inside.sh bash "$REPO/scripts/lfs/ch7-chroot.sh"
+# Kernel + image once per phase: a marker skips them on retries of the package build.
+if [ ! -e $LFS/sources/.done/8a-kernel ]; then
+  echo "== kernel"
+  LFS=$LFS INSIDE=ch10-kernel-inside.sh bash "$REPO/scripts/lfs/ch7-chroot.sh"
+  rm -f $LFS/sources/.done/boot-initramfs $LFS/sources/.done/boot-uki
+  echo "== initramfs + signed image"
+  LFS=$LFS INSIDE=step6-boot-inside.sh bash "$REPO/scripts/lfs/ch7-chroot.sh"
+  touch $LFS/sources/.done/8a-kernel
+else
+  echo "== kernel + image: already built for phase 8a, skipped"
+fi
 echo "== stage 1 done"
 
 echo "== phase 8a packages"
