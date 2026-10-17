@@ -492,3 +492,17 @@ Next: user account (you type its password), first desktop boot (Wi-Fi with iwctl
     Stereo Microphone. Fix: enable pipewire.service globally (script updated; on the installed system you run
     `su -c 'systemctl --global enable pipewire.service'` once).
 - Open: /boot/efi wasn't mounted when the audio script was first run (mounted by hand) — check fstab/automount.
+
+## 2026-10-18 — Node.js, curl, git (so Claude Code can run on Autark)
+
+- A Sonnet agent stalled (no files, no reply after 15 min) → stopped; prepared here instead.
+- Sources: BLFS md5 for libunistring 1.4.2, libidn2 2.3.8, libpsl 0.23.3, curl 8.21.0, git 2.55.0, which 2.25,
+  node 24.19.0. Node's SHASUMS256.txt: good GPG signature by Antoine du Hamel (5BE8A3F6…B168D356, listed in
+  nodejs/node README's release keys); tarball matches. (My first check was a false pass — the fingerprint extraction
+  came back empty and an empty grep "matched" the README; redone properly.)
+- Script `scripts/lfs/phase-node-inside.sh` + `scripts/stage-node.sh`. Node uses its bundled Brotli/c-ares/ICU/libuv/
+  nghttp2/simdutf (saves six packages), shared OpenSSL and zlib as BLFS. libpsl's meson line given its missing `..`.
+- git 2.55 failed first: it builds Rust parts by default (`cargo: command not found`) → `NO_RUST=YesPlease` until
+  phase 8b brings Rust.
+- Built: node v24.19.0 (2975 s), npm 11.17.0, git 2.55.0, curl 8.21.0.
+- tan's account: ~/.npmrc prefix=~/.local and ~/.bash_profile adds ~/.local/bin to PATH, so npm installs without root.
