@@ -133,6 +133,46 @@ NFT_REJECT_INET m
 NFT_LIMIT m
 NFT_LOG m
 
+# Phase 8a, Wi-Fi with iwd: it does its crypto through the kernel (AF_ALG and the keyring). Set from the iwd
+# documentation as remembered, not fetched: iwd logs any missing algorithm at start, so check that on first Wi-Fi use.
+KEYS y
+KEY_DH_OPERATIONS y
+ASYMMETRIC_KEY_TYPE y
+ASYMMETRIC_PUBLIC_KEY_SUBTYPE y
+X509_CERTIFICATE_PARSER y
+PKCS7_MESSAGE_PARSER y
+PKCS8_PRIVATE_KEY_PARSER y
+CRYPTO_USER_API_HASH y
+CRYPTO_USER_API_AEAD y
+CRYPTO_HMAC y
+CRYPTO_CMAC y
+CRYPTO_MD4 y
+CRYPTO_MD5 y
+CRYPTO_SHA1 y
+CRYPTO_SHA512 y
+CRYPTO_ECB y
+CRYPTO_CBC y
+CRYPTO_DES y
+CRYPTO_CCM y
+# Wireless regulatory database (wireless-regdb): signed regulatory.db, checked against the kernel's built-in key
+CFG80211_REQUIRE_SIGNED_REGDB y
+CFG80211_USE_KERNEL_REGDB_KEYS y
+RFKILL y
+
+# Phase 8a, Bluetooth (BlueZ, from its BLFS page)
+BT_BREDR y
+BT_RFCOMM m
+BT_RFCOMM_TTY y
+BT_BNEP m
+BT_BNEP_MC_FILTER y
+BT_BNEP_PROTO_FILTER y
+BT_HIDP m
+CRYPTO_USER m
+
+# Phase 8a, desktop input and graphics (libinput reads evdev; vgem lets llvmpipe work in qemu)
+INPUT_EVDEV y
+DRM_VGEM m
+
 # qemu test boot (build guide 7a): serial console; the screen comes from SIMPLEDRM above
 SERIAL_8250 y
 SERIAL_8250_CONSOLE y
