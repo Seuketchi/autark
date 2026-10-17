@@ -139,9 +139,11 @@ step_secureboot_key() {
 # The unified kernel image: microcode first, then the initramfs, the kernel and its command line, in one
 # EFI file the firmware starts directly (no bootloader). No console=ttyS0: the laptop has no serial port, and with
 # it the passphrase prompt also tried the missing port ("Failed to query password: Input/output error").
+# tpm2-device=auto: without it the initramfs never tries the TPM2+PIN token and only asks for a passphrase
+# (first enrollment test, log.md). If the TPM unlock fails, it still falls back to the passphrase.
 step_uki() {
   cat > /etc/kernel/cmdline << EOF
-rd.luks.name=$ROOT_LUKS_UUID=autark root=/dev/mapper/autark rw
+rd.luks.name=$ROOT_LUKS_UUID=autark rd.luks.options=$ROOT_LUKS_UUID=tpm2-device=auto root=/dev/mapper/autark rw
 EOF
   install -d /boot/efi/EFI/Linux /boot/efi/EFI/BOOT
   local new=/boot/efi/EFI/Linux/autark.efi.new

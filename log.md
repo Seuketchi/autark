@@ -392,3 +392,20 @@ via chroot on p7). [ ] TPM+PIN enrollment from inside Autark (`systemd-cryptenro
 - Verified on the next real boot (11:4x, read back read-only): "Digital mics found on Skylake+ platform, using SOF
   driver"; SOF firmware intel/sof/sof-rpl.ri + topology sof-hda-generic-2ch.tplg loaded (version 2:2:0-57864, same as
   Ubuntu). Cmdline without ttyS0; the "Input/output error" lines are gone (only error: TDX notice). No failed units.
+
+## 2026-10-17 — TPM2 + PIN
+
+- First enrollment (you, inside Autark, via `/boot/efi/tpm-enroll.sh`): header afterwards (read from Ubuntu without
+  unlocking): slot 0 = systemd-recovery token (your paper key), slot 1 = passphrase, slot 2 = systemd-tpm2 token,
+  `tpm2-pin: true`. So `systemd-cryptenroll --tpm2-device=list` worked: **the dlopen'd TSS libraries work** (the open
+  assumption since Step 6).
+- But the next boot never tried the TPM: it asked a plain passphrase; the PIN typed there failed 3× ("Failed to
+  activate with specified passphrase"), emergency shell, then your passphrase unlocked it. Cause: the initramfs only
+  uses the TPM token when told to. Fix: cmdline `rd.luks.options=<root UUID>=tpm2-device=auto` (falls back to the
+  passphrase if the TPM path fails). Only the UKI rebuilt; all four copies verify; previous = 11:06 image.
+- Also found: `tpm2-hash-pcrs` was **empty** — the token wasn't bound to any measurement (systemd 261 no longer
+  defaults to PCR 7), so the PIN would unlock regardless of Secure Boot state. Re-enroll with
+  `--wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=7 --tpm2-with-pin=yes` (script on the ESP updated).
+  PCR 7 = Secure Boot state incl. shim's MOK-based verification; kernel updates signed by the same key don't change it.
+- Side note: "The TPM's NV index space is exhausted, skipping allocation of NvPCR 'cryptsetup'" (systemd-tpm2-setup);
+  harmless for unlocking.
