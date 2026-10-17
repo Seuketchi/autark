@@ -440,3 +440,20 @@ then re-run the script and answer y. Ubuntu free: 20 GB. Root steps from now on 
 terminal); the open-autark-ro/rw helpers already run sudo in a window you type into.
 Still on the host, yours to decide: build packages (`sudo apt remove …` line printed by the script; qemu/ovmf useful
 for testing), the stuck Ubuntu kernel 7.0.0-38 (openvpn-dco-dkms), Timeshift schedule.
+
+## 2026-10-17 — Step 8, phase 8a prepared (Wayland desktop)
+
+- Plan (yours): Step 8 in four phases — 8a desktop, 8b shell toolchain (Rust, GTK4), 8c work tools, 8d extras; 8a+8b
+  first. Defaults accepted: your password once per build batch (pkexec), Intel graphics only (NVIDIA later).
+- Package list `docs/specs/phase-8a-packages.md` (Sonnet agent, BLFS 13.1 closure): 54 packages; Mesa's iris/anv need
+  LLVM+clang+SPIRV tools (no Rust); Wayfire 0.11.0 ↔ wlroots 0.20.2 (both BLFS). Decisions: **PAM yes** (Linux-PAM;
+  Shadow and systemd rebuilt with PAM — logind sessions for seat access and PipeWire), llvmpipe/swrast added (qemu),
+  fonts Geist + Geist Mono with DejaVu fallback, NVIDIA left out.
+- Kernel options added for iwd (crypto/keyring set — from iwd docs as remembered; verify by iwd's startup log),
+  signed regdb, Bluetooth (BLFS BlueZ page), evdev, vgem.
+- Build script `scripts/lfs/phase8a-inside.sh` (drafted by a Sonnet agent; reviewed here): 61 steps. Read in full:
+  Linux-PAM, Shadow-PAM and systemd-PAM match BLFS; systemd-PAM differs from the crypto rebuild ONLY in
+  `pam=enabled`, `pamconfdir=/etc/pam.d` (diffed). Changed on review: make-ca uses only a staged, pinned certdata.txt
+  (Mozilla NSS tip, 172 certs, sha256 beb7e6dfe6499926e52c075c27bcfbe4c957f8609c575b3860273ae2806f63eb); OpenSSH keys
+  only, not enabled; services step: iwd enabled, networkd DHCP on wlan, PipeWire+WirePlumber for all users,
+  Bluetooth and sshd off. Recovery if PAM ever breaks login: open-autark-rw.sh from Ubuntu, fix /etc/pam.d in a chroot.
