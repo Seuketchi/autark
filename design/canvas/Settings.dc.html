@@ -32,8 +32,17 @@ input::placeholder{color:#7A736A}
       <label style="display: flex; align-items: center; gap: 8px; height: 32px; margin: 0 4px 10px; padding: 0 10px; border-radius: 8px; background: rgba(36, 34, 30, 0.07)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A736A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
         <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search settings</span>
-        <input type="text" placeholder="Search" style="flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #24221E; font: inherit; font-size: 13px">
+        <input type="text" placeholder="Search" value="{{query}}" onInput="{{onQuery}}" style="flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #24221E; font: inherit; font-size: 13px">
       </label>
+      <sc-if value="{{searching}}" hint-placeholder-val="{{false}}">
+        <sc-for list="{{results}}" as="r" hint-placeholder-count="2">
+          <button onClick="{{r.pick}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 7px 10px; border: none; border-radius: 8px; background: {{r.bg}}; text-align: left; font: inherit; color: #24221E">
+            <span style="font-size: 13px; font-weight: 500">{{r.label}}</span><span style="font-size: 11px; color: #68625A">{{r.pane}}</span>
+          </button>
+        </sc-for>
+        <span style="padding: 8px 10px; font-size: 11px; color: #7A736A">{{searchNote}}</span>
+      </sc-if>
+      <sc-if value="{{browsing}}" hint-placeholder-val="{{true}}">
       <sc-for list="{{nav}}" as="n" hint-placeholder-count="10">
         <sc-if value="{{n.gapBefore}}" hint-placeholder-val="{{false}}">
           <div aria-hidden="true" style="height: 10px"></div>
@@ -45,10 +54,12 @@ input::placeholder{color:#7A736A}
           <span style="font-weight: {{n.weight}}">{{n.label}}</span>
         </button>
       </sc-for>
+      </sc-if>
     </nav>
 
     <div style="flex: 1; min-width: 0; padding: 28px 40px; display: flex; flex-direction: column; gap: 24px; overflow: hidden">
-      <sc-if value="{{isAppearance}}" hint-placeholder-val="{{true}}">
+      <sc-if value="{{isAppearance}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
         <h2 style="margin: 0; font-size: 22px; font-weight: 600">Appearance</h2>
 
         <div style="display: flex; flex-direction: column; gap: 10px">
@@ -77,26 +88,6 @@ input::placeholder{color:#7A736A}
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
-          <div style="display: flex; align-items: center; gap: 24px; min-height: 52px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
-            <label for="dock-size" style="flex: 1; font-size: 14px">Dock size</label>
-            <input id="dock-size" type="range" min="32" max="80" value="{{dockSize}}" onInput="{{onDockSize}}" style="width: 220px; accent-color: {{accent}}">
-            <span style="width: 44px; text-align: right; font-size: 13px; color: #68625A; font-variant-numeric: tabular-nums">{{dockSize}} px</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 24px; min-height: 52px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
-            <span style="flex: 1; font-size: 14px">Magnify icons on hover</span>
-            <button role="switch" aria-checked="{{magnifyChecked}}" aria-label="Magnify icons on hover" onClick="{{toggleMagnify}}" style="width: 44px; height: 26px; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{magnifyJustify}}; background: {{magnifyTrack}}">
-              <span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.16)"></span>
-            </button>
-          </div>
-          <div style="display: flex; align-items: center; gap: 24px; min-height: 52px; padding: 0 18px">
-            <span style="flex: 1; font-size: 14px">Show dots under running apps</span>
-            <button role="switch" aria-checked="{{dotsChecked}}" aria-label="Show dots under running apps" onClick="{{toggleDots}}" style="width: 44px; height: 26px; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{dotsJustify}}; background: {{dotsTrack}}">
-              <span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.16)"></span>
-            </button>
-          </div>
-        </div>
-
         <div style="display: flex; flex-direction: column; gap: 10px">
           <span style="font-size: 13px; font-weight: 600; color: #3E3A34">Wallpaper</span>
           <div style="display: flex; gap: 16px">
@@ -111,6 +102,13 @@ input::placeholder{color:#7A736A}
               </button>
             </sc-for>
           </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Accessibility</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+          <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Text size</span><select aria-label="Text size" value="{{textSize}}" onChange="{{on_textSize}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="100">Default</option><option value="115">Larger</option><option value="130">Largest</option></select></div>
+          <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Font</span><select aria-label="Font" value="{{font}}" onChange="{{on_font}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="geist">Geist</option><option value="inter">Inter</option></select></div>
+          <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Reduce motion</span><span style="font-size: 12px; color: #68625A">No magnifying dock, sliding panels or fades</span></span><button role="switch" aria-checked="{{motionSw.checked}}" aria-label="Reduce motion" onClick="{{motionSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{motionSw.justify}}; background: {{motionSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+          <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Increase contrast</span><span style="font-size: 12px; color: #68625A">A high-contrast Linen: darker text and borders</span></span><button role="switch" aria-checked="{{contrastSw.checked}}" aria-label="Increase contrast" onClick="{{contrastSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{contrastSw.justify}}; background: {{contrastSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+        </div></div>
         </div>
       </sc-if>
 
@@ -263,6 +261,219 @@ input::placeholder{color:#7A736A}
         </div>
       </sc-if>
 
+
+      <sc-if value="{{isWifi}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 600">Wi-Fi</h2></div>
+          <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Wi-Fi</span><button role="switch" aria-checked="{{wifiSw.checked}}" aria-label="Wi-Fi" onClick="{{wifiSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{wifiSw.justify}}; background: {{wifiSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+            <sc-if value="{{wifiOn}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px">
+                <span style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: {{accent}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0M12 19h.01"></path></svg></span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 500">{{connected}}</span><span style="font-size: 12px; color: #68625A">Connected · 192.168.1.24 · WPA3</span></span>
+                <button onClick="{{disconnect}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Disconnect</button>
+              </div>
+            </sc-if>
+          </div>
+          <sc-if value="{{wifiOn}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Known networks</span><span style="font-size: 12px; color: #68625A">Joined automatically when in range</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)"><sc-for list="{{known}}" as="w" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: {{w.border}}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#24221E" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0" stroke-opacity="{{w.o3}}"></path><path d="M5 12a10 10 0 0 1 14 0" stroke-opacity="{{w.o2}}"></path><path d="M8.5 15.5a5 5 0 0 1 7 0" stroke-opacity="{{w.o1}}"></path><path d="M12 19h.01"></path></svg>
+                <span style="flex: 1; display: flex; align-items: center; gap: 6px; font-size: 14px">{{w.name}}<sc-if value="{{w.secure}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7A736A" stroke-width="2.2" stroke-linecap="round" aria-label="Secured"><path d="M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3"></path></svg></sc-if></span>
+                <span style="font-size: 12px; color: #68625A">Join automatically</span>
+                <button role="switch" aria-checked="{{w.checked}}" aria-label="Join {{w.name}} automatically" onClick="{{w.toggle}}" style="width: 40px; height: 24px; flex-shrink: 0; padding: 2px; border: none; border-radius: 12px; display: flex; justify-content: {{w.justify}}; background: {{w.track}}"><span style="width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button>
+                <button aria-label="Forget {{w.name}}" onClick="{{w.forget}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: transparent; color: #A84433; font: inherit; font-size: 12px">Forget</button>
+              </div></sc-for></div></div>
+            <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Other networks</span><span style="font-size: 12px; color: #68625A">Searching…</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)"><sc-for list="{{others}}" as="w" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: {{w.border}}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#24221E" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0" stroke-opacity="{{w.o3}}"></path><path d="M5 12a10 10 0 0 1 14 0" stroke-opacity="{{w.o2}}"></path><path d="M8.5 15.5a5 5 0 0 1 7 0" stroke-opacity="{{w.o1}}"></path><path d="M12 19h.01"></path></svg>
+                <span style="flex: 1; display: flex; align-items: center; gap: 6px; font-size: 14px">{{w.name}}<sc-if value="{{w.secure}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7A736A" stroke-width="2.2" stroke-linecap="round" aria-label="Secured"><path d="M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3"></path></svg></sc-if></span>
+                <sc-if value="{{w.asking}}" hint-placeholder-val="{{false}}">
+                  <input type="password" aria-label="Password for {{w.name}}" placeholder="Password" style="width: 180px; height: 30px; padding: 0 10px; border-radius: 7px; border: 1px solid {{accent}}; outline: none; background: #FFFFFF; font: inherit; font-size: 13px">
+                  <button onClick="{{w.cancel}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px; background: transparent; color: #68625A">Cancel</button>
+                </sc-if>
+                <button onClick="{{w.join}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Join</button>
+              </div></sc-for></div></div>
+            <div><button style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Join a hidden network…</button></div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isBluetooth}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 600">Bluetooth</h2></div>
+          <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Bluetooth</span><span style="font-size: 12px; color: #68625A">This laptop shows up as “autark” while this pane is open</span></span><button role="switch" aria-checked="{{btSw.checked}}" aria-label="Bluetooth" onClick="{{btSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{btSw.justify}}; background: {{btSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+          </div>
+          <sc-if value="{{btOn}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">My devices</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)"><sc-for list="{{myDevices}}" as="d" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: {{d.border}}">
+                <span style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(36, 34, 30, 0.07)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#24221E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{d.icon}}"></path></svg></span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">{{d.name}}</span><span style="font-size: 12px; color: {{d.statusColor}}">{{d.status}}</span></span>
+                <button onClick="{{d.connect}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">{{d.action}}</button>
+                <button aria-label="Forget {{d.name}}" onClick="{{d.forget}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: transparent; color: #A84433; font: inherit; font-size: 12px">Forget</button>
+              </div></sc-for></div></div>
+            <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Nearby</span><span style="font-size: 12px; color: #68625A">Searching…</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)"><sc-for list="{{nearby}}" as="d" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: {{d.border}}">
+                <span style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(36, 34, 30, 0.07)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#24221E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{d.icon}}"></path></svg></span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">{{d.name}}</span><span style="font-size: 12px; color: #68625A">{{d.status}}</span></span>
+                <button onClick="{{d.pair}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">{{d.action}}</button>
+              </div></sc-for>
+              <sc-if value="{{noNearby}}" hint-placeholder-val="{{false}}"><div style="padding: 14px 18px; font-size: 12px; color: #68625A">Nothing else nearby. Put a device in pairing mode to see it here.</div></sc-if></div></div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isDock}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 600">Desktop &amp; Dock</h2></div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Dock</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><label for="dock-size" style="flex: 1; font-size: 14px">Size</label>
+              <input id="dock-size" type="range" min="32" max="80" value="{{dockSize}}" onInput="{{onDockSize}}" style="width: 220px; accent-color: {{accent}}">
+              <span style="width: 44px; text-align: right; font-size: 13px; color: #68625A; font-variant-numeric: tabular-nums">{{dockSize}} px</span></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Magnify icons on hover</span><button role="switch" aria-checked="{{magnifySw.checked}}" aria-label="Magnify icons on hover" onClick="{{magnifySw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{magnifySw.justify}}; background: {{magnifySw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Show dots under running apps</span><button role="switch" aria-checked="{{dotsSw.checked}}" aria-label="Show dots under running apps" onClick="{{dotsSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{dotsSw.justify}}; background: {{dotsSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Position on screen</span><div role="radiogroup" aria-label="Position on screen" style="display: flex; padding: 2px; border-radius: 8px; background: rgba(36, 34, 30, 0.07)"><sc-for list="{{dockSides}}" as="o" hint-placeholder-count="3"><button role="radio" aria-checked="{{o.checked}}" onClick="{{o.pick}}" style="height: 26px; padding: 0 12px; border: none; border-radius: 6px; background: {{o.bg}}; box-shadow: {{o.shadow}}; color: #24221E; font: inherit; font-size: 12px; font-weight: {{o.weight}}">{{o.label}}</button></sc-for></div></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Hide and show the dock automatically</span><button role="switch" aria-checked="{{hideSw.checked}}" aria-label="Hide and show the dock automatically" onClick="{{hideSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{hideSw.justify}}; background: {{hideSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+          </div></div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Desktop</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Show widgets on the desktop</span><span style="font-size: 12px; color: #68625A">The clock and the pinned note, from the notification centre’s Widgets</span></span><button role="switch" aria-checked="{{widgetsSw.checked}}" aria-label="Show widgets on the desktop" onClick="{{widgetsSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{widgetsSw.justify}}; background: {{widgetsSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Widgets</span><span style="font-size: 12px; color: #68625A">Choose them in the notification centre</span></span><button style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Edit widgets…</button></div>
+          </div></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isDisplay}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 600">Display</h2></div>
+          <div style="position: relative; height: 150px; flex-shrink: 0; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <sc-for list="{{monitors}}" as="m" hint-placeholder-count="2"><button onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" aria-label="{{m.name}}" style="position: absolute; left: {{m.left}}px; top: {{m.top}}px; width: {{m.w}}px; height: {{m.h}}px; padding: 0; border: 2px solid {{m.ring}}; border-radius: 6px; background: linear-gradient(160deg, #DCE7DF, #EFE6D6); box-shadow: 0 4px 14px rgba(70, 58, 40, 0.16); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: inherit"><span style="position: absolute; left: 0; right: 0; top: 0; height: 5px; background: rgba(36, 34, 30, 0.18)"></span><span style="font-size: 12px; font-weight: 600; color: #24221E">{{m.short}}</span><span style="font-size: 11px; color: #68625A">{{m.looks}}</span></button></sc-for>
+            <span style="position: absolute; right: 12px; bottom: 8px; font-size: 11px; color: #7A736A">Drag displays to arrange them</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">{{selName}}</span><span style="font-size: 12px; color: #68625A">{{selModel}}</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Resolution</span><select aria-label="Resolution" value="{{resolution}}" onChange="{{on_resolution}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="2560x1600">2560 × 1600</option><option value="1920x1200">1920 × 1200</option><option value="1680x1050">1680 × 1050</option></select></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Refresh rate</span><select aria-label="Refresh rate" value="{{refresh}}" onChange="{{on_refresh}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="165">165 Hz</option><option value="60">60 Hz</option></select></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Scale</span><span style="font-size: 12px; color: #68625A">{{looksLike}}</span></span><div role="radiogroup" aria-label="Scale" style="display: flex; padding: 2px; border-radius: 8px; background: rgba(36, 34, 30, 0.07)"><sc-for list="{{scales}}" as="o" hint-placeholder-count="3"><button role="radio" aria-checked="{{o.checked}}" onClick="{{o.pick}}" style="height: 26px; padding: 0 12px; border: none; border-radius: 6px; background: {{o.bg}}; box-shadow: {{o.shadow}}; color: #24221E; font: inherit; font-size: 12px; font-weight: {{o.weight}}">{{o.label}}</button></sc-for></div></div>
+            <sc-if value="{{selInternal}}" hint-placeholder-val="{{true}}"><div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Brightness</span><span style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #68625A">☼<input type="range" aria-label="Brightness" min="5" max="100" step="1" value="{{brightness}}" onInput="{{on_brightness}}" style="width: 220px; accent-color: {{accent}}">☀</span></div></sc-if>
+            <sc-if value="{{selExternal}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Rotation</span><select aria-label="Rotation" value="{{rotation}}" onChange="{{on_rotation}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="normal">Standard</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div></sc-if>
+          </div></div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Night light</span><span style="font-size: 12px; color: #68625A">{{nlStatus}}</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Schedule</span><div role="radiogroup" aria-label="Schedule" style="display: flex; padding: 2px; border-radius: 8px; background: rgba(36, 34, 30, 0.07)"><sc-for list="{{schedules}}" as="o" hint-placeholder-count="3"><button role="radio" aria-checked="{{o.checked}}" onClick="{{o.pick}}" style="height: 26px; padding: 0 12px; border: none; border-radius: 6px; background: {{o.bg}}; box-shadow: {{o.shadow}}; color: #24221E; font: inherit; font-size: 12px; font-weight: {{o.weight}}">{{o.label}}</button></sc-for></div></div>
+            <sc-if value="{{nlSun}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Location</span><span style="font-size: 12px; color: #68625A">Stays on this laptop. Sunset {{sunset}}, sunrise {{sunrise}}</span></span>
+                <input aria-label="Latitude" value="7.07" style="width: 72px; height: 30px; padding: 0 8px; border-radius: 7px; border: 1px solid rgba(36, 34, 30, 0.14); font: inherit; font-size: 13px; font-variant-numeric: tabular-nums">
+                <input aria-label="Longitude" value="125.61" style="width: 72px; height: 30px; padding: 0 8px; border-radius: 7px; border: 1px solid rgba(36, 34, 30, 0.14); font: inherit; font-size: 13px; font-variant-numeric: tabular-nums"></div>
+            </sc-if>
+            <sc-if value="{{nlCustom}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">From</span>
+                <input type="time" aria-label="From" value="22:00" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><span style="font-size: 12px; color: #68625A">to</span><input type="time" aria-label="To" value="07:00" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"></div>
+            </sc-if>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Warmth</span><span style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #68625A">More<input type="range" aria-label="Warmth" min="2500" max="6000" step="100" value="{{warmth}}" onInput="{{on_warmth}}" style="width: 220px; accent-color: {{accent}}">Less</span><span style="width: 52px; text-align: right; font-size: 13px; color: #68625A; font-variant-numeric: tabular-nums">{{warmth}} K</span></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Turn on now</span><span style="font-size: 12px; color: #68625A">{{nlNowNote}}</span></span><button role="switch" aria-checked="{{nlNowSw.checked}}" aria-label="Turn night light on now" onClick="{{nlNowSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{nlNowSw.justify}}; background: {{nlNowSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+          </div></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isSound}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 600">Sound</h2></div>
+          <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Output volume</span><span style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #68625A"><input type="range" aria-label="Output volume" min="0" max="100" step="1" value="{{volume}}" onInput="{{on_volume}}" style="width: 220px; accent-color: {{accent}}"></span><span style="width: 40px; text-align: right; font-size: 13px; color: #68625A; font-variant-numeric: tabular-nums">{{volume}}%</span></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Mute</span><button role="switch" aria-checked="{{muteSw.checked}}" aria-label="Mute" onClick="{{muteSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{muteSw.justify}}; background: {{muteSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Play sound effects</span><span style="font-size: 12px; color: #68625A">Alerts and the screenshot shutter</span></span><button role="switch" aria-checked="{{effectsSw.checked}}" aria-label="Play sound effects" onClick="{{effectsSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{effectsSw.justify}}; background: {{effectsSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Output</span></div><div role="radiogroup" aria-label="Output device" style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)"><sc-for list="{{outputs}}" as="o" hint-placeholder-count="3">
+            <button role="radio" aria-checked="{{o.checked}}" onClick="{{o.pick}}" style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border: none; border-bottom: {{o.border}}; background: transparent; text-align: left; font: inherit; color: #24221E">
+              <span style="width: 16px; color: {{accent}}; font-weight: 700">{{o.mark}}</span>
+              <span style="flex: 1; font-size: 14px">{{o.name}}</span><span style="font-size: 12px; color: #68625A">{{o.kind}}</span>
+            </button></sc-for></div></div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Input</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <sc-for list="{{inputs}}" as="o" hint-placeholder-count="2">
+            <button role="radio" aria-checked="{{o.checked}}" onClick="{{o.pick}}" style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border: none; border-bottom: 1px solid rgba(36, 34, 30, 0.06); background: transparent; text-align: left; font: inherit; color: #24221E">
+              <span style="width: 16px; color: {{accent}}; font-weight: 700">{{o.mark}}</span>
+              <span style="flex: 1; font-size: 14px">{{o.name}}</span><span style="font-size: 12px; color: #68625A">{{o.kind}}</span>
+            </button></sc-for>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Input level</span>
+              <span aria-label="Input level" style="display: flex; gap: 3px"><sc-for list="{{level}}" as="l" hint-placeholder-count="12"><span style="width: 8px; height: 14px; border-radius: 2px; background: {{l.c}}"></span></sc-for></span>
+              <span style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #68625A"><input type="range" aria-label="Input volume" min="0" max="100" step="1" value="{{micVolume}}" onInput="{{on_micVolume}}" style="width: 220px; accent-color: {{accent}}"></span></div>
+          </div></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isPower}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 600">Power</h2></div>
+          <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; min-height: 72px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
+              <span aria-hidden="true" style="position: relative; width: 46px; height: 24px; border: 2px solid #24221E; border-radius: 6px; padding: 2px; box-sizing: border-box"><span style="display: block; width: 76%; height: 100%; border-radius: 3px; background: {{accent}}"></span><span style="position: absolute; right: -6px; top: 6px; width: 3px; height: 8px; border-radius: 0 2px 2px 0; background: #24221E"></span></span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums">76%</span><span style="font-size: 12px; color: #68625A">On battery · about 5 h 10 min left</span></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Battery health</span><span style="font-size: 13px; color: #68625A">92% of its design capacity · 213 cycles</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">On battery</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Turn the screen off after</span><select aria-label="Turn the screen off after, on battery" value="{{batteryScreen}}" onChange="{{on_batteryScreen}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="2">2 minutes</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="0">Never</option></select></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Sleep after</span><select aria-label="Sleep after, on battery" value="{{batterySleep}}" onChange="{{on_batterySleep}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="0">Never</option></select></div>
+          </div></div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Plugged in</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Turn the screen off after</span><select aria-label="Turn the screen off after, plugged in" value="{{acScreen}}" onChange="{{on_acScreen}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="30">30 minutes</option><option value="0">Never</option></select></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Sleep after</span><select aria-label="Sleep after, plugged in" value="{{acSleep}}" onChange="{{on_acSleep}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="30">30 minutes</option><option value="60">1 hour</option><option value="0">Never</option></select></div>
+          </div></div>
+          <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Show the percentage in the top bar</span><button role="switch" aria-checked="{{percentSw.checked}}" aria-label="Show the battery percentage in the top bar" onClick="{{percentSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{percentSw.justify}}; background: {{percentSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Warn when the battery is low</span><select aria-label="Warn when the battery is low" value="{{lowBattery}}" onChange="{{on_lowBattery}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="10">At 10%</option><option value="15">At 15%</option><option value="20">At 20%</option></select></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Closing the lid</span><span style="font-size: 13px; color: #68625A">Sleeps, unless a display is connected</span></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isLock}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 600">Fingerprint &amp; Lock</h2></div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Fingerprints</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <sc-for list="{{fingers}}" as="f" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M7 11a5 5 0 0 1 10 0v2M12 11v6M9.5 21c-1-1.8-1.5-4-1.5-7M16.5 18c-.3 1.2-.8 2.3-1.4 3.2M4.5 15c-.3-1.3-.5-2.6-.5-4a8 8 0 0 1 14.5-4.6M20 11c0 1.2-.1 2.4-.3 3.5"></path></svg><span style="flex: 1; font-size: 14px">{{f.name}}</span><button aria-label="Delete {{f.name}}" onClick="{{f.remove}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: transparent; color: #A84433; font: inherit; font-size: 12px">Delete</button></div>
+            </sc-for>
+            <sc-if value="{{enrolling}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; min-height: 84px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)">
+                <span style="position: relative; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: conic-gradient({{accent}} {{enrollDeg}}deg, rgba(36, 34, 30, 0.10) 0)"><span style="width: 44px; height: 44px; border-radius: 50%; background: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M7 11a5 5 0 0 1 10 0v2M12 11v6M9.5 21c-1-1.8-1.5-4-1.5-7M16.5 18c-.3 1.2-.8 2.3-1.4 3.2M4.5 15c-.3-1.3-.5-2.6-.5-4a8 8 0 0 1 14.5-4.6M20 11c0 1.2-.1 2.4-.3 3.5"></path></svg></span></span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 500">Touch the sensor again</span><span style="font-size: 12px; color: #68625A">Lift and rest your finger, a little differently each time · {{enrollStep}} of 8</span></span>
+                <button onClick="{{stepEnroll}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Touch</button>
+                <button onClick="{{cancelEnroll}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px; background: transparent; color: #68625A">Cancel</button>
+              </div>
+            </sc-if>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><button onClick="{{startEnroll}}" disabled="{{enrolling}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Add a fingerprint…</button><span style="font-size: 12px; color: #68625A">Up to 10, read by fprintd</span></div>
+          </div></div>
+          <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Unlock the screen with a fingerprint</span><button role="switch" aria-checked="{{fpUnlockSw.checked}}" aria-label="Unlock the screen with a fingerprint" onClick="{{fpUnlockSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{fpUnlockSw.justify}}; background: {{fpUnlockSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px">Use a fingerprint for sudo</span><span style="font-size: 12px; color: #68625A">Your password still works, and is needed after a restart</span></span><button role="switch" aria-checked="{{fpSudoSw.checked}}" aria-label="Use a fingerprint for sudo" onClick="{{fpSudoSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{fpSudoSw.justify}}; background: {{fpSudoSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+          </div>
+          <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Lock after the screen turns off</span><select aria-label="Lock after the screen turns off" value="{{lockAfter}}" onChange="{{on_lockAfter}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="0">Immediately</option><option value="60">After 1 minute</option><option value="300">After 5 minutes</option><option value="-1">Never</option></select></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Show notification text on the lock screen</span><button role="switch" aria-checked="{{lockNotesSw.checked}}" aria-label="Show notification text on the lock screen" onClick="{{lockNotesSw.toggle}}" style="width: 44px; height: 26px; flex-shrink: 0; padding: 2px; border: none; border-radius: 13px; display: flex; justify-content: {{lockNotesSw.justify}}; background: {{lockNotesSw.track}}"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(70, 58, 40, 0.3)"></span></button></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Password</span><button style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Change password…</button></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isKeyboard}}" hint-placeholder-val="{{false}}">
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; padding-right: 4px">
+          <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 600">Keyboard</h2></div>
+          <div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Key repeat rate</span><span style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #68625A">Slow<input type="range" aria-label="Key repeat rate" min="10" max="60" step="1" value="{{repeatRate}}" onInput="{{on_repeatRate}}" style="width: 220px; accent-color: {{accent}}">Fast</span></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: 1px solid rgba(36, 34, 30, 0.06)"><span style="flex: 1; font-size: 14px">Delay until repeat</span><span style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #68625A">Long<input type="range" aria-label="Delay until repeat" min="150" max="800" step="50" value="{{repeatDelayInv}}" onInput="{{on_repeatDelay}}" style="width: 220px; accent-color: {{accent}}">Short</span></div>
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px"><span style="flex: 1; font-size: 14px">Caps Lock key</span><select aria-label="Caps Lock key" value="{{capsLock}}" onChange="{{on_capsLock}}" style="height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(36, 34, 30, 0.14); background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px"><option value="caps">Caps Lock</option><option value="ctrl">Control</option><option value="escape">Escape</option></select></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Layouts</span><span style="font-size: 12px; color: #68625A">The first is used at the lock screen</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)"><sc-for list="{{layouts}}" as="k" hint-placeholder-count="2">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: {{k.border}}"><span style="width: 34px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: #68625A">{{k.code}}</span><span style="flex: 1; font-size: 14px">{{k.name}}</span><button aria-label="Remove {{k.name}}" onClick="{{k.remove}}" disabled="{{k.only}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: transparent; color: #A84433; font: inherit; font-size: 12px">Remove</button></div>
+          </sc-for><div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-top: 1px solid rgba(36, 34, 30, 0.06)"><button onClick="{{addLayout}}" style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Add a layout…</button></div></div></div>
+          <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 13px; font-weight: 600; color: #3E3A34">Shortcuts</span><span style="font-size: 12px; color: #68625A">Kept in wayfire.ini</span></div><div style="display: flex; flex-direction: column; border-radius: 12px; background: rgba(36, 34, 30, 0.05); border: 1px solid rgba(36, 34, 30, 0.07)"><sc-for list="{{shortcuts}}" as="k" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 20px; min-height: 48px; padding: 0 18px; border-bottom: {{k.border}}"><span style="flex: 1; font-size: 14px">{{k.what}}</span>
+              <span style="display: flex; gap: 4px"><sc-for list="{{k.keys}}" as="c" hint-placeholder-count="3"><kbd style="min-width: 22px; height: 24px; padding: 0 7px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.14); border-bottom-width: 2px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: #3E3A34">{{c.key}}</kbd></sc-for></span>
+              <button style="height: 28px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(36, 34, 30, 0.07); color: #24221E; font: inherit; font-size: 12px">Change</button></div>
+          </sc-for></div></div>
+        </div>
+      </sc-if>
+
       <sc-if value="{{isOther}}" hint-placeholder-val="{{false}}">
         <h2 style="margin: 0; font-size: 22px; font-weight: 600">{{paneTitle}}</h2>
         <p style="margin: 0; font-size: 14px; color: #68625A">This pane isn't designed yet.</p>
@@ -279,7 +490,35 @@ input::placeholder{color:#7A736A}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { pane: 'ai', theme: 'light', accent: 'sage', dockSize: 52, magnify: true, dots: true, wall: 'linen', localOnly: false, model: 'llama3.2:3b', jevFeat: { launcher: true, notify: false, terminal: true, files: false, settings: false },
+    this.state = { pane: props.pane || 'display', query: props.query || '', theme: 'light', accent: 'sage', dockSize: 52, wall: 'linen', localOnly: false, model: 'llama3.2:3b',
+      jevFeat: { launcher: true, notify: false, terminal: true, files: false, settings: true },
+      on: { wifi: true, bt: true, magnify: true, dots: true, hide: false, widgets: true, nlNow: false, mute: false, effects: true, percent: true, fpUnlock: true, fpSudo: false, lockNotes: false, motion: false, contrast: false },
+      sel: { resolution: '2560x1600', refresh: '165', rotation: 'normal', batteryScreen: '2', batterySleep: '10', acScreen: '5', acSleep: '30', lowBattery: '10', lockAfter: '0', capsLock: 'caps', textSize: '100', font: 'geist' },
+      dockSide: 'bottom', monitor: 'builtin', scale: { builtin: 150, dell: 150 }, brightness: 70, schedule: 'sun', warmth: 4000, volume: 45, micVolume: 70, repeatRate: 30, repeatDelay: 400,
+      output: 'speakers', input: 'mic', joining: null,
+      known: [
+        { name: 'Linen Home', secure: true, auto: true, strength: 3 },
+        { name: 'Studio 5G', secure: true, auto: true, strength: 2 },
+        { name: 'Airport Free WiFi', secure: false, auto: false, strength: 1 }
+      ],
+      others: [
+        { name: 'Neighbour-2.4', secure: true, strength: 2 },
+        { name: 'PLDT-FIBR-88A1', secure: true, strength: 1 },
+        { name: 'Cafe Guest', secure: false, strength: 1 }
+      ],
+      connected: 'Linen Home',
+      devices: [
+        { id: 'xm4', name: 'WH-1000XM4', kind: 'headphones', connected: true, battery: 80 },
+        { id: 'mx', name: 'MX Master 3S', kind: 'mouse', connected: true, battery: 55 },
+        { id: 'k380', name: 'Keychron K3', kind: 'keyboard', connected: false }
+      ],
+      nearby: [
+        { id: 'buds', name: 'Galaxy Buds2', kind: 'headphones', pairing: false },
+        { id: 'jbl', name: 'JBL Flip 6', kind: 'speaker', pairing: false }
+      ],
+      fingers: ['Right index finger', 'Left index finger'],
+      enrolling: !!props.enrolling, enrollStep: props.enrolling ? 3 : 0,
+      layouts: [{ code: 'us', name: 'English (US)' }, { code: 'ph', name: 'Filipino' }],
       memories: [
         { id: 1, text: 'Works on Autark in the evenings', added: 'Today' },
         { id: 2, text: 'The Autark project lives in ~/autark', added: '16 Oct' },
@@ -307,6 +546,23 @@ class Component extends DCLogic {
     ];
     const cur = accents.find((a) => a.id === st.accent) || accents[0];
     const A = cur.hex;
+    const off = 'rgba(36, 34, 30, 0.18)';
+    const line = '1px solid rgba(36, 34, 30, 0.06)';
+    const border = (i, list) => (i < list.length - 1 ? line : 'none');
+    const sw = (key) => ({
+      checked: st.on[key] ? 'true' : 'false',
+      track: st.on[key] ? A : off,
+      justify: st.on[key] ? 'flex-end' : 'flex-start',
+      toggle: () => this.setState({ on: { ...st.on, [key]: !st.on[key] } })
+    });
+    const seg = (options, value, pick) => options.map((o) => ({
+      label: o.label,
+      checked: o.id === value ? 'true' : 'false',
+      bg: o.id === value ? '#FFFFFF' : 'transparent',
+      shadow: o.id === value ? '0 1px 3px rgba(70, 58, 40, 0.18)' : 'none',
+      weight: o.id === value ? 600 : 400,
+      pick: () => pick(o.id)
+    }));
     const navDefs = [
       { id: 'wifi', label: 'Wi-Fi', d: 'M2 8.5a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0M12 19h.01' },
       { id: 'bluetooth', label: 'Bluetooth', d: 'M7 7l10 10l-5 4V3l5 4L7 17' },
@@ -341,6 +597,44 @@ class Component extends DCLogic {
         pick: () => this.setState({ pane: n.id })
       };
     });
+    const paneName = (id) => (navDefs.find((n) => n.id === id) || {}).label;
+
+    // Search: names first; with Jev's Settings search on, a sentence finds the setting by meaning.
+    const index = [
+      ['Wi-Fi', 'wifi'], ['Known networks', 'wifi'], ['Join a hidden network', 'wifi'], ['Bluetooth', 'bluetooth'], ['Pair a device', 'bluetooth'],
+      ['Theme', 'appearance'], ['Dark mode', 'appearance'], ['Accent colour', 'appearance'], ['Wallpaper', 'appearance'], ['Text size', 'appearance'], ['Font', 'appearance'], ['Reduce motion', 'appearance'], ['Increase contrast', 'appearance'],
+      ['Dock size', 'dock'], ['Magnify icons', 'dock'], ['Dock position', 'dock'], ['Hide the dock', 'dock'], ['Widgets on the desktop', 'dock'],
+      ['Arrange displays', 'display'], ['Resolution', 'display'], ['Refresh rate', 'display'], ['Scale', 'display'], ['Brightness', 'display'], ['Rotation', 'display'], ['Night light', 'display'],
+      ['Volume', 'sound'], ['Output device', 'sound'], ['Microphone', 'sound'], ['Sound effects', 'sound'],
+      ['Battery', 'power'], ['Battery health', 'power'], ['Screen off', 'power'], ['Sleep', 'power'], ['Low battery warning', 'power'],
+      ['Fingerprints', 'lock'], ['Lock screen', 'lock'], ['Password', 'lock'], ['Fingerprint for sudo', 'lock'],
+      ['Key repeat', 'keyboard'], ['Caps Lock', 'keyboard'], ['Keyboard layouts', 'keyboard'], ['Shortcuts', 'keyboard'],
+      ['Local-only mode', 'ai'], ['Jev', 'ai'], ['Ollama model', 'ai'], ['Tasks', 'ai'], ['Memory', 'ai'], ['Call log', 'ai'], ['About Autark', 'about']
+    ];
+    const meaning = [
+      [/bright|dark|warm|eyes|night|blue light|glare/, ['Night light', 'Brightness']],
+      [/loud|quiet|hear|speaker|headphone/, ['Volume', 'Output device']],
+      [/battery|last longer|charge|drain/, ['Battery', 'Screen off']],
+      [/small|tiny|big|read|see/, ['Text size', 'Scale']]
+    ];
+    const q = st.query.trim().toLowerCase();
+    let found = q ? index.filter(([label]) => label.toLowerCase().includes(q)) : [];
+    let searchNote = '';
+    if (q && found.length === 0) {
+      const jev = !st.localOnly && st.jevFeat.settings;
+      const hit = jev && meaning.find(([re]) => re.test(q));
+      if (hit) {
+        found = hit[1].map((label) => index.find(([l]) => l === label));
+        searchNote = 'Ranked by Jev';
+      } else {
+        searchNote = jev ? 'No settings match.' : 'No settings match. Turn on Settings search in AI to search by meaning.';
+      }
+    }
+    const results = found.map(([label, pane], i) => ({
+      label, pane: paneName(pane), bg: i === 0 ? 'rgba(63, 122, 95, 0.12)' : 'transparent',
+      pick: () => this.setState({ pane, query: '' })
+    }));
+
     const themeDefs = [
       { id: 'light', label: 'Light', ground: '#F6F4EF', bar: '#E2DDD3', window: '#FFFFFF' },
       { id: 'dark', label: 'Dark', ground: '#1A1916', bar: '#26241F', window: '#2E2B26' },
@@ -366,6 +660,111 @@ class Component extends DCLogic {
       weight: w.id === st.wall ? 600 : 400,
       pick: () => this.setState({ wall: w.id })
     }));
+
+    // Wi-Fi.
+    const arcs = (n) => ({ o1: n >= 1 ? 1 : 0.22, o2: n >= 2 ? 1 : 0.22, o3: n >= 3 ? 1 : 0.22 });
+    const known = st.known.map((w, i, list) => ({
+      ...w, ...arcs(w.strength), border: border(i, list),
+      checked: w.auto ? 'true' : 'false', track: w.auto ? A : off, justify: w.auto ? 'flex-end' : 'flex-start',
+      toggle: () => this.setState({ known: st.known.map((x) => (x.name === w.name ? { ...x, auto: !x.auto } : x)) }),
+      forget: () => this.setState({ known: st.known.filter((x) => x.name !== w.name), connected: st.connected === w.name ? '' : st.connected })
+    }));
+    const others = st.others.map((w, i, list) => ({
+      ...w, ...arcs(w.strength), border: border(i, list), asking: st.joining === w.name,
+      join: () => (w.secure && st.joining !== w.name
+        ? this.setState({ joining: w.name })
+        : this.setState({ joining: null, connected: w.name, others: st.others.filter((x) => x.name !== w.name), known: [...st.known, { ...w, auto: true }] })),
+      cancel: () => this.setState({ joining: null })
+    }));
+
+    // Bluetooth.
+    const icons = {
+      headphones: 'M4 15v-3a8 8 0 0 1 16 0v3M4 15h3v5H4zM17 15h3v5h-3z',
+      mouse: 'M12 3a6 6 0 0 1 6 6v6a6 6 0 0 1-12 0V9a6 6 0 0 1 6-6zM12 7v3',
+      keyboard: 'M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10',
+      speaker: 'M7 3h10v18H7zM12 14a2.5 2.5 0 1 0 0 .01M12 7h.01'
+    };
+    const myDevices = st.devices.map((d, i, list) => ({
+      ...d, icon: icons[d.kind], border: border(i, list),
+      status: d.connected ? 'Connected' + (d.battery ? ' · battery ' + d.battery + '%' : '') : 'Not connected',
+      statusColor: d.connected ? '#336650' : '#68625A',
+      action: d.connected ? 'Disconnect' : 'Connect',
+      connect: () => this.setState({ devices: st.devices.map((x) => (x.id === d.id ? { ...x, connected: !x.connected } : x)) }),
+      forget: () => this.setState({ devices: st.devices.filter((x) => x.id !== d.id) })
+    }));
+    const nearby = st.nearby.map((d, i, list) => ({
+      ...d, icon: icons[d.kind], border: border(i, list),
+      status: d.pairing ? 'Pairing… confirm 482 913 on the device' : 'Ready to pair',
+      action: d.pairing ? 'Confirm' : 'Pair',
+      pair: () => (d.pairing
+        ? this.setState({ nearby: st.nearby.filter((x) => x.id !== d.id), devices: [...st.devices, { id: d.id, name: d.name, kind: d.kind, connected: true }] })
+        : this.setState({ nearby: st.nearby.map((x) => (x.id === d.id ? { ...x, pairing: true } : x)) }))
+    }));
+
+    // Display: two monitors, laid out side by side at their logical sizes.
+    const monitorDefs = [
+      { id: 'builtin', name: 'Built-in display', short: 'Built-in', model: 'BOE NE160QDM-NY1 · 16″', w: 2560, h: 1600 },
+      { id: 'dell', name: 'DELL U2723QE', short: 'DELL U2723QE', model: 'Dell Inc. · 27″ · DisplayPort', w: 3840, h: 2160 }
+    ];
+    const logical = monitorDefs.map((m) => ({ ...m, lw: Math.round(m.w / (st.scale[m.id] / 100)), lh: Math.round(m.h / (st.scale[m.id] / 100)) }));
+    const totalW = logical.reduce((sum, m) => sum + m.lw, 0);
+    const maxH = Math.max(...logical.map((m) => m.lh));
+    const k = Math.min(680 / totalW, 116 / maxH);
+    let x = Math.round((746 - (totalW * k + 4 * (logical.length - 1))) / 2);
+    const monitors = logical.map((m) => {
+      const out = {
+        ...m, w: Math.round(m.lw * k), h: Math.round(m.lh * k), left: x, top: Math.round(17 + (maxH - m.lh) * k),
+        looks: m.lw + ' × ' + m.lh, pressed: st.monitor === m.id ? 'true' : 'false', ring: st.monitor === m.id ? A : 'rgba(255, 255, 255, 0.9)',
+        pick: () => this.setState({ monitor: m.id, sel: { ...st.sel, resolution: m.id === 'dell' ? '2560x1600' : st.sel.resolution } })
+      };
+      x += out.w + 4;
+      return out;
+    });
+    const selected = logical.find((m) => m.id === st.monitor);
+    const scales = seg([100, 125, 150, 175, 200].map((v) => ({ id: v, label: v + '%' })), st.scale[st.monitor], (v) => this.setState({ scale: { ...st.scale, [st.monitor]: v } }));
+    const schedules = seg([{ id: 'sun', label: 'Sunset to sunrise' }, { id: 'custom', label: 'Custom' }, { id: 'off', label: 'Off' }], st.schedule, (v) => this.setState({ schedule: v }));
+    const nlStatus = st.on.nlNow
+      ? (st.schedule === 'off' ? 'On until you turn it off' : 'On until ' + (st.schedule === 'sun' ? 'sunrise, 05:39' : '07:00'))
+      : (st.schedule === 'sun' ? 'Comes on at sunset, 17:28' : st.schedule === 'custom' ? 'Comes on at 22:00' : 'Off');
+    const dockSides = seg([{ id: 'left', label: 'Left' }, { id: 'bottom', label: 'Bottom' }, { id: 'right', label: 'Right' }], st.dockSide, (v) => this.setState({ dockSide: v }));
+
+    // Sound.
+    const outputDefs = [
+      { id: 'speakers', name: 'Built-in speakers', kind: 'Internal' },
+      { id: 'xm4', name: 'WH-1000XM4', kind: 'Bluetooth' },
+      { id: 'dell', name: 'DELL U2723QE', kind: 'DisplayPort' }
+    ];
+    const outputs = outputDefs.map((o, i, list) => ({ ...o, border: border(i, list), checked: o.id === st.output ? 'true' : 'false', mark: o.id === st.output ? '✓' : '', pick: () => this.setState({ output: o.id }) }));
+    const inputDefs = [{ id: 'mic', name: 'Built-in microphone', kind: 'Internal' }, { id: 'xm4', name: 'WH-1000XM4', kind: 'Bluetooth headset' }];
+    const inputs = inputDefs.map((o) => ({ ...o, checked: o.id === st.input ? 'true' : 'false', mark: o.id === st.input ? '✓' : '', pick: () => this.setState({ input: o.id }) }));
+    const lit = Math.round(st.micVolume / 100 * 7);
+    const level = Array.from({ length: 12 }, (_, i) => ({ c: i < lit ? (i < 9 ? A : '#E8B04A') : 'rgba(36, 34, 30, 0.12)' }));
+
+    // Fingerprint & Lock.
+    const fingers = st.fingers.map((name) => ({ name, remove: () => this.setState({ fingers: st.fingers.filter((f) => f !== name) }) }));
+
+    // Keyboard.
+    const layouts = st.layouts.map((l, i, list) => ({ ...l, border: border(i, list), only: list.length === 1, remove: () => this.setState({ layouts: st.layouts.filter((x) => x.code !== l.code) }) }));
+    const shortcutDefs = [
+      ['Open the launcher', ['Super', 'Space']],
+      ['Screenshot of the screen', ['Shift', 'Super', '3']],
+      ['Screenshot of an area or window', ['Shift', 'Super', '4']],
+      ['Screenshot options', ['Shift', 'Super', '5']],
+      ['Force quit', ['Ctrl', 'Alt', 'Esc']]
+    ];
+    const shortcuts = shortcutDefs.map(([what, keys], i, list) => ({ what, keys: keys.map((key) => ({ key })), border: border(i, list) }));
+
+    const selects = {};
+    for (const name of Object.keys(st.sel)) {
+      selects[name] = st.sel[name];
+      selects['on_' + name] = (e) => this.setState({ sel: { ...st.sel, [name]: e.target.value } });
+    }
+    const ranges = {};
+    for (const name of ['brightness', 'warmth', 'volume', 'micVolume', 'repeatRate']) {
+      ranges[name] = st[name];
+      ranges['on_' + name] = (e) => this.setState({ [name]: Number(e.target.value) });
+    }
+
     const aboutRows = [
       { k: 'Processor', v: 'Intel Core i5-1135G7' },
       { k: 'Graphics', v: 'Intel Iris Xe' },
@@ -374,7 +773,6 @@ class Component extends DCLogic {
       { k: 'Compositor', v: 'Wayfire' },
       { k: 'Desktop shell', v: 'autark-shell (GTK4 + Rust)' }
     ];
-    const off = 'rgba(36, 34, 30, 0.18)';
     const featDefs = [
       { id: 'launcher', label: 'Launcher commands', desc: 'Turns what you type into actions' },
       { id: 'notify', label: 'Notification urgency', desc: 'Focus lets only urgent ones through' },
@@ -425,9 +823,18 @@ class Component extends DCLogic {
       edit: () => this.setState({ editing: m.id, editDraft: m.text }),
       forget: () => this.setState({ memories: st.memories.filter((x) => x.id !== m.id), editing: null })
     }));
+    const designed = ['wifi', 'bluetooth', 'appearance', 'dock', 'display', 'sound', 'power', 'lock', 'keyboard', 'ai', 'about'];
     const current = navDefs.find((n) => n.id === st.pane);
     return {
+      ...selects,
+      ...ranges,
       nav,
+      query: st.query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      searching: q !== '',
+      browsing: q === '',
+      results,
+      searchNote,
       accent: A,
       accentLabel: cur.label,
       accents: accents.map((a) => ({
@@ -438,21 +845,77 @@ class Component extends DCLogic {
       })),
       themes,
       walls,
+      motionSw: sw('motion'),
+      contrastSw: sw('contrast'),
       dockSize: st.dockSize,
       onDockSize: (e) => this.setState({ dockSize: Number(e.target.value) }),
-      magnifyChecked: st.magnify ? 'true' : 'false',
-      magnifyTrack: st.magnify ? A : off,
-      magnifyJustify: st.magnify ? 'flex-end' : 'flex-start',
-      toggleMagnify: () => this.setState({ magnify: !st.magnify }),
-      dotsChecked: st.dots ? 'true' : 'false',
-      dotsTrack: st.dots ? A : off,
-      dotsJustify: st.dots ? 'flex-end' : 'flex-start',
-      toggleDots: () => this.setState({ dots: !st.dots }),
+      magnifySw: sw('magnify'),
+      dotsSw: sw('dots'),
+      hideSw: sw('hide'),
+      widgetsSw: sw('widgets'),
+      dockSides,
+      wifiSw: sw('wifi'),
+      wifiOn: st.on.wifi,
+      connected: st.connected || 'Not connected',
+      disconnect: () => this.setState({ connected: '' }),
+      known,
+      others,
+      btSw: sw('bt'),
+      btOn: st.on.bt,
+      myDevices,
+      nearby,
+      noNearby: st.nearby.length === 0,
+      monitors,
+      selName: selected.name,
+      selModel: selected.model,
+      selInternal: selected.id === 'builtin',
+      selExternal: selected.id !== 'builtin',
+      scales,
+      looksLike: 'Looks like ' + selected.lw + ' × ' + selected.lh,
+      schedules,
+      nlSun: st.schedule === 'sun',
+      nlCustom: st.schedule === 'custom',
+      sunset: '17:28',
+      sunrise: '05:39',
+      nlNowSw: sw('nlNow'),
+      nlNowNote: st.schedule === 'off' ? 'Stays on until you turn it off' : 'Until the schedule next changes',
+      nlStatus,
+      muteSw: sw('mute'),
+      effectsSw: sw('effects'),
+      outputs,
+      inputs,
+      level,
+      percentSw: sw('percent'),
+      fingers,
+      enrolling: st.enrolling,
+      enrollStep: st.enrollStep,
+      enrollDeg: Math.round(st.enrollStep / 8 * 360),
+      startEnroll: () => this.setState({ enrolling: true, enrollStep: 0 }),
+      stepEnroll: () => (st.enrollStep >= 7
+        ? this.setState({ enrolling: false, enrollStep: 0, fingers: [...st.fingers, 'Right thumb'] })
+        : this.setState({ enrollStep: st.enrollStep + 1 })),
+      cancelEnroll: () => this.setState({ enrolling: false, enrollStep: 0 }),
+      fpUnlockSw: sw('fpUnlock'),
+      fpSudoSw: sw('fpSudo'),
+      lockNotesSw: sw('lockNotes'),
+      repeatDelayInv: 950 - st.repeatDelay,
+      on_repeatDelay: (e) => this.setState({ repeatDelay: 950 - Number(e.target.value) }),
+      layouts,
+      addLayout: () => {},
+      shortcuts,
       about: aboutRows.map((r, i) => ({ ...r, border: i < aboutRows.length - 1 ? '1px solid rgba(36, 34, 30, 0.06)' : 'none' })),
+      isWifi: st.pane === 'wifi',
+      isBluetooth: st.pane === 'bluetooth',
       isAppearance: st.pane === 'appearance',
+      isDock: st.pane === 'dock',
+      isDisplay: st.pane === 'display',
+      isSound: st.pane === 'sound',
+      isPower: st.pane === 'power',
+      isLock: st.pane === 'lock',
+      isKeyboard: st.pane === 'keyboard',
       isAbout: st.pane === 'about',
       isAi: st.pane === 'ai',
-      isOther: st.pane !== 'appearance' && st.pane !== 'about' && st.pane !== 'ai',
+      isOther: !designed.includes(st.pane),
       localChecked: st.localOnly ? 'true' : 'false',
       localTrack: st.localOnly ? A : off,
       localJustify: st.localOnly ? 'flex-end' : 'flex-start',
@@ -480,6 +943,7 @@ class Component extends DCLogic {
     };
   }
 }
+
 </script>
 </body>
 </html>
