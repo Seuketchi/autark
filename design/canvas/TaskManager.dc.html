@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark Activity</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+input::placeholder{color:#7A736A}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; color: #24221E; background: #F6F4EF">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Wallpaper" hint-size="1440px,900px"></dc-import>
+  </div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 5">
+    <dc-import name="TopBar" app="Activity" hint-size="1440px,32px"></dc-import>
+  </div>
+
+  <section aria-label="Activity window" style="position: absolute; left: 100px; top: 56px; width: 1240px; height: 720px; display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 14px; box-shadow: 0 30px 80px rgba(70, 58, 40, 0.18); overflow: hidden">
+    <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-bottom: 1px solid rgba(36, 34, 30, 0.08); background: #FBFAF7">
+      <div style="display: flex; gap: 8px">
+        <button aria-label="Close" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #E5684F"></button>
+        <button aria-label="Minimize" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #E8B04A"></button>
+        <button aria-label="Maximize" style="width: 12px; height: 12px; padding: 0; border: none; border-radius: 50%; background: #6FAF7A"></button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px; min-width: 150px">
+        <span style="font-size: 14px; font-weight: 600">Activity</span>
+        <span style="font-size: 11px; color: #7A736A">{{subtitle}}</span>
+      </div>
+      <div role="tablist" aria-label="Measure" style="display: flex; padding: 2px; margin: 0 auto; border-radius: 8px; background: rgba(36, 34, 30, 0.06)">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+          <button role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="height: 28px; padding: 0 14px; border: none; border-radius: 6px; font: inherit; font-size: 12px; font-weight: {{t.weight}}; background: {{t.bg}}; box-shadow: {{t.shadow}}; color: #24221E">{{t.label}}</button>
+        </sc-for>
+      </div>
+      <label style="width: 200px; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; border-radius: 8px; background: rgba(36, 34, 30, 0.06)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A736A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search apps and processes</span>
+        <input type="text" placeholder="Search" style="flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #24221E; font: inherit; font-size: 13px">
+      </label>
+      <button onClick="{{openForceQuit}}" aria-label="Force quit the selected app" style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid rgba(196, 80, 60, 0.35); border-radius: 8px; background: #FFFFFF; color: #A8402E; font: inherit; font-size: 12px; font-weight: 500">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"></path><path d="M9 9l6 6M15 9l-6 6"></path></svg>
+        Force quit
+      </button>
+    </header>
+
+    <div role="table" aria-label="{{tableLabel}}" style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden">
+      <div role="row" style="height: 32px; flex-shrink: 0; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid rgba(36, 34, 30, 0.08); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">
+        <span role="columnheader" style="flex: 1">{{firstColumn}}</span>
+        <sc-for list="{{columns}}" as="c" hint-placeholder-count="3">
+          <span role="columnheader" style="width: {{c.width}}px; text-align: right">{{c.label}}</span>
+        </sc-for>
+      </div>
+      <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 4px 8px">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+          <div role="row" aria-selected="{{r.selected}}" style="height: {{r.height}}px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 {{r.indent}}px; border-radius: 8px; background: {{r.bg}}; font-size: 13px">
+            <sc-if value="{{r.isApp}}" hint-placeholder-val="{{true}}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7A736A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate({{r.chevron}}deg); opacity: {{r.chevronOpacity}}"><path d="M9 6l6 6-6 6"></path></svg>
+              <sc-if value="{{r.hasIcon}}" hint-placeholder-val="{{true}}">
+                <dc-import name="AppIcon" app="{{r.icon}}" size="22" hint-size="22px,22px"></dc-import>
+              </sc-if>
+              <sc-if value="{{r.letterTile}}" hint-placeholder-val="{{false}}">
+                <span aria-hidden="true" style="width: 22px; height: 22px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #E2DDD3; color: #68625A; font-size: 11px; font-weight: 600; font-family: 'Geist Mono', monospace">{{r.letter}}</span>
+              </sc-if>
+            </sc-if>
+            <span style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden">
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: {{r.weight}}; color: {{r.nameColor}}; font-family: {{r.font}}; font-size: {{r.nameSize}}px">{{r.name}}</span>
+              <sc-if value="{{r.flag}}" hint-placeholder-val="{{false}}">
+                <span style="flex-shrink: 0; padding: 1px 8px; border-radius: 999px; background: #F6E7C8; color: #8A5A12; font-size: 11px; font-weight: 500">{{r.flag}}</span>
+              </sc-if>
+            </span>
+            <sc-for list="{{r.cells}}" as="c" hint-placeholder-count="3">
+              <span role="cell" style="width: {{c.width}}px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-variant-numeric: tabular-nums; color: {{c.color}}; font-size: {{c.size}}px">
+                <sc-if value="{{c.bar}}" hint-placeholder-val="{{false}}">
+                  <span aria-hidden="true" style="width: 70px; height: 6px; border-radius: 3px; background: rgba(36, 34, 30, 0.08); overflow: hidden"><span style="display: block; width: {{c.bar}}%; height: 100%; border-radius: 3px; background: {{c.barColor}}"></span></span>
+                </sc-if>
+                {{c.text}}
+              </span>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <footer style="height: 168px; flex-shrink: 0; display: flex; gap: 14px; padding: 16px 20px 18px; border-top: 1px solid rgba(36, 34, 30, 0.08); background: #FBFAF7">
+      <div style="flex: 1.6; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 12px; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.08)">
+        <div style="display: flex; align-items: baseline; gap: 10px">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">{{chart.title}}</span>
+          <span style="margin-left: auto; font-size: 12px; color: #68625A">{{chart.caption}}</span>
+        </div>
+        <svg viewBox="0 0 600 84" preserveAspectRatio="none" style="flex: 1; width: 100%; min-height: 0" aria-label="{{chart.title}}">
+          <path d="{{chart.area}}" fill="rgba(63, 122, 95, 0.14)"></path>
+          <path d="{{chart.line}}" fill="none" stroke="#3F7A5F" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+          <sc-if value="{{chart.line2}}" hint-placeholder-val="{{false}}">
+            <path d="{{chart.line2}}" fill="none" stroke="#C99A3E" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+          </sc-if>
+        </svg>
+      </div>
+      <sc-for list="{{cards}}" as="k" hint-placeholder-count="2">
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.08)">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">{{k.title}}</span>
+          <span style="font-size: 24px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums">{{k.big}}</span>
+          <sc-for list="{{k.lines}}" as="l" hint-placeholder-count="2">
+            <span style="font-size: 12px; color: #68625A">{{l}}</span>
+          </sc-for>
+          <sc-if value="{{k.meter}}" hint-placeholder-val="{{false}}">
+            <span aria-hidden="true" style="margin-top: auto; height: 6px; border-radius: 3px; background: rgba(36, 34, 30, 0.08); overflow: hidden"><span style="display: block; width: {{k.meter}}%; height: 100%; border-radius: 3px; background: #3F7A5F"></span></span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </footer>
+  </section>
+
+  <sc-if value="{{showForceQuit}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; z-index: 8; background: rgba(36, 34, 30, 0.18)"></div>
+    <section role="dialog" aria-label="Force quit" style="position: absolute; z-index: 9; left: 510px; top: 170px; width: 420px; display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 14px; box-shadow: 0 30px 80px rgba(70, 58, 40, 0.28); overflow: hidden">
+      <div style="padding: 18px 20px 12px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 15px; font-weight: 600">Force quit an app</span>
+        <span style="font-size: 12px; color: #68625A">Unsaved changes in the app are lost. Ctrl+Alt+Esc opens this from anywhere.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding: 4px 10px 10px">
+        <sc-for list="{{quitList}}" as="q" hint-placeholder-count="6">
+          <button onClick="{{q.pick}}" aria-pressed="{{q.selected}}" style="height: 38px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border: none; border-radius: 8px; background: {{q.bg}}; color: {{q.fg}}; font: inherit; font-size: 13px; text-align: left">
+            <sc-if value="{{q.hasIcon}}" hint-placeholder-val="{{true}}">
+              <dc-import name="AppIcon" app="{{q.icon}}" size="24" hint-size="24px,24px"></dc-import>
+            </sc-if>
+            <sc-if value="{{q.letterTile}}" hint-placeholder-val="{{false}}">
+              <span aria-hidden="true" style="width: 24px; height: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #E2DDD3; color: #68625A; font-size: 11px; font-weight: 600; font-family: 'Geist Mono', monospace">{{q.letter}}</span>
+            </sc-if>
+            <span style="flex: 1">{{q.name}}</span>
+            <sc-if value="{{q.note}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 11px; color: {{q.noteColor}}">{{q.note}}</span>
+            </sc-if>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid rgba(36, 34, 30, 0.08); background: #FBFAF7">
+        <button onClick="{{closeForceQuit}}" style="height: 32px; padding: 0 14px; border: 1px solid rgba(36, 34, 30, 0.12); border-radius: 8px; background: #FFFFFF; color: #24221E; font: inherit; font-size: 13px">Cancel</button>
+        <button onClick="{{closeForceQuit}}" style="height: 32px; padding: 0 14px; border: none; border-radius: 8px; background: #C4503C; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500">Force quit {{quitName}}</button>
+      </div>
+    </section>
+  </sc-if>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; z-index: 5">
+    <dc-import name="Dock" hint-size="720px,112px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"forceQuit":{"editor":"bool","default":false},"tab":{"editor":"enum","options":["cpu","memory","energy","disk","network"],"default":"energy"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const forceQuit = props.forceQuit === true || props.forceQuit === 'true';
+    this.state = { tab: props.tab || 'energy', open: { browser: true }, sel: 'kitchend', forceQuit, quitSel: 'kitchend' };
+  }
+  renderVals() {
+    const st = this.state;
+    // One reading from autark-stats, made up for the mockup.
+    const apps = [
+      { id: 'kitchend', name: 'kitchend', letter: 'k', cpu: 154.1, mem: 397, watts: 6.2, read: 0.1, write: 2.4, procs: 6, flag: 'High CPU for 14 min', children: [] },
+      { id: 'browser', name: 'Firefox', icon: 'browser', cpu: 12.3, mem: 2140, watts: 1.4, read: 0.8, write: 1.6, procs: 9, children: [
+        { name: 'firefox', cpu: 6.1, mem: 610, watts: 0.7 },
+        { name: 'Web Content — github.com', cpu: 3.9, mem: 420, watts: 0.4 },
+        { name: 'Web Content — docs.rs', cpu: 1.8, mem: 380, watts: 0.2 }
+      ] },
+      { id: 'terminal', name: 'Terminal', icon: 'terminal', cpu: 4.0, mem: 180, watts: 0.5, read: 0.0, write: 0.1, procs: 4, children: [] },
+      { id: 'editor', name: 'Galley', icon: 'editor', cpu: 2.6, mem: 310, watts: 0.3, read: 0.2, write: 0.3, procs: 3, children: [] },
+      { id: 'music', name: 'Music', icon: 'music', cpu: 1.9, mem: 140, watts: 0.3, read: 0.4, write: 0.0, procs: 2, children: [] },
+      { id: 'shell', name: 'Autark shell', letter: 'A', cpu: 1.0, mem: 120, watts: 0.1, read: 0.0, write: 0.0, procs: 5, children: [] },
+      { id: 'files', name: 'Files', icon: 'files', cpu: 0.4, mem: 95, watts: 0.05, read: 0.0, write: 0.0, procs: 1, children: [] },
+      { id: 'settings', name: 'Settings', icon: 'settings', cpu: 0.2, mem: 70, watts: 0.02, read: 0.0, write: 0.0, procs: 1, children: [] }
+    ];
+    const totalWatts = 8.4;
+    const tabsDef = [['cpu', 'CPU'], ['memory', 'Memory'], ['energy', 'Energy'], ['disk', 'Disk'], ['network', 'Network']];
+    const tabs = tabsDef.map(([id, label]) => {
+      const on = st.tab === id;
+      return { label, selected: on ? 'true' : 'false', weight: on ? 600 : 400, bg: on ? '#FFFFFF' : 'transparent', shadow: on ? '0 1px 2px rgba(36, 34, 30, 0.12)' : 'none', pick: () => this.setState({ tab: id }) };
+    });
+    const mb = (m) => (m >= 1000 ? (m / 1000).toFixed(1) + ' GB' : Math.round(m) + ' MB');
+    const rate = (r) => (r >= 1 ? r.toFixed(1) + ' MB/s' : Math.round(r * 1000) + ' KB/s');
+    const impact = (w) => Math.round((w / totalWatts) * 1000) / 10;
+    const plain = (text, width) => ({ text, width, color: '#24221E', size: 13, bar: 0 });
+    const dim = (text, width) => ({ text, width, color: '#68625A', size: 12, bar: 0 });
+    const columnsFor = {
+      cpu: [['% CPU', 110], ['Processes', 100], ['Memory', 110]],
+      memory: [['Memory', 120], ['% of RAM', 100], ['Processes', 100]],
+      energy: [['Energy impact', 170], ['Power', 90], ['% CPU', 90]],
+      disk: [['Read', 120], ['Written', 120], ['Processes', 100]],
+      network: [['Received', 130], ['Sent', 130]]
+    };
+    const columns = columnsFor[st.tab].map(([label, width]) => ({ label, width }));
+    const cellsFor = (a, child) => {
+      const w = columns.map((c) => c.width);
+      const cell = child ? dim : plain;
+      if (st.tab === 'cpu') return [cell(a.cpu.toFixed(1), w[0]), cell(child ? '' : String(a.procs), w[1]), cell(mb(a.mem), w[2])];
+      if (st.tab === 'memory') return [cell(mb(a.mem), w[0]), cell((a.mem / 327.9).toFixed(1) + '%', w[1]), cell(child ? '' : String(a.procs), w[2])];
+      if (st.tab === 'disk') return [cell(rate(a.read || 0), w[0]), cell(rate(a.write || 0), w[1]), cell(child ? '' : String(a.procs), w[2])];
+      const value = impact(a.watts);
+      const bar = { text: value.toFixed(1), width: w[0], color: child ? '#68625A' : '#24221E', size: child ? 12 : 13, bar: Math.min(100, value * 1.4), barColor: value > 40 ? '#C99A3E' : '#3F7A5F' };
+      return [bar, cell(a.watts.toFixed(1) + ' W', w[1]), cell(a.cpu.toFixed(1), w[2])];
+    };
+    let rows = [];
+    if (st.tab === 'network') {
+      rows = [
+        { isApp: false, name: 'Wi-Fi (wlan0)', weight: 500, cells: [plain('412 KB/s', 130), plain('38 KB/s', 130)] },
+        { isApp: false, name: 'Tailscale (tailscale0)', weight: 500, cells: [plain('6 KB/s', 130), plain('19 KB/s', 130)] },
+        { isApp: false, name: 'Per-app network needs a kernel probe; it comes after the first release.', weight: 400, nameColor: '#7A736A', nameSize: 12, cells: [] }
+      ].map((r) => ({ ...r, height: 38, indent: 12, bg: 'transparent', selected: 'false', nameColor: r.nameColor || '#24221E', nameSize: r.nameSize || 13, font: 'inherit', flag: '' }));
+    } else {
+      const sorted = apps.slice().sort((a, b) => {
+        const key = { cpu: 'cpu', memory: 'mem', energy: 'watts', disk: 'write' }[st.tab];
+        return b[key] - a[key];
+      });
+      sorted.forEach((a) => {
+        const open = !!st.open[a.id];
+        const on = st.sel === a.id;
+        rows.push({
+          isApp: true, hasIcon: !!a.icon, icon: a.icon || 'files', letterTile: !a.icon, letter: a.letter,
+          chevron: open ? 90 : 0, chevronOpacity: a.children.length ? 1 : 0.25,
+          name: a.name, weight: 500, nameColor: '#24221E', nameSize: 13, font: 'inherit', flag: a.flag || '',
+          height: 38, indent: 12, bg: on ? '#E1EDE6' : 'transparent', selected: on ? 'true' : 'false',
+          cells: cellsFor(a, false)
+        });
+        if (open) a.children.forEach((c) => rows.push({
+          isApp: false, name: c.name, weight: 400, nameColor: '#68625A', nameSize: 12, font: "'Geist Mono', ui-monospace, monospace", flag: '',
+          height: 30, indent: 66, bg: 'transparent', selected: 'false',
+          cells: cellsFor({ ...a, ...c, read: 0, write: 0 }, true)
+        }));
+      });
+    }
+    // Ten minutes of readings for the chart.
+    const series = {
+      cpu: [22, 25, 31, 28, 46, 61, 58, 55, 63, 60, 57, 52, 49, 54, 58, 61, 59, 57, 60, 58],
+      memory: [38, 38, 39, 39, 40, 40, 41, 41, 41, 41, 42, 42, 42, 41, 41, 41, 42, 42, 42, 41],
+      energy: [5.1, 5.4, 6.0, 5.8, 7.9, 8.8, 8.6, 8.2, 8.9, 8.7, 8.5, 8.1, 7.8, 8.3, 8.6, 8.9, 8.7, 8.4, 8.6, 8.4],
+      disk: [0.2, 0.1, 1.8, 3.2, 0.4, 0.2, 0.1, 2.6, 0.3, 0.2, 0.2, 0.1, 0.6, 2.9, 0.4, 0.2, 0.1, 0.3, 1.1, 0.4],
+      network: [0.1, 0.3, 0.2, 0.6, 0.4, 0.2, 0.1, 0.1, 0.5, 0.9, 0.4, 0.3, 0.2, 0.2, 0.4, 0.3, 0.1, 0.2, 0.4, 0.4]
+    };
+    const second = { disk: [0.4, 0.3, 0.6, 0.5, 2.1, 0.8, 0.4, 0.5, 1.9, 0.6, 0.4, 0.3, 0.5, 0.6, 0.4, 1.6, 0.5, 0.4, 0.3, 0.5], network: [0.02, 0.05, 0.03, 0.08, 0.04, 0.03, 0.02, 0.02, 0.06, 0.1, 0.05, 0.04, 0.03, 0.03, 0.05, 0.04, 0.02, 0.03, 0.05, 0.04] };
+    const max = { cpu: 100, memory: 100, energy: 12, disk: 4, network: 1.2 }[st.tab];
+    const path = (values) => values.map((v, i) => (i ? 'L' : 'M') + Math.round((i / (values.length - 1)) * 600) + ' ' + Math.round(80 - (v / max) * 76)).join(' ');
+    const line = path(series[st.tab]);
+    const chart = {
+      title: { cpu: 'CPU LOAD', memory: 'MEMORY USED', energy: 'POWER DRAW', disk: 'READ AND WRITTEN', network: 'RECEIVED AND SENT' }[st.tab] + ', LAST 10 MINUTES',
+      caption: { cpu: 'Now 58%  ·  8 cores', memory: '13.4 of 32 GB', energy: 'Now 8.4 W  ·  average 7.9 W', disk: 'Read 0.4 MB/s  ·  written 2.4 MB/s', network: 'In 418 KB/s  ·  out 57 KB/s' }[st.tab],
+      line,
+      area: line + ' L600 84 L0 84 Z',
+      line2: second[st.tab] ? path(second[st.tab]) : ''
+    };
+    const cardsFor = {
+      cpu: [
+        { title: 'BUSIEST APP', big: 'kitchend', lines: ['154% of a core for 14 minutes', 'Kith flagged it as a runaway'], meter: 0 },
+        { title: 'TEMPERATURE', big: '71 °C', lines: ['Fans quiet', 'Power profile: Balanced'], meter: 0 }
+      ],
+      memory: [
+        { title: 'IN USE', big: '13.4 GB', lines: ['18.6 GB available', 'Firefox uses the most'], meter: 41 },
+        { title: 'COMPRESSED SWAP', big: '1.2 GB', lines: ['zram, 3.1 : 1 compression', 'No pressure'], meter: 7 }
+      ],
+      energy: [
+        { title: 'BATTERY', big: '72%', lines: ['Discharging  ·  3 h 10 min left', 'Health 86%  ·  314 cycles'], meter: 72 },
+        { title: 'SIGNIFICANT ENERGY', big: '1 app', lines: ['kitchend: 74% of the power drawn', 'Quitting it saves about 6 W'], meter: 0 }
+      ],
+      disk: [
+        { title: 'SINCE BOOT', big: '18.2 GB', lines: ['Read 11.4 GB  ·  written 6.8 GB', 'NVMe, 61% free'], meter: 39 },
+        { title: 'BUSIEST APP', big: 'kitchend', lines: ['Writing 2.4 MB/s', 'Logs under ~/.local/state'], meter: 0 }
+      ],
+      network: [
+        { title: 'SINCE BOOT', big: '2.1 GB', lines: ['Received 1.8 GB  ·  sent 0.3 GB', 'Wi-Fi: Hearth-5G'], meter: 0 },
+        { title: 'FIREWALL', big: 'Closed', lines: ['No ports open to the network', 'Blocked today: 14 attempts'], meter: 0 }
+      ]
+    };
+    const running = apps.filter((a) => a.id !== 'shell');
+    const quitList = running.map((a) => {
+      const on = st.quitSel === a.id;
+      return {
+        name: a.name, hasIcon: !!a.icon, icon: a.icon || 'files', letterTile: !a.icon, letter: a.letter,
+        note: a.id === 'kitchend' ? 'High CPU' : '', noteColor: on ? '#FFFFFF' : '#A8402E',
+        bg: on ? '#3F7A5F' : 'transparent', fg: on ? '#FFFFFF' : '#24221E', selected: on ? 'true' : 'false',
+        pick: () => this.setState({ quitSel: a.id })
+      };
+    });
+    const quitName = (apps.find((a) => a.id === st.quitSel) || apps[0]).name;
+    return {
+      tabs,
+      subtitle: '8 apps  ·  31 processes',
+      tableLabel: st.tab === 'network' ? 'Network interfaces' : 'Apps',
+      firstColumn: st.tab === 'network' ? 'INTERFACE' : 'APP',
+      columns,
+      rows,
+      chart,
+      cards: cardsFor[st.tab],
+      showForceQuit: st.forceQuit,
+      quitList,
+      quitName,
+      openForceQuit: () => this.setState({ forceQuit: true }),
+      closeForceQuit: () => this.setState({ forceQuit: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

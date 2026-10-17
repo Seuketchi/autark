@@ -11,6 +11,7 @@ The desktop design. This folder is the only copy; the Claude canvas used to edit
 | `Tasks` | Creating a scheduled task, and its result notification |
 | `Persona` | Kith's name and Visor face in four states |
 | `Notes` | Autark Notes: folders, note list, live preview with checklists and `[[links]]`, backlinks, graph view |
+| `TaskManager` | Activity, the task manager: apps by CPU, memory, energy, disk and network, with the force-quit dialog |
 | `Overview` | All windows and workspaces |
 | `NotificationCenter` | Quick settings and notifications |
 | `Lock` | Lock screen with fingerprint or password |
