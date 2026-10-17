@@ -1,0 +1,27 @@
+# Phase 8b sources (docs/specs/phase-8b-packages.md), read by scripts/fetch-8b.sh.
+# <saved name> <url> <md5 or -> <sha256>
+# md5 is BLFS's where the package has a BLFS page; every sha256 was computed on 2026-10-18 and, where the spec says
+# so, matches the publisher's (rust-lang.org, download.gnome.org, the crates.io index). Crates are saved as .tar.gz
+# (a .crate is a gzipped tar) so the stage script's *.tar.* copy and build-lib.sh's unpacking take them as they are.
+
+rustc-1.97.1-src.tar.xz https://static.rust-lang.org/dist/rustc-1.97.1-src.tar.xz c6fc3febcd3b1235cf4f00c3e05559b3 0ed06fdaffd4722a7702e0b4eebfafc897ab8f513e8e1b247cdd7e5c6df6ded2
+rustc-1.96.0-x86_64-unknown-linux-gnu.tar.xz https://static.rust-lang.org/dist/2026-05-28/rustc-1.96.0-x86_64-unknown-linux-gnu.tar.xz - 7d7fa1d0cfb0fab71a956bb78f41107202c17f30ab56c45288e869a37fd9633d
+rust-std-1.96.0-x86_64-unknown-linux-gnu.tar.xz https://static.rust-lang.org/dist/2026-05-28/rust-std-1.96.0-x86_64-unknown-linux-gnu.tar.xz - c09c7c646248f14f473f5f7a029af15ee57c3a9f9bc93dfa72d9621938586b82
+cargo-1.96.0-x86_64-unknown-linux-gnu.tar.xz https://static.rust-lang.org/dist/2026-05-28/cargo-1.96.0-x86_64-unknown-linux-gnu.tar.xz - dee75c3c8f9f600ad75bc0c93249e767d3047845a4dd668327ce43ab039ba266
+tiff-4.7.2.tar.gz https://download.osgeo.org/libtiff/tiff-4.7.2.tar.gz a2a65ea450b8f469c667128848ffebfc 672bd7d10aee4606171afb864f3570b83340f6a33e2c186dc0512f7145ffdf6a
+shared-mime-info-2.5.1.tar.gz https://gitlab.freedesktop.org/xdg/shared-mime-info/-/archive/2.5.1/shared-mime-info-2.5.1.tar.gz 5f8baa7bac254ea9e65782f754a2880b ea248ea157b7fa0165f4fe282c84919fa84c3f175553642f229c8f1ab7539128
+gdk-pixbuf-2.44.7.tar.xz https://download.gnome.org/sources/gdk-pixbuf/2.44/gdk-pixbuf-2.44.7.tar.xz 2a12da2133476b7b36fbfcadd7133315 172f80e3626ec31520a970400f1a3694e04718f6c2cd2885f75250fb5a6995a4
+graphene-1.10.8.tar.xz https://download.gnome.org/sources/graphene/1.10/graphene-1.10.8.tar.xz 169e3c507b5a5c26e9af492412070b81 a37bb0e78a419dcbeaa9c7027bcff52f5ec2367c25ec859da31dfde2928f279a
+libepoxy-1.5.10.tar.xz https://download.gnome.org/sources/libepoxy/1.5/libepoxy-1.5.10.tar.xz 10c635557904aed5239a4885a7c4efb7 072cda4b59dd098bba8c2363a6247299db1fa89411dc221c8b81b8ee8192e623
+iso-codes-v4.20.1.tar.gz https://salsa.debian.org/iso-codes-team/iso-codes/-/archive/v4.20.1/iso-codes-v4.20.1.tar.gz a8f16a62662ec13e55ca255a7c036ee3 2d7d9f6084ab9ce6c534ce71a3dd5144b6e474f3c97616459a88f73f44a64bff
+hicolor-icon-theme-0.18.tar.xz https://icon-theme.freedesktop.org/releases/hicolor-icon-theme-0.18.tar.xz ef14f3af03bcde9ed134aad626bdbaad db0e50a80aa3bf64bb45cbca5cf9f75efd9348cf2ac690b907435238c3cf81d7
+gtk-4.22.4.tar.xz https://download.gnome.org/sources/gtk/4.22/gtk-4.22.4.tar.xz 2420b9b289937c1c9f97332470db1889 51bd9f60c7d23a665a556c7364c21fb2e4e282566b3e7e092455e8f910330893
+adwaita-icon-theme-50.0.tar.xz https://download.gnome.org/sources/adwaita-icon-theme/50/adwaita-icon-theme-50.0.tar.xz a03d8d68377a88fcf06e090ba6a6ec2f fac6e0401fca714780561a081b8f7e27c3bc1db34ebda4da175081f26b24d460
+duktape-2.7.0.tar.xz https://duktape.org/duktape-2.7.0.tar.xz b3200b02ab80125b694bae887d7c1ca6 90f8d2fa8b5567c6899830ddef2c03f3c27960b11aca222fa17aa7ac613c2890
+polkit-127.tar.gz https://github.com/polkit-org/polkit/archive/127/polkit-127.tar.gz 2cc95f1b02fc1de6c9e52db986642ec4 9b7bc16f086479dcc626c575976568ba4a85d34297a750d8ab3d2e57f6d8b988
+libgudev-238.tar.xz https://download.gnome.org/sources/libgudev/238/libgudev-238.tar.xz 46da30a1c69101c3a13fa660d9ab7b73 61266ab1afc9d73dbc60a8b2af73e99d2fdff47d99544d085760e4fa667b5dd1
+upower-v1.91.3.tar.bz2 https://gitlab.freedesktop.org/upower/upower/-/archive/v1.91.3/upower-v1.91.3.tar.bz2 bf09da2eb695224e249e38077460414c 12227b3dcd34c5097bbda25984b192ea0bd5e11dce479358d9ef70415a38e4b6
+gtk4-layer-shell-1.3.0.tar.gz https://github.com/wmww/gtk4-layer-shell/archive/refs/tags/v1.3.0.tar.gz - 1ebb01ab14e98afd1727f68f64981c37bd23305b1f131f5667c02b94cf593192
+sudo-rs-0.2.15.tar.gz https://static.crates.io/crates/sudo-rs/sudo-rs-0.2.15.crate - 2feba7868bd3c057f8362302112d00a18fd6ff458baa3c779c9254b761052a87
+oo7-daemon-0.6.0.tar.gz https://static.crates.io/crates/oo7-daemon/oo7-daemon-0.6.0.crate - c141c6898c77acc3c2700defec58ae8fc00eb889ebba1b5f983eaf42f36d0fcb
+oo7-pam-0.6.0.tar.gz https://static.crates.io/crates/oo7-pam/oo7-pam-0.6.0.crate - d2bd166dbbd075738911f6b08428936f88e55dabfbe89adcf1d2fe276246dbf1

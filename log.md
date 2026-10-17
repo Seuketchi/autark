@@ -506,3 +506,22 @@ Next: user account (you type its password), first desktop boot (Wi-Fi with iwctl
   phase 8b brings Rust.
 - Built: node v24.19.0 (2975 s), npm 11.17.0, git 2.55.0, curl 8.21.0.
 - tan's account: ~/.npmrc prefix=~/.local and ~/.bash_profile adds ~/.local/bin to PATH, so npm installs without root.
+
+## 2026-10-18 — Phase 8b prepared on the work laptop (shell toolchain)
+
+- Decisions (yours, row "Phase 8b"): Rust from BLFS's recipe on 8a's LLVM, in `/usr`, no test suite; GTK4 + Adwaita
+  (librsvg and cargo-c dropped: GTK draws SVG icons itself); polkit with duktape; gtk4-layer-shell, UPower,
+  shared-mime-info; sudo-rs; oo7 keyring unlocked at login by `pam_oo7`; autark-tools last. autark-pkg now drops to
+  its build user itself (autark-tools 9dbd15b), since ch8's util-linux has no `setpriv`.
+- Package list `docs/specs/phase-8b-packages.md` (Sonnet agent, BLFS 13.1): 18 packages after the drops, plus
+  autark-tools. All BLFS md5s match; GNOME tarballs also match their .sha256sum; crates match the crates.io index.
+  Found on the way: GTK 4.22 needs libtiff (not on BLFS's page); UPower 1.91 doesn't use libusb; rustc 1.97.1
+  accepts LLVM 22; the chroot needs no network once the 3 stage0 files and the vendored crates are staged.
+- Scripts: `scripts/fetch-8b.sh` (Ubuntu, as you, with network) → `scripts/stage-8b.sh` (root) →
+  `scripts/lfs/phase8b-inside.sh`. Crates for sudo-rs, oo7-daemon, oo7-pam and autark-tools are vendored by
+  `scripts/vendor-crates.py` (checks each crate against its Cargo.lock; cargo re-checks every file in Autark) into
+  one `crates-8b.tar` (438 crates, 528 MB).
+- Tested here, nothing installed: the fetch end to end (all checksums), and offline builds from the vendored crates of
+  sudo-rs, oo7-daemon, oo7-pam and all of autark-tools. Not tested: everything inside the chroot (Rust's bootstrap
+  with staged stage0, GTK, polkit's PAM file, bindgen on libclang 22, pam_oo7 timing at login).
+Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-8b.sh` through pkexec as in 8a.
