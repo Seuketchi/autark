@@ -88,14 +88,15 @@ pkg_curl() {
   make install
 }
 
-# [Autark] No HTML/man docs (asciidoc and xmlto aren't installed).
+# [Autark] No HTML/man docs (asciidoc and xmlto aren't installed). NO_RUST: git 2.55 builds Rust parts by default
+# (cargo isn't installed until phase 8b); rebuild git with Rust once it is.
 pkg_git() {
   ./configure --prefix=/usr                   \
               --with-gitconfig=/etc/gitconfig \
               --with-python=python3           \
               --with-libpcre2
-  make
-  make perllibdir=/usr/lib/perl5/5.44/site_perl install
+  make NO_RUST=YesPlease
+  make NO_RUST=YesPlease perllibdir=/usr/lib/perl5/5.44/site_perl install
 }
 
 pkg_which() {
