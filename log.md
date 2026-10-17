@@ -389,3 +389,6 @@ via chroot on p7). [ ] TPM+PIN enrollment from inside Autark (`systemd-cryptenro
   all "Signature verification OK"; autark-previous.efi is the 06:58 image that booted successfully.
 - Host cleanup script drafted by a Sonnet agent (`scripts/host-cleanup.sh`), reviewed, not run. Correction: the
   `/etc/bash.bashrc` move was on the host (Step 2), not "in the image only" as an earlier Open line said.
+- Verified on the next real boot (11:4x, read back read-only): "Digital mics found on Skylake+ platform, using SOF
+  driver"; SOF firmware intel/sof/sof-rpl.ri + topology sof-hda-generic-2ch.tplg loaded (version 2:2:0-57864, same as
+  Ubuntu). Cmdline without ttyS0; the "Input/output error" lines are gone (only error: TDX notice). No failed units.
