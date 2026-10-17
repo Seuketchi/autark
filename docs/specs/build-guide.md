@@ -83,9 +83,9 @@ The image is laid out exactly like the real disk will be: the same four partitio
    sudo mkdir -p $LFS/boot/efi && sudo mount ${LOOP}p1 $LFS/boot/efi
    ```
 
-The partitions unlock with a passphrase for now. TPM-plus-PIN unlocking is added in Step 7, on the real disk.
+Root A and `/home` are unlocked for now by a random key file, `/root/autark-build.key` (root-only, mode 0400), with no passphrase yet; use `--key-file` with the `luksFormat` and `open` commands above. Before the qemu boot (Step 7a) you add your passphrase to root A. In Step 7b you remove the key-file slot from both volumes and shred the file. TPM-plus-PIN unlocking is added in Step 7b, on the real disk.
 
-After a reboot, attach the image again (`LOOP=$(sudo losetup -fP --show $IMG)`), unlock both partitions with `cryptsetup open`, and run the three mount commands again before continuing.
+After a reboot, attach the image again (`LOOP=$(sudo losetup -fP --show $IMG)`), unlock both partitions with `cryptsetup open --key-file /root/autark-build.key`, and run the three mount commands again before continuing.
 
 ## Step 2 — Get the sources and set up the build user
 
@@ -100,7 +100,7 @@ This step is done when every source tarball passes its md5 check and you are log
    ```
 2. Create the top-level directory layout (`etc`, `var`, `usr/{bin,lib,sbin}`, `tools`) and the usr-merge symlinks, as in chapter 4.2.
 3. Create the unprivileged `lfs` user that owns the build. The toolchain chapters run as `lfs`, so a mistake there can't damage the host.
-4. Give `lfs` a clean shell: the book's `.bash_profile` and `.bashrc`, plus `export MAKEFLAGS=-j$(nproc)` to use every CPU thread.
+4. Give `lfs` a clean shell: the book's `.bash_profile` and `.bashrc`, plus `export MAKEFLAGS=-j$(nproc)` to use every CPU thread. Move the host's `/etc/bash.bashrc` aside as the book says (`.NOUSE`); restore it after the build (Step 7b). `su - lfs -c '…'` hangs, because the book's `.bash_profile` starts an interactive bash. Run scripts as `lfs` with `scripts/as-lfs.sh '<commands>'` instead (same `env -i` and `.bashrc`, no login).
 
 Why a separate user: the cross-toolchain must not pick up Ubuntu's libraries or environment variables. A fresh login with an almost-empty environment is the simplest guarantee.
 
@@ -137,83 +137,128 @@ This step is done when you can `chroot` into `$LFS`, the temporary tools work th
 
 ## Step 5 — Build the final system
 
-This step is done when all chapter 8 packages are installed, the toolchain test suites pass, and every package has a file list. Book reference: chapter 8. This is the longest step.
+This step is done when all chapter 8 packages are installed, every test failure is explained, every package has a file list, and `backup-ch8.tar.xz` exists. Book reference: chapter 8. This is the longest step.
 
-1. Build roughly 80 packages in the book's order, starting with Man-pages and Glibc and ending with systemd, D-Bus and the cleanup.
-2. Run the test suites for Glibc, Binutils and GCC, and compare the failures against the book's list of known ones. A toolchain that fails its tests is not usable.
-3. Track packages (your decision): install each package into a staging directory, save its file list, then copy it into `/`:
+1. Run the generated script from the host, as root. It builds 81 packages in the book's order inside the chroot, starting with Man-pages and Glibc and ending with systemd, D-Bus and the cleanup:
 
    ```
-   make DESTDIR=/tmp/pkg/$NAME install
-   (cd /tmp/pkg/$NAME && find . -type f -o -type l) > /var/lib/autark/files/$NAME-$VER
-   cp -a /tmp/pkg/$NAME/. /
+   sudo LFS=/mnt/lfs INSIDE=ch8-inside.sh bash scripts/lfs/ch7-chroot.sh [package...]
    ```
 
-   Glibc and GCC install straight into `/`, as the book says. For those, the file list comes from a before/after snapshot.
-4. Back up again: `backup-ch8.tar.xz`.
+   [`scripts/lfs/ch8-inside.sh`](../../scripts/lfs/ch8-inside.sh) is generated from the book's pages by [`scripts/lfs/ch8-gen/`](../../scripts/lfs/ch8-gen/README.md), so each package's commands are the book's, verbatim. The generator skips 25 blocks, and each skip is a rule in `gen.py`: optional docs, upgrade-only steps (nscd), alternatives (`install-locales`), and interactive commands (`tzselect`, `passwd root`, `vim -c ':options'`, `exec bash --login`). Replacements: time zone Asia/Manila, groff paper `letter`, libffi `--with-gcc-arch=x86-64-v3` instead of `native`, and glibc gets the `en_PH.UTF-8` locale.
+2. **GRUB is left out.** Autark has no bootloader; the firmware starts a signed kernel image (Step 6).
+3. **Autark's hardening flags** apply to every package from chapter 8 on ([decisions.md](decisions.md), "CPU target" and "Build hardening"). The script exports `CFLAGS`/`CXXFLAGS` `-O2 -march=x86-64-v3 -pipe -fstack-protector-strong -fstack-clash-protection -fcf-protection=full -D_FORTIFY_SOURCE=3` and `LDFLAGS` `-Wl,-O1 -Wl,-z,relro -Wl,-z,now`. PIE comes from GCC's `--enable-default-pie`. **Glibc is the exception:** it gets `--enable-fortify-source=3 --enable-cet` instead of those flags. Without `--enable-cet`, `-fcf-protection` in its CFLAGS makes `ld.so` fail to link (`_dl_cet_open_check` and friends missing), and glibc refuses `_FORTIFY_SOURCE` in CFLAGS and links `ld.so` itself, so it also gets no `LDFLAGS`. The rule is in `ch8-gen/gen.py`.
+4. **Test failures are logged, not fatal.** A failing suite appends a line to `/sources/logs/test-failures.txt`, and the build goes on. Two suites do stop the build: GMP (needs at least 199 passes) and MPFR (needs `FAIL 0`). After the run, read `test-failures.txt` and compare each failure with the book's list of known ones. A failure the book doesn't list needs explaining before you go on. On the first build the toolchain failures were: Glibc `io/tst-lchmod`, Binutils `tmpdir/gp-gmon`, acl `test/cp.run`, and GCC's 80 (gcc) and 66 (g++) failures, which are identical to the reference LFS 13.1 build log. The full table, with the verdict on each, is in [log.md](../../log.md) ("Step 5 done").
+5. **Package tracking is a before/after snapshot, not DESTDIR** (your decision, 2026-10-17). For each package the script lists every file on the filesystem before and after the install and saves the difference to `/var/lib/autark/files/<package>`. It works the same for Glibc and GCC, which the book installs straight into `/`, so no package needs a special case.
+6. **Check the hardening afterwards** instead of trusting the flags:
+
+   ```
+   sudo bash scripts/lfs/hardening-scan.sh /mnt/lfs
+   ```
+
+   It scans the ELF files for PIE, RELRO, BIND_NOW and CET. The result on the first build (1260 files) was PIE 100%, RELRO 100%, CET 94%, BIND_NOW 69%. The gaps are glibc's own tools (no `LDFLAGS` by design), **Perl and everything built through it** (Perl's Configure ignores `CFLAGS`/`LDFLAGS`), and bzip2 (hard-coded flags). A Perl process therefore runs without IBT. Rebuilding Perl and bzip2 with Autark's flags is open ([log.md](../../log.md), "Open after chapter 8").
+7. **Two test failures are explained by theory only.** Both are marked *not verified* in the log:
+   - 82 extra libstdc++ failures (the reference has 0): probably the libstdc++ test suite reusing the build's hardened `CXXFLAGS`.
+   - 9 libelf failures (the reference has 0): probably because Autark's `CFLAGS` replace autoconf's `-g -O2`, so the "-self" DWARF tests find no DWARF.
+
+   The vim test log was deleted with its build folder, so vim's result is unverified too. Confirm the first two once by rebuilding without the hardening flags (libstdc++) and with `-g` (libelf) and re-running only those tests.
+8. Back up: `sudo LFS=/mnt/lfs bash scripts/lfs/ch7-chroot.sh backup ~/autark/backup-ch8.tar.xz`, then check it with `xz -t`. Restore is the same as for chapter 7.
+9. Trim the image after a big build. Deleted build files stay allocated in the sparse image (it grew to 27 GB). Allow discards on the unlocked volumes, then trim:
+
+   ```
+   sudo cryptsetup refresh --allow-discards autark
+   sudo cryptsetup refresh --allow-discards autark-home
+   sudo fstrim -v /mnt/lfs && sudo fstrim -v /mnt/lfs/home
+   ```
+
+   The result was 27 GB down to 3.1 GB. The trade-off: discards reveal *which* blocks are in use, not their contents. Run `fstrim` again after large builds.
 
 Why track: to upgrade or remove a package later, you need to know exactly which files it owns. LFS records nothing on its own.
 
+## Between Steps 5 and 6 — Disk encryption and TPM support
+
+This step is done when the chroot's systemd shows `+LIBCRYPTSETUP +TPM2` in `systemctl --version`, and `systemd-cryptsetup`, `systemd-cryptenroll` and `ukify` run. Step 6's initramfs and boot image need all of them. Reference: BLFS 13.1-systemd.
+
+The chapter 8 systemd is built the book's way, which leaves out three things Autark needs: `ukify` (it needs the Python `pefile` module), `libcryptsetup` (LUKS unlock) and `tpm2` (TPM+PIN enrolment). So this step builds their dependencies and rebuilds systemd. Run it like chapter 8:
+
+```
+sudo LFS=/mnt/lfs INSIDE=blfs-crypto-inside.sh bash scripts/lfs/ch7-chroot.sh
+```
+
+[`scripts/lfs/blfs-crypto-inside.sh`](../../scripts/lfs/blfs-crypto-inside.sh) builds, in this order: libaio, LVM2 (device-mapper), popt, CMake, json-c, cryptsetup, tpm2-tss, pefile, then systemd again. The script's header has the dependency diagram, and `[Autark]` comments mark each deviation from BLFS:
+
+1. CMake is built with `--no-system-libs` (no curl, libarchive, libuv or nghttp2 yet). tpm2-tss is built with `--disable-fapi`, and its `tss` user and group are created by hand because systemd's sysusers was still off at that point.
+2. The LVM2 and cryptsetup test suites are skipped: they drive the *host* kernel's device-mapper, which is holding Autark's own volumes.
+3. Source verification, because three packages aren't in BLFS or have dead links: libaio's BLFS URL returns 404, so the source is Debian's `.orig` tarball (identical md5 to the one BLFS lists). tpm2-tss (GitHub release) is checked against its upstream GPG signature. pefile is the PyPI sdist, checked against PyPI's sha256. [log.md](../../log.md) ("Disk encryption and TPM support") has every hash and key.
+4. The systemd rebuild enables `ukify`, `libcryptsetup` and `tpm2`. Two later fixes (found in Step 6, applied by rebuilding again): `sysusers=true`, because dracut's journald module needs `systemd-sysusers`, and `bootloader=enabled` (needs pyelftools), because `ukify` needs the `systemd-stub` file. That build also sets SBAT to name Autark.
+
+The cryptsetup page also lists what the kernel needs for this (checked in Step 6's required options): `BLK_DEV_DM`, `DM_CRYPT`, `CRYPTO_AES`, `CRYPTO_XTS`, `CRYPTO_SHA256`, `CRYPTO_USER_API_SKCIPHER`, plus the TPM drivers.
+
 ## Step 6 — Configure, kernel and signed boot image
 
-This step is done when Autark has a hardened kernel built for the target laptop, its firmware, zram swap, and a signed unified kernel image that the firmware starts directly. Book reference: chapters 9–10.
+This step is done when Autark has a hardened kernel built for the target laptop, its firmware, zram swap, and a signed unified kernel image that the firmware starts directly. Book reference: chapters 9–10. Each part is one script, run like chapter 8 (`INSIDE=<script>`); the host copies `hardware/target/{kernel.config,lsmod.txt}` into `$LFS/sources` first.
 
-1. System identity and config (chapter 9): hostname `autark`, `/etc/os-release` with `NAME="Autark"` and `ID=autark`, systemd-networkd for Ethernet, and locale, timezone and keyboard copied from your Ubuntu settings.
-2. Kernel, trimmed to the target laptop. Start from its Ubuntu config and keep only the modules its hardware loads:
+1. **System identity and config** (chapter 9), [`ch9-config-inside.sh`](../../scripts/lfs/ch9-config-inside.sh), safe to re-run. It sets:
+   - hostname `autark`, and `/etc/os-release` with `NAME="Autark"` and `ID=autark`;
+   - systemd-networkd with DHCP on any wired link (Wi-Fi comes with Step 8);
+   - systemd-resolved with DNS over TLS to Quad9 and no plain-DNS fallback;
+   - the hardware clock in UTC (`LocalRTC=no`), like the Ubuntu host, US keyboard, `LANG=en_US.UTF-8`, and the book's profile, inputrc and shells;
+   - `/etc/fstab` by mapper name plus the ESP's UUID, and `/etc/crypttab` for `/home` using the key file `/etc/cryptsetup-keys.d/autark-home.key` (mode 0400, enrolled from the host and tested). Root is unlocked by the initramfs from the kernel command line.
+2. **Kernel**, [`ch10-kernel-inside.sh`](../../scripts/lfs/ch10-kernel-inside.sh). It starts from the target's Ubuntu config, trims it with `make localmodconfig`, applies a list of required options, then **checks every one of them in the final `.config` and stops the build on a mismatch**. The check exists because `olddefconfig` silently drops an option whose dependencies aren't met. The list is grouped by why each option is needed: what the book and systemd require (chapter 10.3), the unlock path built in (`=y`: the NVMe driver, `CONFIG_VMD` since the NVMe sits behind Intel VMD, `DM_CRYPT`, `EXT4_FS`, `EFI_STUB`, the TPM drivers), the hardening defaults from [decisions.md](decisions.md) including signed modules, and a baseline of common drivers as modules so devices plugged in later still work. Additions the check forced on the first build:
+   - `KEXEC_FILE` kept coming back on because `KEXEC_HANDOVER` selects it, so `KEXEC_HANDOVER` and `CRASH_DUMP` are also off.
+   - `localmodconfig` switched off the USB-net and Type-C menus, so `USB_NET_DRIVERS` and `TYPEC` are added back.
+   - `DEBUG_INFO_NONE` didn't win its choice, so the other DWARF options are turned off. `GENDWARFKSYMS` is off too (it needs libdw's `dwarf.h`).
+   - the firewall's `nf_tables` options, added when the firewall work (item 6) found that `NFT_CT` had been dropped.
 
-   ```
-   cp ~/autark/hardware/target/kernel.config .config
-   make localmodconfig LSMOD=~/autark/hardware/target/lsmod.txt
-   ```
+   Each kernel build makes a new module-signing key (kept in `/root/kernel-keys/`, mode 0600), and `MODULE_SIG_FORCE` refuses any module signed by an old one. So the script deletes `/usr/lib/modules/<version>` before installing. If the target needs an out-of-tree driver, build it with its own script (`scripts/pkg/kmod-<name>.sh`), which signs it with the current key and reruns on every kernel update.
+3. **zram**: `CONFIG_ZRAM` with zstd, and a service that calls `/usr/lib/autark/zram-swap`, which makes a zstd device of half the RAM and turns it on as swap. The logic is in a script (written by `ch9-config-inside.sh`) because systemd expands `$VAR` inside `ExecStart=` itself.
+4. **Firmware, microcode, initramfs, boot image**, [`step6-boot-inside.sh`](../../scripts/lfs/step6-boot-inside.sh):
+   - **Firmware** from linux-firmware: only this laptop's files (graphics, Wi-Fi with its `WHENCE` links, Bluetooth, the Realtek NIC), taken from `hardware/target/firmware.txt` and the baseline drivers. SOF audio firmware is not in linux-firmware; it comes from the sof-bin project (below).
+   - **Microcode:** Intel's tarball carries no separate signature; the CPU itself only accepts Intel-signed microcode. The file for this CPU (`06-ba-02`) is packed as an early cpio, which loads before the rest.
+   - **Initramfs** with dracut, **not host-only**: in a chroot dracut would detect the build loop device and bake that in. dracut's tpm2-tss module needs the `tpm2-tools` CLI, which Autark doesn't build, so that module is dropped, and the TSS libraries are added as `install_items` instead. systemd loads those libraries at run time with `dlopen`. **This is an assumption until Step 7b proves TPM unlock on the real TPM.** The initramfs was checked to contain `systemd-cryptsetup` (and its generator), `libcryptsetup`, and the libtss2 esys, mu, rc and tcti-device libraries.
+   - **Unified kernel image:** `autark.efi` (34 MB) is `systemd-stub` + kernel + initramfs + command line + os-release + SBAT, built by `ukify`. The command line is `rd.luks.name=<root LUKS UUID>=autark root=/dev/mapper/autark rw console=tty0 console=ttyS0,115200`. The serial console and `CONFIG_DRM_SIMPLEDRM` are kept so the same image boots in qemu.
+5. **Signing.** Autark does not use sbctl (it is written in Go, and there is no Go on the system). systemd 261 already builds `systemd-sbsign` and `systemd-keyutil` once `bootloader=enabled`, and `ukify` signs through them. The script creates Autark's own Secure Boot **db key** with OpenSSL (RSA-2048 for the widest firmware support, SHA-256, 10 years, CN "Autark Secure Boot db 2026"):
+   - The private key is `/etc/autark/secureboot/db.key` (directory 0700, key 0400) on the encrypted root. Trade-off: any root process can sign.
+   - The public certificate goes on the ESP at `EFI/autark/autark-db.der`, ready to enrol from the firmware setup screen.
+   - `ukify` runs with `--signtool=systemd-sbsign --no-sign-kernel`. `systemd-sbsign` can't yet check whether the inner kernel is signed, and the outer signature covers the whole image anyway.
 
-   Then build everything the unlock path needs into the kernel (`=y`, not a module): the storage controller from `hardware/target/lspci.txt` (for NVMe, `CONFIG_BLK_DEV_NVME`, plus `CONFIG_VMD` if it sits behind Intel VMD, as on the work laptop), `CONFIG_DM_CRYPT`, `CONFIG_EXT4_FS`, `CONFIG_EFI_STUB`, and the TPM drivers (`CONFIG_TCG_TPM`, `CONFIG_TCG_CRB`). Add the kernel hardening defaults from [decisions.md](decisions.md), including signed modules. Also check that the systemd options from chapter 10.3 are set.
+   The script **builds to `autark.efi.new` and rotates only after success**: the earlier version renamed `autark.efi` to `autark-previous.efi` *before* building, so a failed build left no `autark.efi`. The result is copied to `EFI/BOOT/BOOTX64.EFI` (the path firmware tries on a disk with no boot entries; this is Autark's own EFI partition, so it can't overwrite Ubuntu's or Windows' fallback). The previous image stays as `autark-previous.efi`, which becomes the fallback boot entry.
+6. **Firewall and SOF audio**, [`step7-prep-inside.sh`](../../scripts/lfs/step7-prep-inside.sh). The first kernel dropped `NFT_CT` (Ubuntu's rules at capture time didn't use connection tracking), so "allow replies" was impossible. The kernel script now requires `NF_TABLES(_INET)`, `NF_CONNTRACK`, `NFT_CT`, `NFT_REJECT(_INET)`, `NFT_LIMIT` and `NFT_LOG`; rebuild the kernel before this script.
+   - **nftables**: libmnl, libnftnl and nftables (built with `--with-cli=readline`, since the default libedit isn't installed). netfilter.org refuses automated downloads, so the sources are Debian's untouched upstream `.orig` tarballs, checked against the Netfilter Core Team's own `.asc` signatures. `nftables.service` is enabled, before `network-pre.target`.
+   - **Ruleset** `/etc/nftables.conf`, table `inet autark`: input policy *drop*; accept established/related, loopback, the essential ICMPv6 (neighbour discovery, router advertisements, too-big, unreachable, time-exceeded, parameter-problem, MLD query), ICMPv4 errors, and DHCPv6 replies from `fe80::/10`; drop invalid; forward drop; output accept. Local additions go in one file per purpose in `/etc/nftables.d/*.nft`.
+   - **SOF audio firmware** from sof-bin (an unsigned tarball from GitHub, but the DSP only runs Intel-signed firmware, and the files inside are). Raptor Lake runs Alder Lake's: `sof-adl.ri` with a `sof-rpl.ri` link (IPC3), `intel/sof-ipc4/rpl/sof-rpl.ri` (IPC4), and both `sof-hda-generic-2ch.tplg` topologies.
+   - Then rebuild and sign the boot image.
 
-   Then add a baseline of common drivers as loadable modules, so devices plugged in later still work: USB storage (`usb-storage`, `uas`), input (`usbhid`, `hid-generic`, `hid-multitouch`), USB networking and serial (`cdc_ether`, `r8152`, `cdc_acm`), webcams (`uvcvideo`), USB audio (`snd-usb-audio`), Bluetooth (`btusb`), USB-C and Thunderbolt (`typec_ucsi`, `thunderbolt`), and filesystems (`vfat`, `exfat`, `ntfs3`, `iso9660`, `udf`, `fuse`).
-
-   If the target needs an out-of-tree driver, build it with its own script (`scripts/pkg/kmod-<name>.sh`), which signs it with your module key. The script reruns on every kernel update.
-3. Firmware from linux-firmware, copied into `/lib/firmware`: exactly the files listed in `hardware/target/firmware.txt`, which Step 0 captured, plus the firmware for the baseline drivers above and the CPU microcode (Intel's microcode repository, or `amd-ucode` from linux-firmware). For comparison, the work laptop needs four (`hardware/work-laptop/firmware.txt`).
-4. zram (your memory-management choice): build `CONFIG_ZRAM` with zstd compression, then add a systemd unit that creates a zstd zram device sized at half of RAM with `zramctl` and turns it on as swap.
-5. Initramfs and signed boot image. The first boot uses dracut, with its systemd and TPM2 modules. Our Rust initramfs replaces it in Step 9. Combine the kernel, the CPU microcode (first, so it loads before anything else), the initramfs and the kernel command line (`rd.luks.name=<LUKS UUID>=autark root=/dev/mapper/autark`) into one unified kernel image with `ukify`. Then create your Secure Boot keys and sign the image:
-
-   ```
-   ukify build --linux=vmlinuz --initrd=microcode.img --initrd=initramfs.img --cmdline=@cmdline --output=/boot/efi/EFI/Linux/autark.efi
-   sbctl create-keys
-   sbctl sign /boot/efi/EFI/Linux/autark.efi
-   ```
-
-   There's no bootloader: the firmware starts the signed image directly, through boot entries added in Step 7. Also copy it to `EFI/BOOT/BOOTX64.EFI`, the path firmware tries on a disk with no boot entries; that's how qemu finds it in Step 7. This is Autark's own EFI partition, so the copy can't overwrite Ubuntu's or Windows' fallback. Keep the previous image as `autark-previous.efi`; it becomes the fallback boot entry.
-
-   Keep a few kernel options the trimmed config would otherwise drop, so the image also boots in qemu: `CONFIG_SERIAL_8250_CONSOLE` (a serial console) and `CONFIG_DRM_SIMPLEDRM` (a basic screen from the firmware's framebuffer). qemu boots it through the same `nvme` driver the laptop uses.
+Not decided yet: lockdown=integrity disables hibernation (confirmed in qemu), while [decisions.md](decisions.md) mentions an optional hibernate swap file. The kernel's version string says `root@Seukechi`, because the chroot borrows the host name (cosmetic).
 
 ## Step 7 — Boot it
 
-This step is done when Autark boots from the target laptop's own disk, Secure Boot uses your keys, the disk unlocks with TPM plus PIN, and the temporary sudo rule is gone. It happens in two parts: boot the image in qemu, then move it onto the disk.
+This step is done when Autark boots from the target laptop's own disk, Secure Boot accepts your db key, the disk unlocks with TPM plus PIN, and the temporary sudo rule is gone. It happens in two parts: boot the image in qemu, then move it onto the disk.
 
 ### 7a — In qemu
 
-1. Unmount, lock and detach the image: `sudo umount -R $LFS && sudo cryptsetup close autark-home && sudo cryptsetup close autark && sudo losetup -d $LOOP`.
-2. Boot it with UEFI firmware (OVMF), on an emulated NVMe disk. The firmware's settings are kept in a copy, so the original stays clean:
+1. Before the first boot, set two things from the host. Add your passphrase to root A, and set the root password: `cryptsetup luksAddKey --key-file /root/autark-build.key ${LOOP}p2` (the build key file stays in slot 0 until 7b). For the password, `passwd` in a bare `chroot` fails at once ("Please use a combination…") because there is no `/dev/tty`, so it reads an empty password. Bind-mount `/dev` for that one command: `mount --bind /dev /mnt/lfs/dev`, `chroot /mnt/lfs passwd root`, then unmount it. Shadow also rejects all-lowercase passwords, so mix case and a digit.
+2. Release the image completely, because qemu needs it exclusively. [`scripts/qemu-boot.sh`](../../scripts/qemu-boot.sh) refuses to start if it is still attached or unlocked:
 
    ```
-   cp /usr/share/OVMF/OVMF_VARS_4M.fd ~/autark/ovmf-vars.fd
-   qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m 4G \
-     -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd \
-     -drive if=pflash,format=raw,file=$HOME/autark/ovmf-vars.fd \
-     -drive file=$HOME/autark/autark.img,format=raw,if=none,id=disk \
-     -device nvme,drive=disk,serial=autark \
-     -serial mon:stdio
+   sudo umount -R $LFS && sudo cryptsetup close autark-home && sudo cryptsetup close autark && sudo losetup -d $LOOP
    ```
-3. Check that it asks for the disk passphrase, unlocks `/home`, you can log in, and `zramctl` shows the swap device. qemu has none of the laptop's devices, so Wi-Fi, Ethernet, audio and graphics are checked in 7b. Secure Boot is unsigned here (OVMF without keys); your own keys go on the real firmware.
+3. Boot it with `bash ~/autark/scripts/qemu-boot.sh`: UEFI firmware (OVMF), an emulated NVMe disk, the serial console in your terminal (that is where the passphrase prompt appears), and the whole session recorded to `qemu-boot.log`. Typed passphrases are not echoed, so they aren't in it. The firmware's variables live in a copy, `ovmf-vars.fd`, so the original stays clean.
+4. Check that it asks for the disk passphrase, unlocks `/home`, you can log in, and `zramctl` shows the swap device. The result on 2026-10-17 (milestone M1, qemu half): the firmware started `autark.efi` directly, the kernel was locked down, the passphrase unlocked root, `/home` unlocked by its key file, zram gave 2 GB swap (half of 4 GB), multi-user was reached, login worked and it powered off cleanly. The only error was `virt/tdx: TDX not supported by the host platform` (qemu, harmless). qemu can't test Wi-Fi, Ethernet (the emulated NIC has no driver here), graphics, audio or the TPM; those wait for 7b.
+5. **Secure Boot test, with your key.** The plain qemu boot above runs with Secure Boot off. To prove the signing, a separate test used OVMF's Secure Boot build with variables built by the host's `python3-virt-firmware`: Microsoft's standard KEK/db plus Autark's certificate *appended* to db, which mirrors the plan for the laptop. Disks were opened with `snapshot=on`, so `autark.img` stayed untouched. The signed `autark.efi` was accepted ("Secure boot enabled", kernel loaded from db with "Autark Secure Boot db 2026", lockdown on, passphrase prompt reached). An unsigned image on a separate test disk was refused ("Access Denied -- rejected probably by Secure Boot"). The host's `sbverify` also gave "Signature verification OK" on `autark.efi`, `BOOTX64.EFI` and `autark-previous.efi`.
 
 A boot failure here costs a reboot of a window, not of the laptop. Fix it from Ubuntu (attach, unlock, mount, `chroot`), rebuild the image in Step 6, and try again.
 
 ### 7b — Onto the laptop's disk
 
-The disk has Windows, its recovery partition and Ubuntu, with no free space. Ubuntu is last, so shrinking it frees space at the end of the disk, and Autark goes there. Partition order doesn't matter to the firmware.
+The disk has Windows, its recovery partition and Ubuntu, with no free space. Ubuntu is last, so shrinking it from its end frees space at the end of the disk, and **Autark goes after Ubuntu**. Partition order doesn't matter to the firmware.
+
+The real disk's layout is not the image's: **ESP 1 GB, root A 40 GB, root B 15 GB, `/home` 9 GB** (65 GB in all). Root B is never copied from the image, so it can be smaller than the image's 40 GB; the first major upgrade has to fit in it ([maintenance.md](maintenance.md)).
 
 1. Back up everything Ubuntu holds that can't be re-downloaded: uncommitted and unpushed git work, datasets, documents. A shrink that's interrupted (power, crash) can corrupt the filesystem.
-2. Boot GParted Live from a USB stick, so Ubuntu isn't running, and shrink Ubuntu's partition from its end until the free space after it is at least the image's size (90 GB). ext4 can only shrink while unmounted, which is why this runs from the stick.
-3. Back in Ubuntu, create four partitions in the free space with the same sizes as the image's (Step 1), then copy each one across. Root B is empty, so it's created but not copied. Check every device name with `lsblk` first: `dd` overwrites whatever it's pointed at.
+2. Boot GParted Live from a USB stick, so Ubuntu isn't running, and shrink Ubuntu's partition from its end until the free space after it is at least 65 GB. ext4 can only shrink while unmounted, which is why this runs from the stick.
+3. **Remove the build key, and only now.** Until the copy, the key file `/root/autark-build.key` was the way into the image. On the image's root A and `/home`, check with `cryptsetup luksDump` that a slot you can use remains, then `cryptsetup luksKillSlot` the key-file slot (slot 0 on root A) on both, and `shred -u /root/autark-build.key`. The slots are part of the partitions, so doing this before the copy removes it from the real disk too.
+4. Back in Ubuntu, create four partitions in the free space (sizes above), then copy each from the image. Root B is created but not copied. Check every device name with `lsblk` first: `dd` overwrites whatever it's pointed at.
 
    ```
    DISK=/dev/nvme0n1                       # from lsblk; may differ
@@ -224,7 +269,7 @@ The disk has Windows, its recovery partition and Ubuntu, with no free space. Ubu
    ```
 
    Mark the new ESP as an EFI partition (`parted $DISK set <n> esp on`). Copying whole partitions keeps the LUKS UUIDs, so the kernel command line and `/etc/crypttab` need no edits.
-4. Add firmware boot entries for Autark and its fallback, on Autark's own EFI partition. Ubuntu's and Windows' entries stay as the way back:
+5. Add firmware boot entries for Autark and its fallback, on Autark's own EFI partition. Ubuntu's and Windows' entries stay as the way back:
 
    ```
    sudo efibootmgr --create --disk $DISK --part <new ESP number> --label "Autark" --loader '\EFI\Linux\autark.efi'
@@ -232,11 +277,11 @@ The disk has Windows, its recovery partition and Ubuntu, with no free space. Ubu
    ```
 
    A second EFI partition is allowed by the UEFI spec, but whether this laptop's firmware lists entries from it isn't verified yet. If Autark's entry doesn't appear in the boot menu, copy `EFI/Linux/` to the first EFI partition instead, if it has room.
-5. Reboot and pick Autark from the firmware boot menu. Check that it asks for the disk passphrase, you can log in, the network comes up, `zramctl` shows the swap device, and the Wi-Fi, audio and graphics firmware all load (`journalctl -k`).
-6. **Secure Boot:** put the firmware in setup mode and run `sbctl enroll-keys --microsoft`. Keeping Microsoft's keys alongside yours lets Ubuntu, Windows and firmware add-ons still boot.
-7. **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline.
-8. **You** remove the sudo rule from Ubuntu: `sudo rm /etc/sudoers.d/autark-build`. Once Autark has booted from the disk for a week, delete `autark.img`.
-9. Later, at milestone M6, when Autark is the daily driver: Ubuntu's space sits *before* Autark's partitions, so `/home` can't simply grow into it. Decide then: a second encrypted volume there, or moving `/home` into it.
+6. Reboot and pick Autark from the firmware boot menu (Secure Boot still off at this point). Check that it asks for the disk passphrase, you can log in, the network comes up, `zramctl` shows the swap device, and the Wi-Fi, audio and graphics firmware all load (`journalctl -k`).
+7. **Secure Boot: append, don't replace.** In the firmware setup screen, add `EFI/autark/autark-db.der` to the **db**, keeping the MSI and Microsoft keys, so Windows and Ubuntu still boot. This is what the qemu test in 7a did. Replacing all keys would lock them out. Whether the MSI setup screen offers "append to db" is **not verified**; if it only allows replacing, stop and decide again. Then turn Secure Boot on.
+8. **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline. This is the first real test of the TPM path, which relies on systemd loading the TSS libraries with `dlopen` (the assumption in Step 6.4). If enrolment or unlock fails, look there first.
+9. **You** remove the sudo rule from Ubuntu: `sudo rm /etc/sudoers.d/autark-build`, restore `/etc/bash.bashrc` from `/etc/bash.bashrc.NOUSE` (set aside in Step 2), and undo the `/bin/sh` diversion if you want dash back (Step 0). Once Autark has booted from the disk for a week, delete `autark.img`.
+10. Later, at milestone M6, when Autark is the daily driver: Ubuntu's space sits *before* Autark's partitions, so `/home` can't simply grow into it. Decide then: a second encrypted volume there, or moving `/home` into it.
 
 Testing images in qemu (with OVMF) is still useful for the Rust initramfs and new kernels, before they go onto the real disk.
 

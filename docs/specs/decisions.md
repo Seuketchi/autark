@@ -53,10 +53,10 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Swap | zram, plus an optional swap file for hibernate | Compressed RAM swap suits a laptop |
 | Disk encryption | The whole root disk (LUKS2), unlocked by the TPM chip plus a PIN, with a recovery key kept offline | Protects everything if the laptop is stolen |
 | Bootloader | None: the firmware starts a signed unified kernel image directly, with the previous image as the fallback entry | The smallest attack surface, with nothing between the firmware and your signed kernel |
-| Secure Boot | On, with your own keys (sbctl) | Only kernels you signed can boot |
+| Secure Boot | On, with your own db key made with OpenSSL and signed by `ukify` through `systemd-sbsign` (no sbctl: it needs Go). The cert is appended to the firmware db, keeping the MSI/Microsoft keys | Only images you signed boot, and Windows and Ubuntu still do |
 | Initramfs | dracut for the first boot, then our own in Rust (`autark-init`) | We build our own code in Rust; the cryptography stays in libcryptsetup and tpm2-tss |
 | Own code | Rust | Anything we write ourselves: shell, AI daemon, initramfs, tools |
-| Package tracking | DESTDIR staging and file lists, from chapter 8 onward | So packages can be cleanly upgraded or removed later |
+| Package tracking | A before/after file snapshot per package, saved to `/var/lib/autark/files/`, from chapter 8 onward | So packages can be cleanly upgraded or removed later |
 | Build host | The target laptop itself, from the Ubuntu it already runs. Autark is built into a sparse disk image, tested in qemu, then copied onto its own partitions after Ubuntu is shrunk (build guide Steps 1 and 7) | The work laptop stays untouched (no sudo rule, no CPU load), and the kernel is tuned to the hardware that runs Autark |
 | Root access | Temporary passwordless sudo rule on the target laptop only, removed in Step 7 | Chapters 7 to 10 run as root in a chroot |
 | Compositor | Wayfire | Stacking by design, with Mission Control–style and Spaces-style plugins and touchpad gestures |
@@ -82,7 +82,7 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Locale | en_US.UTF-8, time zone Asia/Manila, US keyboard | |
 | Ollama model | llama3.2:3b; move to a 7–8B model only if the target measures at least 8 tokens per second | Usable speed on a CPU without a discrete GPU |
 | Updates | Kith checks BLFS security advisories weekly; you apply updates by hand, first with the per-package scripts and then with `autark-pkg` (milestone M10) | Nothing updates silently |
-| Disk layout (target) | After Windows and Ubuntu: Autark's own EFI 1 GB, root A 40 GB, root B 40 GB (reserved for upgrades), encrypted `/home` 9 GB | A/B upgrades need two roots; `/home` is shared by both. Its own EFI partition keeps Windows' 100 MB one untouched. Sized to what shrinking Ubuntu can free on the 512 GB disk; revisit when the second drive arrives |
+| Disk layout (target) | After Windows and Ubuntu: Autark's own EFI 1 GB, root A 40 GB, root B 15 GB (reserved for upgrades; never copied from the image, so it can differ from the image's 40 GB), encrypted `/home` 9 GB | A/B upgrades need two roots; `/home` is shared by both. Its own EFI partition keeps Windows' 100 MB one untouched. Sized to what shrinking Ubuntu can free on the 512 GB disk; revisit when the second drive arrives |
 | DNS | DNS over TLS to Quad9 | Lookups encrypted; non-profit, no logs, blocks malware domains |
 | Claude on the target | Claude Code with your personal Claude account | The company seat stays for company work |
 | Maintenance | Security fixes within a week, other updates monthly, A/B rebuilds for major upgrades, a weekly Kith health report, package scripts in the repo. See [maintenance.md](maintenance.md) | Secure without surprises, and every change can be undone |
