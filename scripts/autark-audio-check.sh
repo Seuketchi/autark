@@ -25,7 +25,7 @@ ls -l /dev/snd/
 command -v getfacl >/dev/null && getfacl -p /dev/snd/controlC$CARD 2>/dev/null
 
 section "UCM (what PipeWire uses to pick outputs)"
-alsaucm -c "$(cat /proc/asound/card$CARD/id)" list _verbs 2>&1 | head -20
+alsaucm -c hw:$CARD list _verbs 2>&1 | head -20   # hw:N, not the card id: a bare id is looked up as a profile name
 
 section "mixer controls BEFORE"
 amixer -c $CARD scontents 2>&1 | grep -E "^Simple|Playback|Capture" | head -80
@@ -48,7 +48,9 @@ try() {
   local label=$1; shift
   echo; echo ">>> Test: $label   (listen for 'front left, front right')"
   timeout 20 "$@" 2>&1 | tail -4
-  read -r -p ">>> Did you hear it? [y/N] " a < /dev/tty
+  local a=""
+  # Plain stdin: under `su -c` there is no /dev/tty, but the terminal is still stdin.
+  read -r -p ">>> Did you hear it? [y/N] " a || a=n
   echo "    answer: ${a:-n}"
   [[ $a =~ ^[Yy] ]] && heard=yes
 }
@@ -64,6 +66,16 @@ if [ $heard = yes ]; then alsactl store && echo "    mixer levels saved (alsactl
 section "PipeWire's view (as $USER_NAME)"
 su $USER_NAME -c "XDG_RUNTIME_DIR=/run/user/$USER_UID wpctl status" 2>&1 | head -40
 su $USER_NAME -c "XDG_RUNTIME_DIR=/run/user/$USER_UID systemctl --user --no-pager status pipewire wireplumber" 2>&1 | grep -E "Active|●" | head -6
+
+section "WirePlumber restarted with ALSA debug logging (user $USER_NAME)"
+as_user() { su $USER_NAME -c "XDG_RUNTIME_DIR=/run/user/$USER_UID DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$USER_UID/bus $*"; }
+as_user "systemctl --user set-environment WIREPLUMBER_DEBUG=spa.alsa:4,s-monitors:4,s-device:4,m-*:3,wp-device:4" 2>&1
+since=$(date '+%Y-%m-%d %H:%M:%S')
+as_user "systemctl --user restart wireplumber" 2>&1
+sleep 4
+as_user "wpctl status" 2>&1 | head -30
+journalctl --since "$since" _UID=$USER_UID --no-pager -o cat 2>/dev/null | grep -vE "RTKit|UPower" | tail -80
+as_user "systemctl --user unset-environment WIREPLUMBER_DEBUG" 2>&1
 
 section "WirePlumber / PipeWire log this boot (user $USER_NAME)"
 journalctl -b _UID=$USER_UID --no-pager -o cat 2>/dev/null | grep -iE "wireplumber|pipewire|spa\.|alsa|acp|ucm" | grep -vE "RTKit|UPower" | tail -60
