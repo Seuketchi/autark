@@ -5,7 +5,7 @@ version=1.16.1
 release=1
 description="make-ca"
 source=(https://github.com/lfs-book/make-ca/archive/v1.16.1/make-ca-1.16.1.tar.gz https://hg-edge.mozilla.org/projects/nss/raw-file/tip/lib/ckfw/builtins/certdata.txt)
-checksums=(md5:bf9cea2d24fc5344d4951b49f275c595 -)
+checksums=(md5:bf9cea2d24fc5344d4951b49f275c595 sha256:beb7e6dfe6499926e52c075c27bcfbe4c957f8609c575b3860273ae2806f63eb)
 depends=(p11-kit)
 mode=tracked
 

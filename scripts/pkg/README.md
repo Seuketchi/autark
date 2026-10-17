@@ -45,5 +45,5 @@ Delete the `GENERATED` line to take a recipe over by hand: the converter never t
 Not converted: chapter 8's stripping and cleanup, and the machine's own steps (initramfs, Secure Boot key,
 UKI, services), which stay in their phase scripts; the kernel stays with `ch10-kernel-inside.sh`.
 
-**Before the first build on the target:** `make-ca`'s `certdata.txt` has no checksum yet (the pinned copy is in
-the target's `/sources`; put its sha256 in `sources/extra.tsv` and convert again).
+
+
