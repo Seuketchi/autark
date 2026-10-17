@@ -429,3 +429,14 @@ Autark boots on the target laptop from its own partitions: Secure Boot on (shim 
 LUKS2 root unlocked by TPM2 (PCR 7) + PIN (passphrase and paper recovery key as fallbacks), /home by key file, zram,
 firewall, all of this laptop's firmware including SOF audio with digital mics. Rollback image and shim fallback path
 in place. Remaining from Step 7: host cleanup (`scripts/host-cleanup.sh`, reviewed, not run yet).
+
+## 2026-10-17 — Host cleanup (Step 7 done)
+
+`scripts/host-cleanup.sh` (drafted by a Sonnet agent, every destructive line reviewed first), run by you in a window.
+Verified afterwards: passwordless sudo refused (drop-in gone, `visudo -c` passed); `/bin/sh` → /usr/bin/dash, no local
+diversion; /etc/bash.bashrc restored; `lfs` user and /home/lfs gone; backup-ch7/ch8, ovmf-vars*.fd, qemu-boot.log,
+repo autark-db.der deleted; /mnt/lfs removed. **Kept on purpose: autark.img** (~7 GB real) for about a week of real use,
+then re-run the script and answer y. Ubuntu free: 20 GB. Root steps from now on need your password (pkexec or a
+terminal); the open-autark-ro/rw helpers already run sudo in a window you type into.
+Still on the host, yours to decide: build packages (`sudo apt remove …` line printed by the script; qemu/ovmf useful
+for testing), the stuck Ubuntu kernel 7.0.0-38 (openvpn-dco-dkms), Timeshift schedule.
