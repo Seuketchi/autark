@@ -409,3 +409,14 @@ via chroot on p7). [ ] TPM+PIN enrollment from inside Autark (`systemd-cryptenro
   PCR 7 = Secure Boot state incl. shim's MOK-based verification; kernel updates signed by the same key don't change it.
 - Side note: "The TPM's NV index space is exhausted, skipping allocation of NvPCR 'cryptsetup'" (systemd-tpm2-setup);
   harmless for unlocking.
+- PCR 7 re-enrollment done (token 2 → keyslot 3, `tpm2-hash-pcrs: 7`, `tpm2-pin: true`), but boot still never asked
+  for the PIN. The journal had no TPM message even at debug level, so I ran the initramfs's own systemd-cryptsetup
+  from Ubuntu (extracted initramfs, chroot, `SYSTEMD_LOG_LEVEL=debug`, `readonly,headless`, nothing opened):
+  "Trying to load /usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so: cannot open shared object file" →
+  "falling back to traditional unlocking". systemd 261 unlocks TPM2 tokens through cryptsetup's token plugin, which
+  was on the root but not in the initramfs. The TSS-libs assumption was half right: enough to enroll, not to unlock.
+  (My first guess, missing TSS dependencies, was checked and wrong: dracut had pulled libtss2-sys and libcrypto in.)
+- Fix: `install_items` += /usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so (systemd builds no recovery plugin).
+  Initramfs + UKI rebuilt; images verify. Same debug run against the new initramfs: "Token handler systemd-tpm2-1.0
+  … loaded successfully", TSS libs dlopened, token open → -55 "PIN querying disabled via 'headless'" = it reaches the
+  PIN step. At a real boot it should prompt for the PIN.
