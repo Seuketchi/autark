@@ -113,7 +113,8 @@ add_dracutmodules+=" systemd systemd-cryptsetup "
 install_items+=" /usr/lib/libtss2-esys.so.0 /usr/lib/libtss2-mu.so.0 /usr/lib/libtss2-rc.so.0 /usr/lib/libtss2-tcti-device.so.0 "
 # systemd-cryptsetup unlocks TPM2 and recovery tokens through cryptsetup token plugins; without them in the initramfs
 # it silently skips the TPM ("falling back to traditional unlocking", found in a debug run, log.md).
-install_items+=" /usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so /usr/lib/cryptsetup/libcryptsetup-token-systemd-recovery.so "
+install_items+=" /usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so "
+# (systemd builds no plugin for the recovery key: it unlocks like a passphrase.)
 omit_dracutmodules+=" network nfs iscsi multipath lvm mdraid dmraid "
 compress="zstd"
 early_microcode="no"

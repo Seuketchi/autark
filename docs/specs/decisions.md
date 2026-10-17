@@ -53,7 +53,7 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Swap | zram, plus an optional swap file for hibernate | Compressed RAM swap suits a laptop |
 | Disk encryption | The whole root disk (LUKS2), unlocked by the TPM chip plus a PIN, with a recovery key kept offline | Protects everything if the laptop is stolen |
 | Bootloader | None: the firmware starts a signed unified kernel image directly, with the previous image as the fallback entry | The smallest attack surface, with nothing between the firmware and your signed kernel |
-| Secure Boot | On, with your own db key made with OpenSSL and signed by `ukify` through `systemd-sbsign` (no sbctl: it needs Go). The cert is appended to the firmware db, keeping the MSI/Microsoft keys | Only images you signed boot, and Windows and Ubuntu still do |
+| Secure Boot | On, with your own db key made with OpenSSL and signed by `ukify` through `systemd-sbsign` (no sbctl: it needs Go). The cert is enrolled as a MOK and Autark boots through Microsoft-signed shim, because the MSI firmware cannot append one key to db (it only offers factory-default keys), and replacing all keys risks Windows and Ubuntu | Only images you signed boot, and Windows and Ubuntu still do. Cost: the shim comes from Ubuntu's package and Autark can't update it alone |
 | Initramfs | dracut for the first boot, then our own in Rust (`autark-init`) | We build our own code in Rust; the cryptography stays in libcryptsetup and tpm2-tss |
 | Own code | Rust | Anything we write ourselves: shell, AI daemon, initramfs, tools |
 | Package tracking | A before/after file snapshot per package, saved to `/var/lib/autark/files/`, from chapter 8 onward | So packages can be cleanly upgraded or removed later |

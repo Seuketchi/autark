@@ -196,7 +196,7 @@ The cryptsetup page also lists what the kernel needs for this (checked in Step 6
 
 ## Step 6 — Configure, kernel and signed boot image
 
-This step is done when Autark has a hardened kernel built for the target laptop, its firmware, zram swap, and a signed unified kernel image that the firmware starts directly. Book reference: chapters 9–10. Each part is one script, run like chapter 8 (`INSIDE=<script>`); the host copies `hardware/target/{kernel.config,lsmod.txt}` into `$LFS/sources` first.
+This step is done when Autark has a hardened kernel built for the target laptop, its firmware, zram swap, and a signed unified kernel image that the firmware starts (directly in qemu, through shim on the laptop). Book reference: chapters 9–10. Each part is one script, run like chapter 8 (`INSIDE=<script>`); the host copies `hardware/target/{kernel.config,lsmod.txt}` into `$LFS/sources` first.
 
 1. **System identity and config** (chapter 9), [`ch9-config-inside.sh`](../../scripts/lfs/ch9-config-inside.sh), safe to re-run. It sets:
    - hostname `autark`, and `/etc/os-release` with `NAME="Autark"` and `ID=autark`;
@@ -215,25 +215,32 @@ This step is done when Autark has a hardened kernel built for the target laptop,
 4. **Firmware, microcode, initramfs, boot image**, [`step6-boot-inside.sh`](../../scripts/lfs/step6-boot-inside.sh):
    - **Firmware** from linux-firmware: only this laptop's files (graphics, Wi-Fi with its `WHENCE` links, Bluetooth, the Realtek NIC), taken from `hardware/target/firmware.txt` and the baseline drivers. SOF audio firmware is not in linux-firmware; it comes from the sof-bin project (below).
    - **Microcode:** Intel's tarball carries no separate signature; the CPU itself only accepts Intel-signed microcode. The file for this CPU (`06-ba-02`) is packed as an early cpio, which loads before the rest.
-   - **Initramfs** with dracut, **not host-only**: in a chroot dracut would detect the build loop device and bake that in. dracut's tpm2-tss module needs the `tpm2-tools` CLI, which Autark doesn't build, so that module is dropped, and the TSS libraries are added as `install_items` instead. systemd loads those libraries at run time with `dlopen`. **This is an assumption until Step 7b proves TPM unlock on the real TPM.** The initramfs was checked to contain `systemd-cryptsetup` (and its generator), `libcryptsetup`, and the libtss2 esys, mu, rc and tcti-device libraries.
-   - **Unified kernel image:** `autark.efi` (34 MB) is `systemd-stub` + kernel + initramfs + command line + os-release + SBAT, built by `ukify`. The command line is `rd.luks.name=<root LUKS UUID>=autark root=/dev/mapper/autark rw console=tty0 console=ttyS0,115200`. The serial console and `CONFIG_DRM_SIMPLEDRM` are kept so the same image boots in qemu.
+   - **Initramfs** with dracut, **not host-only**: in a chroot dracut would detect the build loop device and bake that in. dracut's tpm2-tss module needs the `tpm2-tools` CLI, which Autark doesn't build, so that module is dropped, and `install_items` adds what TPM unlock needs instead (`step_initramfs` in the script):
+     - the TSS libraries (libtss2 esys, mu, rc, tcti-device), which systemd loads at run time with `dlopen`. These were enough to *enrol* a TPM key, but not to unlock with it;
+     - cryptsetup's token plugin, `/usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so`. systemd 261 unlocks TPM2 tokens through it. Without it in the initramfs, `systemd-cryptsetup` logs "cannot open shared object file", falls back to a plain passphrase prompt, and never asks for the PIN. This was found in Step 7b with a debug run of the initramfs's own `systemd-cryptsetup` ([log.md](../../log.md), "TPM2 + PIN").
+
+     The initramfs was checked to contain `systemd-cryptsetup` (and its generator), `libcryptsetup`, the libtss2 libraries and the token plugin.
+   - **Unified kernel image:** `autark.efi` (34 MB) is `systemd-stub` + kernel + initramfs + command line + os-release + SBAT, built by `ukify`. The command line is `rd.luks.name=<root LUKS UUID>=autark rd.luks.options=<root LUKS UUID>=tpm2-device=auto root=/dev/mapper/autark rw`. Two parts matter:
+     - `rd.luks.options=…=tpm2-device=auto` tells the initramfs to try the TPM2+PIN token. Without it, it only asks for a passphrase. If the TPM path fails, it still falls back to the passphrase.
+     - There is no `console=ttyS0`: the laptop has no serial port, and with it the passphrase prompt printed "Failed to query password: Input/output error". The qemu image of 7a had it.
 5. **Signing.** Autark does not use sbctl (it is written in Go, and there is no Go on the system). systemd 261 already builds `systemd-sbsign` and `systemd-keyutil` once `bootloader=enabled`, and `ukify` signs through them. The script creates Autark's own Secure Boot **db key** with OpenSSL (RSA-2048 for the widest firmware support, SHA-256, 10 years, CN "Autark Secure Boot db 2026"):
    - The private key is `/etc/autark/secureboot/db.key` (directory 0700, key 0400) on the encrypted root. Trade-off: any root process can sign.
-   - The public certificate goes on the ESP at `EFI/autark/autark-db.der`, ready to enrol from the firmware setup screen.
+   - The public certificate goes on the ESP at `EFI/autark/autark-db.der`. On the laptop it is enrolled as a MOK (7b step 7), because the MSI firmware cannot add it to db.
    - `ukify` runs with `--signtool=systemd-sbsign --no-sign-kernel`. `systemd-sbsign` can't yet check whether the inner kernel is signed, and the outer signature covers the whole image anyway.
 
-   The script **builds to `autark.efi.new` and rotates only after success**: the earlier version renamed `autark.efi` to `autark-previous.efi` *before* building, so a failed build left no `autark.efi`. The result is copied to `EFI/BOOT/BOOTX64.EFI` (the path firmware tries on a disk with no boot entries; this is Autark's own EFI partition, so it can't overwrite Ubuntu's or Windows' fallback). The previous image stays as `autark-previous.efi`, which becomes the fallback boot entry.
+   The script **builds to `autark.efi.new` and rotates only after success**: the earlier version renamed `autark.efi` to `autark-previous.efi` *before* building, so a failed build left no `autark.efi`. The previous image stays as `autark-previous.efi`, which becomes the fallback boot entry. After each build the script also refreshes the shim copies, if shim is installed (7b step 5): `EFI/autark/grubx64.efi` = the new image, `EFI/autark-prev/grubx64.efi` = the previous one, and the removable path `EFI/BOOT/` = shim (`BOOTX64.EFI`, `mmx64.efi`) plus the current image as `grubx64.efi`. Without shim (the qemu image) `EFI/BOOT/BOOTX64.EFI` is the bare image. This is Autark's own EFI partition, so it can't overwrite Ubuntu's or Windows' fallback.
 6. **Firewall and SOF audio**, [`step7-prep-inside.sh`](../../scripts/lfs/step7-prep-inside.sh). The first kernel dropped `NFT_CT` (Ubuntu's rules at capture time didn't use connection tracking), so "allow replies" was impossible. The kernel script now requires `NF_TABLES(_INET)`, `NF_CONNTRACK`, `NFT_CT`, `NFT_REJECT(_INET)`, `NFT_LIMIT` and `NFT_LOG`; rebuild the kernel before this script.
    - **nftables**: libmnl, libnftnl and nftables (built with `--with-cli=readline`, since the default libedit isn't installed). netfilter.org refuses automated downloads, so the sources are Debian's untouched upstream `.orig` tarballs, checked against the Netfilter Core Team's own `.asc` signatures. `nftables.service` is enabled, before `network-pre.target`.
    - **Ruleset** `/etc/nftables.conf`, table `inet autark`: input policy *drop*; accept established/related, loopback, the essential ICMPv6 (neighbour discovery, router advertisements, too-big, unreachable, time-exceeded, parameter-problem, MLD query), ICMPv4 errors, and DHCPv6 replies from `fe80::/10`; drop invalid; forward drop; output accept. Local additions go in one file per purpose in `/etc/nftables.d/*.nft`.
    - **SOF audio firmware** from sof-bin (an unsigned tarball from GitHub, but the DSP only runs Intel-signed firmware, and the files inside are). Raptor Lake runs Alder Lake's: `sof-adl.ri` with a `sof-rpl.ri` link (IPC3), `intel/sof-ipc4/rpl/sof-rpl.ri` (IPC4), and both `sof-hda-generic-2ch.tplg` topologies.
    - Then rebuild and sign the boot image.
+7. **Laptop rebuild: audio.** The first real boot used plain HDA audio, without the digital mics. `SND_SOC_SOF_ALDERLAKE=m` was missing from the kernel: it makes no module of its own, so `localmodconfig` dropped it, and without it the kernel has no entry for this laptop's audio controller (8086:51ca, Raptor Lake, in the Alder Lake SOF family). It is now in the required list of [`ch10-kernel-inside.sh`](../../scripts/lfs/ch10-kernel-inside.sh) and checked like the rest. The next boot printed "Digital mics found on Skylake+ platform, using SOF driver" and loaded `sof-rpl.ri` and the topology.
 
 Not decided yet: lockdown=integrity disables hibernation (confirmed in qemu), while [decisions.md](decisions.md) mentions an optional hibernate swap file. The kernel's version string says `root@Seukechi`, because the chroot borrows the host name (cosmetic).
 
 ## Step 7 — Boot it
 
-This step is done when Autark boots from the target laptop's own disk, Secure Boot accepts your db key, the disk unlocks with TPM plus PIN, and the temporary sudo rule is gone. It happens in two parts: boot the image in qemu, then move it onto the disk.
+This step is done when Autark boots from the target laptop's own disk, Secure Boot accepts your key, the disk unlocks with TPM plus PIN, and the temporary sudo rule is gone. It happens in two parts: boot the image in qemu, then move it onto the disk.
 
 ### 7a — In qemu
 
@@ -243,9 +250,9 @@ This step is done when Autark boots from the target laptop's own disk, Secure Bo
    ```
    sudo umount -R $LFS && sudo cryptsetup close autark-home && sudo cryptsetup close autark && sudo losetup -d $LOOP
    ```
-3. Boot it with `bash ~/autark/scripts/qemu-boot.sh`: UEFI firmware (OVMF), an emulated NVMe disk, the serial console in your terminal (that is where the passphrase prompt appears), and the whole session recorded to `qemu-boot.log`. Typed passphrases are not echoed, so they aren't in it. The firmware's variables live in a copy, `ovmf-vars.fd`, so the original stays clean.
+3. Boot it with `bash ~/autark/scripts/qemu-boot.sh`: UEFI firmware (OVMF), an emulated NVMe disk, the serial console in your terminal, and the whole session recorded to `qemu-boot.log`. Images built after the first real boot have no `console=ttyS0` (the laptop has no serial port), so the passphrase prompt then appears only in qemu's graphical window, not in the terminal or the log. Typed passphrases are not echoed, so they aren't in it. The firmware's variables live in a copy, `ovmf-vars.fd`, so the original stays clean.
 4. Check that it asks for the disk passphrase, unlocks `/home`, you can log in, and `zramctl` shows the swap device. The result on 2026-10-17 (milestone M1, qemu half): the firmware started `autark.efi` directly, the kernel was locked down, the passphrase unlocked root, `/home` unlocked by its key file, zram gave 2 GB swap (half of 4 GB), multi-user was reached, login worked and it powered off cleanly. The only error was `virt/tdx: TDX not supported by the host platform` (qemu, harmless). qemu can't test Wi-Fi, Ethernet (the emulated NIC has no driver here), graphics, audio or the TPM; those wait for 7b.
-5. **Secure Boot test, with your key.** The plain qemu boot above runs with Secure Boot off. To prove the signing, a separate test used OVMF's Secure Boot build with variables built by the host's `python3-virt-firmware`: Microsoft's standard KEK/db plus Autark's certificate *appended* to db, which mirrors the plan for the laptop. Disks were opened with `snapshot=on`, so `autark.img` stayed untouched. The signed `autark.efi` was accepted ("Secure boot enabled", kernel loaded from db with "Autark Secure Boot db 2026", lockdown on, passphrase prompt reached). An unsigned image on a separate test disk was refused ("Access Denied -- rejected probably by Secure Boot"). The host's `sbverify` also gave "Signature verification OK" on `autark.efi`, `BOOTX64.EFI` and `autark-previous.efi`.
+5. **Secure Boot test, with your key.** The plain qemu boot above runs with Secure Boot off. To prove the signing, a separate test used OVMF's Secure Boot build with variables built by the host's `python3-virt-firmware`: Microsoft's standard KEK/db plus Autark's certificate *appended* to db, which mirrors the plan at the time (the MSI firmware later turned out not to allow this; see 7b step 7). Disks were opened with `snapshot=on`, so `autark.img` stayed untouched. The signed `autark.efi` was accepted ("Secure boot enabled", kernel loaded from db with "Autark Secure Boot db 2026", lockdown on, passphrase prompt reached). An unsigned image on a separate test disk was refused ("Access Denied -- rejected probably by Secure Boot"). The host's `sbverify` also gave "Signature verification OK" on `autark.efi`, `BOOTX64.EFI` and `autark-previous.efi`.
 
 A boot failure here costs a reboot of a window, not of the laptop. Fix it from Ubuntu (attach, unlock, mount, `chroot`), rebuild the image in Step 6, and try again.
 
@@ -269,19 +276,43 @@ The real disk's layout is not the image's: **ESP 1 GB, root A 40 GB, root B 15 G
    ```
 
    Mark the new ESP as an EFI partition (`parted $DISK set <n> esp on`). Copying whole partitions keeps the LUKS UUIDs, so the kernel command line and `/etc/crypttab` need no edits.
-5. Add firmware boot entries for Autark and its fallback, on Autark's own EFI partition. Ubuntu's and Windows' entries stay as the way back:
+5. **Shim and boot entries.** The firmware cannot trust Autark's key directly (step 7), so Autark boots through shim, the small loader Microsoft signs, copied from Ubuntu's `shim-signed` package. Each boot entry gets its own ESP folder, because shim always loads `grubx64.efi` from its own folder:
+
+   | Folder on Autark's ESP | `grubx64.efi` is | Firmware entry |
+   |---|---|---|
+   | `EFI/autark/` | the current image | "Autark" → `\EFI\autark\shimx64.efi` |
+   | `EFI/autark-prev/` | `autark-previous.efi` | "Autark (previous)" → `\EFI\autark-prev\shimx64.efi` |
+   | `EFI/BOOT/` | the current image | none: the removable path `BOOTX64.EFI` is shim, so the firmware's own automatic entry works under Secure Boot too |
+
+   Each folder also holds `shimx64.efi` and `mmx64.efi` (the MOK manager). `step6-boot-inside.sh` refreshes the `grubx64.efi` copies after every image build. Verify each copy with `sbverify --cert <Autark's cert>`; a missing `--cert` file is reported as "Signature verification failed", which looks like a bad signature. Create the entries (`--create` puts a new entry first in the boot order):
 
    ```
-   sudo efibootmgr --create --disk $DISK --part <new ESP number> --label "Autark" --loader '\EFI\Linux\autark.efi'
-   sudo efibootmgr --create --disk $DISK --part <new ESP number> --label "Autark (previous)" --loader '\EFI\Linux\autark-previous.efi'
+   sudo efibootmgr --create --disk $DISK --part <new ESP number> --label "Autark" --loader '\EFI\autark\shimx64.efi'
+   sudo efibootmgr --create --disk $DISK --part <new ESP number> --label "Autark (previous)" --loader '\EFI\autark-prev\shimx64.efi'
    ```
 
-   A second EFI partition is allowed by the UEFI spec, but whether this laptop's firmware lists entries from it isn't verified yet. If Autark's entry doesn't appear in the boot menu, copy `EFI/Linux/` to the first EFI partition instead, if it has room.
-6. Reboot and pick Autark from the firmware boot menu (Secure Boot still off at this point). Check that it asks for the disk passphrase, you can log in, the network comes up, `zramctl` shows the swap device, and the Wi-Fi, audio and graphics firmware all load (`journalctl -k`).
-7. **Secure Boot: append, don't replace.** In the firmware setup screen, add `EFI/autark/autark-db.der` to the **db**, keeping the MSI and Microsoft keys, so Windows and Ubuntu still boot. This is what the qemu test in 7a did. Replacing all keys would lock them out. Whether the MSI setup screen offers "append to db" is **not verified**; if it only allows replacing, stop and decide again. Then turn Secure Boot on.
-8. **Disk unlock:** run `systemd-cryptenroll --tpm2-device=auto --tpm2-with-pin=yes`, plus `--recovery-key`. Store the recovery key offline. This is the first real test of the TPM path, which relies on systemd loading the TSS libraries with `dlopen` (the assumption in Step 6.4). If enrolment or unlock fails, look there first.
+   Then restore the boot order with `efibootmgr -o`: **Ubuntu, Windows, Autark, Autark (previous)**, so Ubuntu stays the way back and Autark is picked from the F11 menu. The firmware does list entries from a second EFI partition on this laptop. Trade-off: the shim comes from Ubuntu's package and Autark cannot update it by itself.
+6. Reboot and pick Autark from the firmware boot menu. Until step 7, Secure Boot refuses the image, so check from here on that it asks for the disk passphrase, you can log in, the network comes up, `zramctl` shows the swap device, and the Wi-Fi, audio and graphics firmware all load (`journalctl -k`).
+7. **Secure Boot: enrol the key as a MOK.** The plan was to append `autark-db.der` to the firmware db, keeping the MSI and Microsoft keys. The MSI setup screen cannot do that: its Key Management only offers "factory default key provisioning" and "install all factory default keys". Replacing all keys would risk Windows and Ubuntu, and leaving Secure Boot off was rejected. So the key goes into shim's own list instead (the Machine Owner Key list, MOK), which shim checks the image against ([decisions.md](decisions.md)):
+   1. From Ubuntu, queue the import: `sudo mokutil --import <Autark's ESP>/EFI/autark/autark-db.der` (mount nvme0n1p6 read-only to reach it; the certificate is public), which asks for a one-time password.
+   2. Reboot. At the blue MokManager screen, choose to enrol the key and give the password. It needs someone at the keyboard.
+   3. Turn Secure Boot on and boot "Autark". The MOK list now holds Canonical's, Ventoy's, Ubuntu's DKMS key and "Autark Secure Boot db 2026".
+
+   Read the first boot's journal to confirm "Secure boot enabled", Autark's cert in the kernel keyring and lockdown on.
+8. **Disk unlock: TPM2 + PIN.** Run this **inside Autark**, not from Ubuntu: the TPM measurement called PCR 7 (Secure Boot state, including shim's MOK check) differs per boot path, so a key enrolled while booted into Ubuntu would never match. systemd 261 binds no PCR by default, which would let the PIN unlock regardless of Secure Boot state, so name PCR 7 explicitly:
+
+   ```
+   sudo systemd-cryptenroll --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=7 --tpm2-with-pin=yes <root device>
+   sudo systemd-cryptenroll --recovery-key <root device>
+   ```
+
+   (`--wipe-slot=tpm2` replaces the first, PCR-less token; skip it if none exists.) Store the recovery key offline. The disk then has the passphrase, the recovery key and the TPM2 token as ways in. Kernel updates signed by the same key don't change PCR 7. If a boot never prompts for the PIN, check the initramfs first (Step 6.4: `tpm2-device=auto` on the command line and the token plugin in the initramfs). Done when a real boot asks for the TPM2 PIN and unlocks root with it, which it did on 2026-10-17. A harmless message, "TPM's NV index space is exhausted, skipping allocation of NvPCR", comes from `systemd-tpm2-setup`. The enrolment helper was kept on the unencrypted ESP, so remove it afterwards.
 9. **You** remove the sudo rule from Ubuntu: `sudo rm /etc/sudoers.d/autark-build`, restore `/etc/bash.bashrc` from `/etc/bash.bashrc.NOUSE` (set aside in Step 2), and undo the `/bin/sh` diversion if you want dash back (Step 0). Once Autark has booted from the disk for a week, delete `autark.img`.
 10. Later, at milestone M6, when Autark is the daily driver: Ubuntu's space sits *before* Autark's partitions, so `/home` can't simply grow into it. Decide then: a second encrypted volume there, or moving `/home` into it.
+
+**Working on Autark from Ubuntu.** Two helpers unlock the real partitions after the first boot, both refusing to run unless the partition labels match, asking for your passphrase only at cryptsetup:
+- [`scripts/open-autark-ro.sh`](../../scripts/open-autark-ro.sh) opens root **read-only** at `/mnt/autark-ro`, for reading Autark's journal after a boot. Close it with `sudo umount /mnt/autark-ro && sudo cryptsetup close autark-ro`.
+- [`scripts/open-autark-rw.sh`](../../scripts/open-autark-rw.sh) opens root, `/home` (by its key file) and the ESP **read-write** at `/mnt/lfs`, so the Step 5–6 chroot scripts can rebuild the kernel and boot image on the real disk. Close it by unmounting `/mnt/lfs` recursively and closing `autark-home` and `autark`.
 
 Testing images in qemu (with OVMF) is still useful for the Rust initramfs and new kernels, before they go onto the real disk.
 
