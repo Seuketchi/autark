@@ -351,3 +351,29 @@ then F11 → "Autark". Then: TPM+PIN enrollment (first real test of the dlopen'd
 - Caveat: the shim itself comes from Ubuntu's package; Autark can't update it on its own. Record for later.
 - Side note: `sbverify` reports a *missing* --cert file as "Signature verification failed" (the scratchpad copy was
   gone after a session restart); re-checked against the ESP's own cert: OK.
+
+## 2026-10-17 — First boot on the real laptop ✅ (milestone M1, minus TPM enrollment)
+
+- MOK: "Autark Secure Boot db 2026" enrolled (mokutil --import, confirmed at the blue MokManager screen). MOK list now:
+  Canonical, Ventoy, "Seukechi … Module Signature key" (Ubuntu's DKMS key), Autark.
+- F11 → "Autark" (shim → autark.efi). Read back afterwards from Ubuntu with root opened `--readonly` (your passphrase).
+  Boot, 10:46:41–10:47:18, clean poweroff ("Finished System Power Off"), no failed units:
+  - Secure Boot enabled; kernel loaded Autark's cert (and Microsoft's, Canonical's) into its keyring; lockdown on.
+  - VMD bound, nvme0n1 p1–p9 seen; root unlocked by passphrase, /home by its key file.
+  - zram 12 GB (half of 24 GB). Firewall service started. TPM present: PCR measurement units and SRK setup ran.
+  - Firmware loaded: microcode updated early 0x410e → 0x6134; i915 DMC 2.20, GuC 70.49.4, HuC 7.9.3; iwlwifi AX211
+    so-a0-gf-a0-89; Bluetooth ibt-0040-0041 (202-5.26); Ethernet RTL8168h as enp4s0.
+- Problems found:
+  - "Failed to query password: Input/output error" ×1, "failed to get terminal attributes" ×3: the cmdline still has
+    `console=ttyS0` (qemu); the laptop has no serial port. Remove it for the laptop image.
+  - `regulatory.db` missing (wireless-regdb, comes with Wi-Fi in Step 8).
+  - **Audio on plain HDA, not SOF:** ALC256 speaker/headphone/headset-mic configured, but no "Digital mics found …
+    using SOF driver" (Ubuntu has it). Cause, confirmed: `SND_SOC_SOF_ALDERLAKE` not set (Ubuntu: m). It produces no
+    module of its own, so localmodconfig had nothing to match; without it dspcfg has no entry for RPL 8086:51ca.
+  - The firmware auto-added Boot0004 "UEFI OS" for the qemu-only \EFI\BOOT\BOOTX64.EFI on p6 (refused under Secure
+    Boot anyway; last in order). Cleanup.
+
+Open: [ ] kernel: add SND_SOC_SOF_ALDERLAKE; cmdline without console=ttyS0 → rebuild kernel + UKI (on Autark or
+via chroot on p7). [ ] TPM+PIN enrollment from inside Autark (`systemd-cryptenroll --tpm2-device=auto
+--tpm2-with-pin=yes`, + `--recovery-key`) — first real test of the dlopen'd TSS libs. [ ] host cleanup: sudo rule,
+/bin/sh diversion, /etc/bash.bashrc (in the image only), autark.img + build backups. [ ] Boot0004 / BOOTX64.EFI.
