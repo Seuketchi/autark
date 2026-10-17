@@ -376,4 +376,16 @@ then F11 → "Autark". Then: TPM+PIN enrollment (first real test of the dlopen'd
 Open: [ ] kernel: add SND_SOC_SOF_ALDERLAKE; cmdline without console=ttyS0 → rebuild kernel + UKI (on Autark or
 via chroot on p7). [ ] TPM+PIN enrollment from inside Autark (`systemd-cryptenroll --tpm2-device=auto
 --tpm2-with-pin=yes`, + `--recovery-key`) — first real test of the dlopen'd TSS libs. [ ] host cleanup: sudo rule,
-/bin/sh diversion, /etc/bash.bashrc (in the image only), autark.img + build backups. [ ] Boot0004 / BOOTX64.EFI.
+/bin/sh diversion, /etc/bash.bashrc (on the host: Step 2 moved it to .NOUSE), autark.img + build backups. [ ] Boot0004 / BOOTX64.EFI.
+
+## 2026-10-17 — Rebuild on the real disk: audio, serial console, fallback path
+
+- Opened p7 read-write from Ubuntu (your passphrase), /home by its key file, ESP p6; same chroot scripts as before.
+- Kernel: `SND_SOC_SOF_ALDERLAKE=m` added (config check passed; 285 modules, unchanged: the option adds no module).
+- Cmdline now `rd.luks.name=33727520-…=autark root=/dev/mapper/autark rw` (no `console=ttyS0`).
+- Fallback path: `EFI/BOOT/BOOTX64.EFI` is now shim, with `grubx64.efi` = the current image and `mmx64.efi`, so the
+  removable path boots under Secure Boot too (it was the bare image, refused; the firmware's auto "UEFI OS" entry).
+- Verified with Autark's cert: autark.efi, EFI/autark/grubx64.efi, EFI/BOOT/grubx64.efi, EFI/autark-prev/grubx64.efi
+  all "Signature verification OK"; autark-previous.efi is the 06:58 image that booted successfully.
+- Host cleanup script drafted by a Sonnet agent (`scripts/host-cleanup.sh`), reviewed, not run. Correction: the
+  `/etc/bash.bashrc` move was on the host (Step 2), not "in the image only" as an earlier Open line said.
