@@ -25,6 +25,26 @@ input::placeholder{color:#68625A}
     <span style="font-size: 120px; font-weight: 600; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums">14:32</span>
   </div>
 
+  <section aria-label="Notifications" style="position: absolute; top: 296px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 8px">
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+      <article style="width: 380px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 16px">
+        <span style="width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: {{g.tile}}; color: #FFFFFF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{g.d}}"></path></svg>
+        </span>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <div style="display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: #3E3A34"><span style="font-weight: 600">{{g.app}}</span><span>{{g.when}}</span></div>
+          <span style="font-size: 13px; font-weight: {{g.weight}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{g.line}}</span>
+          <sc-if value="{{g.body}}" hint-placeholder-val="{{true}}">
+            <span style="font-size: 12px; line-height: 1.4; color: #3E3A34; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{g.body}}</span>
+          </sc-if>
+        </div>
+        <sc-if value="{{g.more}}" hint-placeholder-val="{{true}}">
+          <span style="flex-shrink: 0; min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: rgba(36, 34, 30, 0.10); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums">{{g.more}}</span>
+        </sc-if>
+      </article>
+    </sc-for>
+  </section>
+
   <form aria-label="Unlock" style="position: absolute; bottom: 140px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 14px">
     <span aria-hidden="true" style="width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #3F7A5F; color: #FFFFFF; font-size: 30px; font-weight: 600">T</span>
     <span style="font-size: 16px; font-weight: 600">tan</span>
@@ -51,10 +71,25 @@ input::placeholder{color:#68625A}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900},"text":false}'>
 class Component extends DCLogic {
   renderVals() {
-    return {};
+    // One card per app, newest first, at most three. Without Settings' "Show notification text"
+    // a card says only who and how many; with it, the newest one's summary and body.
+    const apps = [
+      { app: 'Messages', when: 'now', count: 3, title: 'Mara', body: 'Are we still on for the hardware store at five?', tile: '#3F7A5F', d: 'M4 5h16v11H9l-5 4z' },
+      { app: 'autark-build', when: '8 min ago', count: 1, title: 'Checkpoint: Step 4 done', body: 'Temporary tools built. backup-ch7.tar.xz written to ~/autark.', tile: '#336650', d: 'M5 12l5 5L20 7' },
+      { app: 'Calendar', when: '20 min ago', count: 2, title: 'Site visit, Unit 3', body: 'Tomorrow 09:00 with the contractor', tile: '#B0533E', d: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4' }
+    ];
+    const text = !!this.props.text;
+    const groups = apps.map((a) => ({
+      ...a,
+      line: text ? a.title : (a.count === 1 ? '1 notification' : a.count + ' notifications'),
+      weight: text ? 600 : 500,
+      body: text ? a.body : '',
+      more: text && a.count > 1 ? '+' + (a.count - 1) : ''
+    }));
+    return { groups };
   }
 }
 </script>
