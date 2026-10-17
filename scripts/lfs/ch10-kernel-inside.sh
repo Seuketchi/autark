@@ -153,6 +153,10 @@ MEDIA_SUPPORT m
 MEDIA_USB_SUPPORT y
 USB_VIDEO_CLASS m
 SND_USB_AUDIO m
+# Raptor Lake audio (8086:51ca) is in the Alder Lake SOF family. This option makes no module of its own (it extends
+# the Tiger Lake driver), so localmodconfig dropped it; without it dspcfg falls back to plain HDA and the digital
+# mics are lost (first real boot, log.md).
+SND_SOC_SOF_ALDERLAKE m
 BT_HCIBTUSB m
 TYPEC m
 TYPEC_UCSI m

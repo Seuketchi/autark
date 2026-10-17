@@ -137,10 +137,11 @@ step_secureboot_key() {
 }
 
 # The unified kernel image: microcode first, then the initramfs, the kernel and its command line, in one
-# EFI file the firmware starts directly (no bootloader). console=ttyS0 is for the qemu test (Step 7a).
+# EFI file the firmware starts directly (no bootloader). No console=ttyS0: the laptop has no serial port, and with
+# it the passphrase prompt also tried the missing port ("Failed to query password: Input/output error").
 step_uki() {
   cat > /etc/kernel/cmdline << EOF
-rd.luks.name=$ROOT_LUKS_UUID=autark root=/dev/mapper/autark rw console=tty0 console=ttyS0,115200
+rd.luks.name=$ROOT_LUKS_UUID=autark root=/dev/mapper/autark rw
 EOF
   install -d /boot/efi/EFI/Linux /boot/efi/EFI/BOOT
   local new=/boot/efi/EFI/Linux/autark.efi.new
@@ -161,8 +162,15 @@ EOF
   [ -s "$new" ]
   [ -e /boot/efi/EFI/Linux/autark.efi ] && mv -v /boot/efi/EFI/Linux/autark.efi /boot/efi/EFI/Linux/autark-previous.efi
   mv -v "$new" /boot/efi/EFI/Linux/autark.efi
-  # The path firmware tries on a disk with no boot entries; how qemu finds it (build guide 6.5, 7a).
-  cp -v /boot/efi/EFI/Linux/autark.efi /boot/efi/EFI/BOOT/BOOTX64.EFI
+  # The path firmware tries when it has no boot entries. Under Secure Boot the bare image is refused (the firmware
+  # isn't given Autark's key), so once shim is installed the fallback is shim + image too, the standard layout.
+  if [ -e /boot/efi/EFI/autark/shimx64.efi ]; then
+    cp -v /boot/efi/EFI/autark/shimx64.efi /boot/efi/EFI/BOOT/BOOTX64.EFI
+    cp -v /boot/efi/EFI/autark/mmx64.efi   /boot/efi/EFI/BOOT/mmx64.efi
+    cp -v /boot/efi/EFI/Linux/autark.efi   /boot/efi/EFI/BOOT/grubx64.efi
+  else
+    cp -v /boot/efi/EFI/Linux/autark.efi /boot/efi/EFI/BOOT/BOOTX64.EFI
+  fi
   # On the laptop the firmware can't add a key to db, so Autark boots through Ubuntu's Microsoft-signed shim, which
   # checks the image against Autark's key in the MOK list (log.md, Step 7b). shim always loads "grubx64.efi" from its
   # own folder: the current image goes in EFI/autark/, the previous one in EFI/autark-prev/.
