@@ -1232,7 +1232,9 @@ DHCP=yes
 IgnoreCarrierLoss=3s
 EOF
   systemctl enable iwd.service
-  systemctl --global enable pipewire.socket wireplumber.service
+  # pipewire.service too, not only its socket: socket activation starts PipeWire on the first client, so the first
+  # `wpctl status` after login saw no devices (WirePlumber still scanning). Starting it at login avoids that.
+  systemctl --global enable pipewire.socket pipewire.service wireplumber.service
 }
 
 pkg_wireless_regdb() {

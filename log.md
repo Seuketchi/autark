@@ -476,3 +476,19 @@ for testing), the stuck Ubuntu kernel 7.0.0-38 (openvpn-dco-dkms), Timeshift sch
 - Tests: one failure — libjpeg-turbo 330/332: `djpeg(12)-shared-3x2-float-prog-cmp`, both float-DCT byte
   comparisons. Likely FMA from -march=x86-64-v3 changing float rounding (not verified); the default decoder is integer.
 Next: user account (you type its password), first desktop boot (Wi-Fi with iwctl, `wayfire`, foot, sound), then 8b.
+
+## 2026-10-17/18 — Phase 8a tested on the laptop
+
+- Wi-Fi (iwd + networkd DHCP) and Wayfire with foot: work (you).
+- `poweroff`/`reboot` as tan: refused — no polkit yet (phase 8b: polkit with duktape). Meanwhile `su -c poweroff`.
+- Audio, found with `scripts/autark-audio-check.sh` (runs on Autark, writes its report to the ESP so Ubuntu can read
+  it without the passphrase; two bugs in my first version: answers read from /dev/tty, absent under `su -c`; alsaucm
+  called with the card id instead of hw:N):
+  - Cards: 0 = NVIDIA HDMI (GA107), 1 = sof-hda-dsp. UCM loads (verb HiFi).
+  - No sound at first: the ALSA mixer started muted; unmuting Master/Speaker/Headphone → heard on card 1 device 0;
+    levels saved with `alsactl store`.
+  - "wpctl status empty": timing. PipeWire is socket-activated, so the first client starts it and sees nothing while
+    WirePlumber scans. After 4 s: Speaker sink (default, 0.40), 3 HDMI sinks, Digital Microphone (default source) and
+    Stereo Microphone. Fix: enable pipewire.service globally (script updated; on the installed system you run
+    `su -c 'systemctl --global enable pipewire.service'` once).
+- Open: /boot/efi wasn't mounted when the audio script was first run (mounted by hand) — check fstab/automount.
