@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark widgets</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; color: #24221E; background: #F6F4EF">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Wallpaper" hint-size="1440px,900px"></dc-import>
+  </div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 5">
+    <dc-import name="TopBar" app="Finder" hint-size="1440px,32px"></dc-import>
+  </div>
+
+  <div aria-label="Desktop widgets" style="position: absolute; left: 32px; top: 60px; width: 344px; display: flex; flex-direction: column; gap: 14px">
+    <section aria-label="Clock and calendar" style="padding: 18px; display: flex; gap: 18px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 20px">
+      <div style="display: flex; flex-direction: column; justify-content: space-between; min-width: 112px">
+        <span style="font-size: 12px; font-weight: 600; color: #3F7A5F; letter-spacing: 0.04em">{{weekday}}</span>
+        <span style="font-size: 44px; font-weight: 500; letter-spacing: -0.03em; line-height: 1">{{time}}</span>
+        <span style="font-size: 13px; color: #68625A">{{dateLine}}</span>
+      </div>
+      <div style="flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; font-size: 10px; text-align: center">
+        <sc-for list="{{dayNames}}" as="d" hint-placeholder-count="7">
+          <span style="color: #7A736A; font-weight: 600; padding-bottom: 2px">{{d}}</span>
+        </sc-for>
+        <sc-for list="{{days}}" as="d" hint-placeholder-count="31">
+          <span style="height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: {{d.bg}}; color: {{d.fg}}; font-weight: {{d.weight}}">{{d.n}}</span>
+        </sc-for>
+      </div>
+    </section>
+    <section aria-label="Pinned note" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; background: rgba(255, 255, 255, 0.62); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 20px">
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3F7A5F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5M5 17h14l-2-4V4H7v9z"></path></svg>
+        PINNED NOTE
+      </div>
+      <span style="font-size: 16px; font-weight: 600">{{note.title}}</span>
+      <sc-for list="{{note.items}}" as="i" hint-placeholder-count="4">
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{i.color}}">
+          <span aria-hidden="true" style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid {{i.border}}; background: {{i.fill}}"></span>
+          <span style="text-decoration: {{i.strike}}">{{i.text}}</span>
+        </span>
+      </sc-for>
+    </section>
+  </div>
+
+  <aside aria-label="Notification centre" style="position: absolute; top: 44px; right: 12px; width: 380px; display: flex; flex-direction: column; gap: 12px">
+    <div role="tablist" style="display: flex; padding: 3px; border-radius: 10px; background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid rgba(36, 34, 30, 0.08)">
+      <sc-for list="{{views}}" as="v" hint-placeholder-count="2">
+        <button role="tab" aria-selected="{{v.selected}}" onClick="{{v.pick}}" style="flex: 1; height: 28px; border: none; border-radius: 7px; font: inherit; font-size: 12px; font-weight: {{v.weight}}; background: {{v.bg}}; box-shadow: {{v.shadow}}; color: #24221E">{{v.label}}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{isWidgets}}" hint-placeholder-val="{{true}}">
+      <section aria-label="Clock and calendar" style="padding: 14px 16px; display: flex; align-items: center; gap: 14px; background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 16px">
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #3F7A5F">{{weekday}}</span>
+          <span style="font-size: 30px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.1">{{time}}</span>
+          <span style="font-size: 12px; color: #68625A">{{dateLine}}  ·  week {{week}}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(7, 22px); gap: 1px; font-size: 10px; text-align: center">
+          <sc-for list="{{dayNames}}" as="d" hint-placeholder-count="7">
+            <span style="color: #7A736A; font-weight: 600">{{d}}</span>
+          </sc-for>
+          <sc-for list="{{days}}" as="d" hint-placeholder-count="31">
+            <span style="height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: {{d.bg}}; color: {{d.fg}}; font-weight: {{d.weight}}">{{d.n}}</span>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+        <section aria-label="Battery" style="padding: 14px; display: flex; flex-direction: column; gap: 10px; background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 16px">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">BATTERY</span>
+          <sc-for list="{{batteries}}" as="b" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <span aria-hidden="true" style="position: relative; width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; background: conic-gradient({{b.color}} {{b.deg}}deg, rgba(36, 34, 30, 0.10) 0)">
+                <span style="position: absolute; inset: 4px; border-radius: 50%; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: #3E3A34">{{b.short}}</span>
+              </span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+                <span style="font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{b.name}}</span>
+                <span style="font-size: 11px; color: #68625A">{{b.state}}</span>
+              </span>
+            </div>
+          </sc-for>
+        </section>
+
+        <section aria-label="Resources" style="padding: 14px; display: flex; flex-direction: column; gap: 9px; background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 16px">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">RESOURCES</span>
+          <sc-for list="{{resources}}" as="r" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <div style="display: flex; justify-content: space-between; font-size: 12px"><span>{{r.label}}</span><span style="font-variant-numeric: tabular-nums; color: #68625A">{{r.value}}</span></div>
+              <span aria-hidden="true" style="height: 5px; border-radius: 3px; background: rgba(36, 34, 30, 0.08); overflow: hidden"><span style="display: block; width: {{r.pct}}%; height: 100%; border-radius: 3px; background: {{r.color}}"></span></span>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+
+      <section aria-label="Kith" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 16px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 7px; background: #1F2A25; display: flex; align-items: center; justify-content: center; gap: 3px">
+            <span style="width: 4px; height: 4px; border-radius: 50%; background: #9FD3B5; box-shadow: 0 0 4px #9FD3B5"></span>
+            <span style="width: 4px; height: 4px; border-radius: 50%; background: #9FD3B5; box-shadow: 0 0 4px #9FD3B5"></span>
+          </span>
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">KITH</span>
+          <span style="margin-left: auto; font-size: 11px; color: #7A736A">Up next</span>
+        </div>
+        <sc-for list="{{tasks}}" as="t" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px">
+            <span style="width: 54px; flex-shrink: 0; font-size: 12px; font-variant-numeric: tabular-nums; color: #3F7A5F; font-weight: 600">{{t.when}}</span>
+            <span style="flex: 1">{{t.name}}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{showSuggestion}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #E1EDE6">
+            <span style="font-size: 12px; color: #24221E">{{suggestion}}</span>
+            <div style="display: flex; gap: 6px">
+              <button onClick="{{dismiss}}" style="height: 26px; padding: 0 10px; border: none; border-radius: 7px; background: #3F7A5F; color: #FFFFFF; font: inherit; font-size: 12px; font-weight: 500">Quit kitchend</button>
+              <button onClick="{{dismiss}}" style="height: 26px; padding: 0 10px; border: none; border-radius: 7px; background: rgba(255, 255, 255, 0.7); color: #24221E; font: inherit; font-size: 12px">Not now</button>
+              <button onClick="{{dismiss}}" style="height: 26px; margin-left: auto; padding: 0 8px; border: none; border-radius: 7px; background: transparent; color: #68625A; font: inherit; font-size: 11px">Don't suggest again</button>
+            </div>
+          </div>
+        </sc-if>
+      </section>
+
+      <section aria-label="Pinned note" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 16px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">PINNED NOTE</span>
+        <span style="font-size: 14px; font-weight: 600">{{note.title}}</span>
+        <span style="font-size: 12px; color: #68625A">{{note.summary}}</span>
+      </section>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 6px">
+        <span style="font-size: 11px; color: #68625A">Weather is off: it sends your location</span>
+        <button onClick="{{edit}}" style="height: 28px; padding: 0 12px; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.7); color: #24221E; font: inherit; font-size: 12px; font-weight: 500">Edit widgets</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isNotifications}}" hint-placeholder-val="{{false}}">
+      <div style="padding: 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.78); border: 1px solid rgba(36, 34, 30, 0.10); font-size: 13px; color: #68625A">Notifications stay as in the NotificationCenter artboard.</div>
+    </sc-if>
+  </aside>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; z-index: 5">
+    <dc-import name="Dock" hint-size="720px,112px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { view: 'widgets', suggestion: true };
+  }
+  renderVals() {
+    const st = this.state;
+    // October 2026 starts on a Thursday; weeks start on Monday.
+    const days = [];
+    for (let i = 0; i < 3; i++) days.push({ n: '', bg: 'transparent', fg: '#24221E', weight: 400 });
+    for (let d = 1; d <= 31; d++) {
+      const today = d === 16;
+      days.push({ n: String(d), bg: today ? '#3F7A5F' : 'transparent', fg: today ? '#FFFFFF' : '#24221E', weight: today ? 600 : 400 });
+    }
+    const ring = (pct, color) => ({ deg: Math.round(pct * 3.6), color });
+    const batteries = [
+      { name: 'This laptop', state: '87%  ·  charging', short: '87', ...ring(87, '#3F7A5F') },
+      { name: 'Headphones', state: '64%', short: '64', ...ring(64, '#3F7A5F') },
+      { name: 'Mouse', state: '18%  ·  low', short: '18', ...ring(18, '#C4503C') }
+    ];
+    const resources = [
+      { label: 'CPU', value: '18%', pct: 18, color: '#3F7A5F' },
+      { label: 'Memory', value: '13.4 GB', pct: 41, color: '#3F7A5F' },
+      { label: 'Power', value: '7.9 W', pct: 55, color: '#C99A3E' }
+    ];
+    const views = [['notifications', 'Notifications'], ['widgets', 'Widgets']].map(([id, label]) => {
+      const on = st.view === id;
+      return { label, selected: on ? 'true' : 'false', weight: on ? 600 : 400, bg: on ? '#FFFFFF' : 'transparent', shadow: on ? '0 1px 2px rgba(36, 34, 30, 0.12)' : 'none', pick: () => this.setState({ view: id }) };
+    });
+    const check = (text, done) => ({ text, color: done ? '#7A736A' : '#24221E', border: done ? '#3F7A5F' : 'rgba(36, 34, 30, 0.35)', fill: done ? '#3F7A5F' : 'transparent', strike: done ? 'line-through' : 'none' });
+    return {
+      views,
+      isWidgets: st.view === 'widgets',
+      isNotifications: st.view === 'notifications',
+      weekday: 'FRIDAY',
+      time: '14:32',
+      dateLine: '16 October 2026',
+      week: 42,
+      dayNames: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+      days,
+      batteries,
+      resources,
+      tasks: [
+        { when: '18:30', name: 'Learning digest' },
+        { when: '21:30', name: 'Evening check' },
+        { when: 'Sun', name: 'Weekly review' }
+      ],
+      showSuggestion: st.suggestion,
+      suggestion: 'kitchend has used a full core for 14 minutes and is draining the battery.',
+      dismiss: () => this.setState({ suggestion: false }),
+      note: {
+        title: 'Kith',
+        summary: '2 of 4 done  ·  next: Write the autark-ai daemon',
+        items: [check('Spec the assistant', true), check('Pick the name and face', true), check('Write the autark-ai daemon', false), check('Move Kith to its own box (M7)', false)]
+      },
+      edit: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>
