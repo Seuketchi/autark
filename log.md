@@ -334,3 +334,20 @@ copy). [ ] Secure Boot enrollment method on the MSI firmware. [ ] backup + shrin
 
 Next (you, in the firmware): append `EFI/autark/autark-db.der` (on p6) to the Secure Boot db, keeping existing keys;
 then F11 → "Autark". Then: TPM+PIN enrollment (first real test of the dlopen'd TSS libs), and cleanup.
+
+## 2026-10-17 — Secure Boot on the MSI firmware: MOK through shim
+
+- The MSI firmware's Key Management offers only "factory default key provisioning" / "install all factory default
+  keys": **no way to append one cert to db** (the qemu test couldn't predict this). Options weighed: replace all keys
+  (setup mode not exposed; risks Windows/Valorant), Secure Boot off (rejected), MOK via shim (chosen).
+- Chosen: Ubuntu's Microsoft-signed shim (shim-signed 1.59+15.8; signer "Microsoft Windows UEFI Driver Publisher")
+  copied to Autark's ESP: `EFI/autark/{shimx64,mmx64}.efi` + `grubx64.efi` = autark.efi, and `EFI/autark-prev/`
+  likewise with autark-previous.efi (one folder each instead of shim's load-option path). All copies verify with
+  Autark's key. Boot0001 "Autark" → \EFI\autark\shimx64.efi, Boot0003 → \EFI\autark-prev\shimx64.efi; order kept
+  Ubuntu, Windows, Autark, Autark (previous).
+- `step6-boot-inside.sh` now also refreshes both `grubx64.efi` copies after each image build.
+- Trust: only images signed by Autark's key (in MOK) or by Microsoft/Canonical boot. MOK enrollment needs someone at
+  the keyboard (MokManager at boot, one-time password). Existing MOKs: Canonical, Ventoy (July).
+- Caveat: the shim itself comes from Ubuntu's package; Autark can't update it on its own. Record for later.
+- Side note: `sbverify` reports a *missing* --cert file as "Signature verification failed" (the scratchpad copy was
+  gone after a session restart); re-checked against the ESP's own cert: OK.

@@ -163,6 +163,13 @@ EOF
   mv -v "$new" /boot/efi/EFI/Linux/autark.efi
   # The path firmware tries on a disk with no boot entries; how qemu finds it (build guide 6.5, 7a).
   cp -v /boot/efi/EFI/Linux/autark.efi /boot/efi/EFI/BOOT/BOOTX64.EFI
+  # On the laptop the firmware can't add a key to db, so Autark boots through Ubuntu's Microsoft-signed shim, which
+  # checks the image against Autark's key in the MOK list (log.md, Step 7b). shim always loads "grubx64.efi" from its
+  # own folder: the current image goes in EFI/autark/, the previous one in EFI/autark-prev/.
+  if [ -e /boot/efi/EFI/autark/shimx64.efi ]; then
+    cp -v /boot/efi/EFI/Linux/autark.efi /boot/efi/EFI/autark/grubx64.efi
+    [ -e /boot/efi/EFI/Linux/autark-previous.efi ] && cp -v /boot/efi/EFI/Linux/autark-previous.efi /boot/efi/EFI/autark-prev/grubx64.efi
+  fi
   ukify inspect /boot/efi/EFI/Linux/autark.efi | grep -E '^\.(linux|initrd|cmdline|osrel|uname)|size'
 }
 

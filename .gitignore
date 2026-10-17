@@ -6,3 +6,4 @@ version-check.sh
 ovmf-vars.fd
 qemu-boot.log
 ovmf-vars-sb.fd
+autark-db.der
