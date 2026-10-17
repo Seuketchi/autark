@@ -71,7 +71,7 @@ Until then, the work laptop's profile in [`hardware/work-laptop/`](../../hardwar
 | Login | Automatic login after the disk's TPM-plus-PIN unlock; the lock screen guards resume. A greeter (greetd plus our own Rust greeter) can be turned on for multi-user setups | The PIN at boot already proves it's you |
 | Admin rights | sudo-rs | Same as sudo to use, without sudo's class of memory bugs |
 | Terminal | foot | Writing a terminal is a large, security-sensitive job (escape sequences, Unicode, fonts); foot is the lightest Wayland terminal. Our own can come later |
-| Files app | Our own in Rust, built right after Notes, which shares its file code | Matches the design; nothing borrowed in the shell |
+| Files app | Our own in Rust, built right after Notes, which shares its file code. Version 1 (2026-10-17): icon and list views, info pane, new folder, rename, copy, cut, paste, drag to move, Move to Trash (the shared freedesktop Trash) with restore and empty, Open and Open with; several windows, no tabs. Search matches names in the folder and below by code, and Jev re-ranks the hits by meaning when `autark-ai` is on. Image thumbnails in the shared `~/.cache/thumbnails`, and image or text previews in the info pane. Locations lists disks that are already mounted, with Eject; mounting by click waits for UDisks2 | Matches the design; nothing borrowed in the shell |
 | Code editor | Galley, your own IDE (Rust and Svelte), improved for Autark | Your own tool. As a webview app it needs WebKitGTK from BLFS |
 | Command-line shell | bash | What LFS and all the build scripts use |
 | System font | Geist and Geist Mono; Inter selectable in Settings | Used in the designs |
