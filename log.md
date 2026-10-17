@@ -420,3 +420,12 @@ via chroot on p7). [ ] TPM+PIN enrollment from inside Autark (`systemd-cryptenro
   Initramfs + UKI rebuilt; images verify. Same debug run against the new initramfs: "Token handler systemd-tpm2-1.0
   … loaded successfully", TSS libs dlopened, token open → -55 "PIN querying disabled via 'headless'" = it reaches the
   PIN step. At a real boot it should prompt for the PIN.
+- **PIN works**: next real boot asked for the TPM2 PIN and unlocked root with it (you, 2026-10-17).
+  `/boot/efi/tpm-enroll.sh` removed from the (unencrypted) ESP afterwards.
+
+## ✅ Milestone M1 — bootable base: done (2026-10-17)
+
+Autark boots on the target laptop from its own partitions: Secure Boot on (shim + Autark's key in MOK), lockdown,
+LUKS2 root unlocked by TPM2 (PCR 7) + PIN (passphrase and paper recovery key as fallbacks), /home by key file, zram,
+firewall, all of this laptop's firmware including SOF audio with digital mics. Rollback image and shim fallback path
+in place. Remaining from Step 7: host cleanup (`scripts/host-cleanup.sh`, reviewed, not run yet).
