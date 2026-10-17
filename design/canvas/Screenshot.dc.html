@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Autark screenshots</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; font-family: 'Geist', system-ui, sans-serif; color: #24221E; background: #F6F4EF">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Wallpaper" hint-size="1440px,900px"></dc-import>
+  </div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; z-index: 5">
+    <dc-import name="TopBar" app="Notes" hint-size="1440px,32px"></dc-import>
+  </div>
+
+  <div aria-label="A window behind the capture" style="position: absolute; left: 250px; top: 110px; width: 940px; height: 600px; background: #FFFFFF; border-radius: 12px; box-shadow: 0 24px 60px rgba(36, 34, 30, 0.22), 0 0 0 1px rgba(36, 34, 30, 0.08); overflow: hidden; display: flex">
+    <div style="width: 220px; background: #EFEBE3; padding: 16px 12px; display: flex; flex-direction: column; gap: 6px">
+      <div style="display: flex; gap: 8px; margin-bottom: 18px">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #E5684F"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #E8B04A"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #6FAF7A"></span>
+      </div>
+      <sc-for list="{{folders}}" as="f" hint-placeholder-count="5">
+        <span style="padding: 7px 8px; border-radius: 8px; font-size: 13px; background: {{f.bg}}; font-weight: {{f.weight}}">{{f.name}}</span>
+      </sc-for>
+    </div>
+    <div style="flex: 1; padding: 40px 56px; display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em">Autark build notes</span>
+      <span style="font-size: 13px; color: #7A736A">Friday 16 October 2026</span>
+      <span style="font-size: 15px; line-height: 1.6; color: #3E3A34">Phase 8a is building on the target laptop: Mesa and its LLVM chain first, then wlroots and Wayfire. The shell pieces are written and wait for the desktop to land.</span>
+      <div style="margin-top: 8px; height: 180px; border-radius: 12px; background: linear-gradient(135deg, #DCE7DF, #EFE6D6)"></div>
+    </div>
+  </div>
+
+  <sc-if value="{{dimmed}}" hint-placeholder-val="{{true}}">
+    <div aria-label="Dimmed screen around the selection" style="position: absolute; inset: 0; z-index: 10; pointer-events: none">
+      <div style="position: absolute; left: 0; top: 0; right: 0; height: {{sel.y}}px; background: rgba(36, 34, 30, 0.38)"></div>
+      <div style="position: absolute; left: 0; top: {{sel.y}}px; width: {{sel.x}}px; height: {{sel.h}}px; background: rgba(36, 34, 30, 0.38)"></div>
+      <div style="position: absolute; left: {{sel.right}}px; top: {{sel.y}}px; right: 0; height: {{sel.h}}px; background: rgba(36, 34, 30, 0.38)"></div>
+      <div style="position: absolute; left: 0; top: {{sel.bottom}}px; right: 0; bottom: 0; background: rgba(36, 34, 30, 0.38)"></div>
+      <div aria-label="Selection" style="position: absolute; left: {{sel.x}}px; top: {{sel.y}}px; width: {{sel.w}}px; height: {{sel.h}}px; box-sizing: border-box; border: 1px solid rgba(255, 255, 255, 0.95); box-shadow: 0 0 0 1px rgba(36, 34, 30, 0.25)">
+        <sc-for list="{{handles}}" as="h" hint-placeholder-count="8">
+          <span style="position: absolute; left: {{h.x}}; top: {{h.y}}; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 0 0 1px rgba(36, 34, 30, 0.35)"></span>
+        </sc-for>
+      </div>
+      <span aria-label="Selection size" style="position: absolute; left: {{sel.x}}px; top: {{sel.y}}px; margin: -30px 0 0 0; width: 100px; text-align: center; padding: 3px 0; border-radius: 6px; background: rgba(36, 34, 30, 0.78); color: #FFFFFF; font-family: 'Geist Mono', monospace; font-size: 11px">{{sel.w}} × {{sel.h}}</span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{crosshair}}" hint-placeholder-val="{{false}}">
+    <div aria-label="Pointer while choosing an area" style="position: absolute; left: 1110px; top: 610px; z-index: 11; pointer-events: none">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position: absolute; left: -17px; top: -17px"><path d="M17 2v12M17 20v12M2 17h12M20 17h12" stroke="#FFFFFF" stroke-width="3"/><path d="M17 2v12M17 20v12M2 17h12M20 17h12" stroke="#24221E" stroke-width="1.2"/></svg>
+      <span style="position: absolute; left: 14px; top: 14px; padding: 2px 6px; border-radius: 5px; background: rgba(36, 34, 30, 0.78); color: #FFFFFF; font-family: 'Geist Mono', monospace; font-size: 11px; white-space: nowrap">1110, 610</span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showBar}}" hint-placeholder-val="{{true}}">
+    <div aria-label="Screenshot options" style="position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 4px; padding: 6px; background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 14px; box-shadow: 0 16px 40px rgba(36, 34, 30, 0.22)">
+      <button aria-label="Close" onClick="{{close}}" style="width: 30px; height: 30px; border: none; border-radius: 8px; background: transparent; display: flex; align-items: center; justify-content: center">
+        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="#68625A" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <span style="width: 1px; height: 22px; background: rgba(36, 34, 30, 0.12); margin: 0 2px"></span>
+      <sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+        <button aria-label="{{m.label}}" aria-pressed="{{m.on}}" onClick="{{m.pick}}" style="width: 40px; height: 34px; border: none; border-radius: 8px; background: {{m.bg}}; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="18" viewBox="0 0 22 18" fill="none" stroke="{{m.stroke}}" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="20" height="16" rx="2.5" stroke-dasharray="{{m.dash}}"/><rect x="{{m.ix}}" y="{{m.iy}}" width="{{m.iw}}" height="{{m.ih}}" rx="1.2" fill="{{m.fill}}" stroke="none"/></svg>
+        </button>
+      </sc-for>
+      <span style="width: 1px; height: 22px; background: rgba(36, 34, 30, 0.12); margin: 0 2px"></span>
+      <button aria-label="Record (later)" disabled style="width: 40px; height: 34px; border: none; border-radius: 8px; background: transparent; display: flex; align-items: center; justify-content: center; opacity: 0.35" title="Recording comes later">
+        <svg width="22" height="18" viewBox="0 0 22 18" fill="none" stroke="#24221E" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="20" height="16" rx="2.5"/><circle cx="11" cy="9" r="3.4" fill="#24221E" stroke="none"/></svg>
+      </button>
+      <span style="width: 1px; height: 22px; background: rgba(36, 34, 30, 0.12); margin: 0 2px"></span>
+      <button aria-label="Options" aria-expanded="{{menuOpen}}" onClick="{{toggleMenu}}" style="height: 34px; padding: 0 10px; border: none; border-radius: 8px; background: {{menuBg}}; color: #24221E; font: inherit; font-size: 13px; display: flex; align-items: center; gap: 6px">
+        Options
+        <svg width="9" height="6" viewBox="0 0 9 6" aria-hidden="true"><path d="M1 1l3.5 3.5L8 1" stroke="#68625A" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      </button>
+      <button onClick="{{capture}}" style="height: 34px; padding: 0 16px; margin-left: 2px; border: none; border-radius: 8px; background: #3F7A5F; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600">Capture</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{menuOpen}}" hint-placeholder-val="{{true}}">
+    <div aria-label="Options menu" role="menu" style="position: absolute; left: 754px; bottom: 148px; z-index: 21; width: 220px; padding: 6px; background: #FFFFFF; border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 10px; box-shadow: 0 8px 24px rgba(36, 34, 30, 0.16); font-size: 13px">
+      <sc-for list="{{menu}}" as="g" hint-placeholder-count="3">
+        <div style="padding: 6px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #7A736A">{{g.title}}</div>
+        <sc-for list="{{g.items}}" as="i" hint-placeholder-count="3">
+          <div role="menuitemradio" aria-checked="{{i.on}}" style="height: 28px; padding: 0 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px">
+            <span style="width: 12px; color: #3F7A5F; font-weight: 600">{{i.mark}}</span>{{i.label}}
+          </div>
+        </sc-for>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showThumb}}" hint-placeholder-val="{{true}}">
+    <div aria-label="Screenshot just taken" style="position: absolute; right: 24px; bottom: 24px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 8px">
+      <div style="width: 220px; height: 140px; padding: 6px; box-sizing: border-box; background: #FFFFFF; border-radius: 10px; box-shadow: 0 14px 36px rgba(36, 34, 30, 0.28), 0 0 0 1px rgba(36, 34, 30, 0.08)">
+        <div style="width: 100%; height: 100%; border-radius: 6px; overflow: hidden; background: #FFFFFF; position: relative">
+          <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 30%; background: #EFEBE3"></div>
+          <div style="position: absolute; left: 38%; top: 16%; width: 48%; height: 9px; border-radius: 3px; background: #24221E"></div>
+          <div style="position: absolute; left: 38%; top: 30%; width: 26%; height: 5px; border-radius: 3px; background: #C9C2B6"></div>
+          <div style="position: absolute; left: 38%; top: 42%; width: 54%; height: 5px; border-radius: 3px; background: #D9D3C8"></div>
+          <div style="position: absolute; left: 38%; top: 50%; width: 50%; height: 5px; border-radius: 3px; background: #D9D3C8"></div>
+          <div style="position: absolute; left: 38%; top: 62%; width: 54%; height: 26%; border-radius: 5px; background: linear-gradient(135deg, #DCE7DF, #EFE6D6)"></div>
+        </div>
+      </div>
+      <span style="padding: 4px 10px; border-radius: 7px; background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(36, 34, 30, 0.10); font-size: 11px; color: #68625A">Saved to Screenshots · drag it into an app, or click to open</span>
+    </div>
+  </sc-if>
+
+  <div aria-label="Shortcuts" style="position: absolute; left: 24px; bottom: 24px; z-index: 30; padding: 10px 14px; background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(36, 34, 30, 0.10); border-radius: 12px; font-size: 12px; display: grid; grid-template-columns: auto auto; gap: 4px 12px; color: #3E3A34">
+    <sc-for list="{{shortcuts}}" as="s" hint-placeholder-count="3">
+      <span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #3F7A5F; font-weight: 500">{{s.keys}}</span><span>{{s.what}}</span>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    // view: 'options' (Shift+Super+5), 'area' (Shift+Super+4 while dragging), 'saved' (the thumbnail afterwards)
+    this.state = { view: (props && props.view) || 'options', mode: 'area', menu: true };
+  }
+  renderVals() {
+    const st = this.state;
+    const sel = { x: 470, y: 190, w: 640, h: 420 };
+    sel.right = sel.x + sel.w;
+    sel.bottom = sel.y + sel.h;
+    const handles = [['0%', '0%'], ['50%', '0%'], ['100%', '0%'], ['0%', '50%'], ['100%', '50%'], ['0%', '100%'], ['50%', '100%'], ['100%', '100%']].map(([x, y]) => ({ x, y }));
+    const glyph = { screen: [3, 3, 16, 12, '1 0'], window: [5, 4, 12, 10, '1 0'], area: [6, 5, 10, 8, '2.5 2'] };
+    const modes = [['screen', 'Capture the entire screen'], ['window', 'Capture a window'], ['area', 'Capture an area']].map(([key, label]) => {
+      const on = st.mode === key;
+      const [ix, iy, iw, ih, dash] = glyph[key];
+      return { label, on, bg: on ? 'rgba(63, 122, 95, 0.14)' : 'transparent', stroke: on ? '#3F7A5F' : '#24221E', fill: on ? 'rgba(63, 122, 95, 0.35)' : 'rgba(36, 34, 30, 0.18)', ix, iy, iw, ih, dash, pick: () => this.setState({ mode: key }) };
+    });
+    const radio = (labels, on) => labels.map(label => ({ label, on: label === on, mark: label === on ? '✓' : '' }));
+    const options = st.view === 'options';
+    return {
+      folders: [{ name: 'All notes', bg: 'transparent', weight: 400 }, { name: 'Autark', bg: 'rgba(36, 34, 30, 0.08)', weight: 600 }, { name: 'Kith', bg: 'transparent', weight: 400 }, { name: 'Work', bg: 'transparent', weight: 400 }, { name: 'Recently deleted', bg: 'transparent', weight: 400 }],
+      dimmed: st.view !== 'saved',
+      crosshair: st.view === 'area',
+      sel,
+      handles,
+      showBar: options,
+      modes,
+      menuOpen: options && st.menu,
+      menuBg: st.menu ? 'rgba(36, 34, 30, 0.08)' : 'transparent',
+      toggleMenu: () => this.setState({ menu: !st.menu }),
+      menu: [
+        { title: 'SAVE TO', items: radio(['Screenshots folder', 'Clipboard', 'Both'], 'Screenshots folder') },
+        { title: 'TIMER', items: radio(['None', '5 seconds', '10 seconds'], 'None') },
+        { title: 'SHOW', items: [{ label: 'Pointer', on: false, mark: '' }, { label: 'Thumbnail afterwards', on: true, mark: '✓' }] }
+      ],
+      capture: () => this.setState({ view: 'saved' }),
+      close: () => this.setState({ view: 'saved' }),
+      showThumb: st.view === 'saved',
+      shortcuts: [
+        { keys: 'Shift Super 3', what: 'Whole screen' },
+        { keys: 'Shift Super 4', what: 'Drag an area (Space: pick a window)' },
+        { keys: 'Shift Super 5', what: 'These options' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

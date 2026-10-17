@@ -13,6 +13,7 @@ The desktop design. This folder is the only copy; the Claude canvas used to edit
 | `Notes` | Autark Notes: folders, note list, live preview with checklists and `[[links]]`, backlinks, graph view |
 | `TaskManager` | Activity, the task manager: apps by CPU, memory, energy, disk and network, with the force-quit dialog |
 | `Widgets` | The centre's Widgets view (clock and calendar, batteries, resources, weather, Kith's tasks and suggestion, pinned note) and the optional desktop widgets |
+| `Screenshot` | Screenshots: the Shift+Super+5 options bar over an area selection, choosing an area (Shift+Super+4), and the thumbnail afterwards |
 | `Overview` | All windows and workspaces |
 | `NotificationCenter` | Quick settings and notifications |
 | `Lock` | Lock screen with fingerprint or password |
