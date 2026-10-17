@@ -9,3 +9,4 @@ ovmf-vars-sb.fd
 autark-db.der
 sources-8a/
 build-8a-*.log
+sources-node/
