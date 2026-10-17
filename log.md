@@ -297,3 +297,18 @@ Script: `scripts/lfs/step7-prep-inside.sh`.
 
 Open before Step 7b: [x] signing [x] SOF firmware [x] firewall. [ ] remove the build key (last, right before the
 copy). [ ] Secure Boot enrollment method on the MSI firmware. [ ] backup + shrink + copy.
+
+## 2026-10-17 — Step 7b preparation: space, backup, shrink plan
+
+- Timeshift: deleted the 3 automatic snapshots (by you; the classifier blocked me) → freed only ~1 GB: rsync
+  snapshots hard-link unchanged files, so the "initial baseline" (yours, kept) holds the shared 34 GB. A new weekly
+  snapshot appeared at 08:00. Suggested: lower the schedule (5 daily + 3 weekly now).
+- Decision (yours): real-disk root B **15 GB** (was 40). Root B isn't copied from the image, so the image is unchanged.
+  Real layout after Ubuntu: ESP 1 + A 40 + B 15 + /home 9 = 65 GiB.
+- Backup to the Ventoy stick, `autark-backup-2026-10-17/` (verified: every archive read back, bundle verified):
+  patches + untracked files for 5 repos, a bundle of the-mobile-app_mobile's 5 unpushed commits, `data.tar.gz` 15 GB
+  (datasets, Documents, Pictures, Downloads, Videos, non-git folders incl. the camera-trap project, Claude memory),
+  and `backup-ch8.tar.xz`. Not on the stick: autark.img (7.4 GB, rebuildable from ch8 + scripts), .ssh/.gnupg.
+- Shrink plan (GParted live): nvme0n1p5 296631 MiB → **229950 MiB**, start unchanged → 66681 MiB freed + 903 MiB
+  already free = 67584 MiB (66 GiB) after Ubuntu. Ubuntu then 87% full (199.5 / 224.6 GiB), ~83% after deleting
+  autark.img and the build backups.
