@@ -457,3 +457,22 @@ for testing), the stuck Ubuntu kernel 7.0.0-38 (openvpn-dco-dkms), Timeshift sch
   (Mozilla NSS tip, 172 certs, sha256 beb7e6dfe6499926e52c075c27bcfbe4c957f8609c575b3860273ae2806f63eb); OpenSSH keys
   only, not enabled; services step: iwd enabled, networkd DHCP on wlan, PipeWire+WirePlumber for all users,
   Bluetooth and sshd off. Recovery if PAM ever breaks login: open-autark-rw.sh from Ubuntu, fix /etc/pam.d in a chroot.
+
+## 2026-10-17 — Phase 8a built (Wayland desktop stack)
+
+- Sources: 70 files staged by a Sonnet agent (53 BLFS md5, GPG for foot/fcft/tllist/alsa-ucm-conf/iwd/wireless-regdb,
+  Wayfire + Geist sha256); copied in and re-verified inside Autark (`scripts/stage-8a.sh`, via pkexec).
+  libevdev: freedesktop.org 403s → LFS mirror, same md5. The 3 BLFS patches matched a second download.
+  blfs-systemd-units: the lfs-matrix mirror has an older same-named release (exim/slapd units differ, ChangeLog
+  2026-02-17); ours = linuxfromscratch.org's current file.
+- Run issues: (1) `chown --from lfs` in ch7-chroot.sh failed after the cleanup removed `lfs` → skipped when the user
+  is gone. (2) build-lib.sh's top-folder detection printed nothing for OpenSSH (first entry `openssh-10.5p1`, no
+  slash; `sed -n 's…p'` prints only on substitution) → always print, plus a guard. (3) My "kernel marker" touch
+  failed silently (root-owned .done/) → one unneeded 10-min kernel rebuild; the stage script now writes it as root.
+- Kernel rebuilt with the 8a options (iwd crypto, regdb, Bluetooth, evdev, vgem), image re-signed.
+- **60/60 packages built**, exit 0: PAM (Linux-PAM, Shadow+PAM, systemd+PAM), make-ca (pinned certdata), OpenSSH,
+  font stack, Cairo/Pango, Wayland, libinput/xkbcommon, LLVM 22.1.8 (~45 min), Mesa (iris+llvmpipe, anv+swrast),
+  wlroots 0.20.2, Wayfire 0.11.0, foot, ALSA, BlueZ, PipeWire, WirePlumber, iwd, wireless-regdb; services step.
+- Tests: one failure — libjpeg-turbo 330/332: `djpeg(12)-shared-3x2-float-prog-cmp`, both float-DCT byte
+  comparisons. Likely FMA from -march=x86-64-v3 changing float rounding (not verified); the default decoder is integer.
+Next: user account (you type its password), first desktop boot (Wi-Fi with iwctl, `wayfire`, foot, sound), then 8b.
