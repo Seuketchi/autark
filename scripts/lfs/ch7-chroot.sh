@@ -32,11 +32,15 @@ if [ "${1:-}" = backup ]; then
 fi
 
 # 7.2 (--from lfs only touches files lfs still owns, so a re-run changes nothing)
-chown --from lfs -R root:root $LFS/{usr,var,etc}
-[ -d $LFS/tools ] && chown --from lfs -R root:root $LFS/tools
-case $(uname -m) in
-  x86_64) chown --from lfs -R root:root $LFS/lib64 ;;
-esac
+# Only while the build user exists: after the host cleanup removed `lfs`, `chown --from lfs` fails
+# ("invalid user"), and there is nothing left for it to change anyway.
+if getent passwd lfs > /dev/null; then
+  chown --from lfs -R root:root $LFS/{usr,var,etc}
+  [ -d $LFS/tools ] && chown --from lfs -R root:root $LFS/tools
+  case $(uname -m) in
+    x86_64) chown --from lfs -R root:root $LFS/lib64 ;;
+  esac
+fi
 
 # 7.3
 mkdir -pv $LFS/{dev,proc,sys,run}
