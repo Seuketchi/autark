@@ -312,3 +312,25 @@ copy). [ ] Secure Boot enrollment method on the MSI firmware. [ ] backup + shrin
 - Shrink plan (GParted live): nvme0n1p5 296631 MiB → **229950 MiB**, start unchanged → 66681 MiB freed + 903 MiB
   already free = 67584 MiB (66 GiB) after Ubuntu. Ubuntu then 87% full (199.5 / 224.6 GiB), ~83% after deleting
   autark.img and the build backups.
+
+## 2026-10-17 — Step 7b: Autark copied onto the laptop's disk
+
+- Shrink (you, GParted live): nvme0n1p5 → 229950 MiB, start unchanged; 67584 MiB free after it. Ubuntu's ext4
+  "clean" (GParted fsck 09:53), 0 ext4 errors on the next boot. Windows partitions untouched.
+- Partitions (start sectors on 1 MiB boundaries; each ≥ its image source, read exact in sectors):
+  p6 autark-esp 1 GiB (ESP flag) · p7 autark-a 40 GiB · p8 autark-b 15 GiB (empty, not copied) ·
+  p9 autark-home 10 GiB (image's is 18872320 sectors ≈ 9 GiB; the spare GiB went here). p1–p5 unchanged.
+- Build key removed: `luksRemoveKey` on root A and /home in the image (each now has only slot 1: your passphrase /
+  the /home key file); build key now refused with "No key available with this passphrase"; `/root/autark-build.key`
+  shredded. **Mistake caught:** my first attempt read a helper file holding `LOOP=/dev/loop29` (not the device), so
+  nothing was removed, and its check printed "correct" anyway because it only tested that open *failed*. Re-done
+  against the real device with a check that requires cryptsetup's actual wrong-key message.
+- Copy (image attached read-only): label + size guard before each `dd`, then `cmp` over the source's full length:
+  ESP, root A, /home all **byte-identical**. A session cut-off interrupted the first copy midway; all three were
+  re-copied and verified from scratch. Image detached afterwards (the copies share its UUIDs).
+- Firmware entries: Boot0001 "Autark" → \EFI\Linux\autark.efi, Boot0003 "Autark (previous)", both on p6.
+  `efibootmgr --create` puts new entries first, so the order was restored to Ubuntu, Windows, then Autark's two:
+  Autark isn't trusted by Secure Boot until its cert is appended to db, so it's started from the F11 menu for now.
+
+Next (you, in the firmware): append `EFI/autark/autark-db.der` (on p6) to the Secure Boot db, keeping existing keys;
+then F11 → "Autark". Then: TPM+PIN enrollment (first real test of the dlopen'd TSS libs), and cleanup.
