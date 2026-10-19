@@ -98,7 +98,14 @@ class Rig:
         os.remove(key)
 
     def start_tpm(self):
-        os.makedirs(self.tpm_dir)
+        """swtpm serves one qemu run and exits when qemu disconnects, so every run that wants a TPM starts its own. The state folder stays,
+        so what one run did to the TPM (the enrolled key) is there for the next."""
+        if self.swtpm and self.swtpm.poll() is None:
+            self.swtpm.terminate()
+            self.swtpm.wait(5)
+        os.makedirs(self.tpm_dir, exist_ok=True)
+        if os.path.exists(self.tpm_sock):
+            os.remove(self.tpm_sock)
         self.swtpm = subprocess.Popen(
             ["swtpm", "socket", "--tpm2", "--tpmstate", f"dir={self.tpm_dir}", "--ctrl", f"type=unixio,path={self.tpm_sock}", "--flags", "not-need-init,startup-clear", "--log", f"file={self.work}/swtpm.log"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -138,6 +145,7 @@ class Vm:
         if disk:
             args += ["-drive", f"file={rig.disk},if=none,id=d0,format=raw" + (",snapshot=on" if snapshot else ""), "-device", "nvme,drive=d0,serial=autarktest"]
         if tpm:
+            rig.start_tpm()
             args += ["-chardev", f"socket,id=chrtpm,path={rig.tpm_sock}", "-tpmdev", "emulator,id=tpm0,chardev=chrtpm", "-device", "tpm-tis,tpmdev=tpm0"]
         self.cmdline = cmdline
         rig.current = self
@@ -383,7 +391,6 @@ def main():
     try:
         print("making the test disk…")
         rig.make_disk()
-        rig.start_tpm()
         print(f"disk UUID {rig.uuid}; kernel and initramfs from the bundle:\n{open(os.path.join(rig.dir, 'MANIFEST')).read()}")
         for name, case, _ in CASES:
             if name not in selected:
