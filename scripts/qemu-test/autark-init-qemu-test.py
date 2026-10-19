@@ -336,9 +336,22 @@ def case_tpm_wrong_pin(rig):
     return vm
 
 
+def diagnose_recovery_key(rig):
+    """Asks the host's cryptsetup whether the test disk accepts the recovery key (and the passphrase, as a control), and prints what the
+    disk has in its header. If the host accepts the key but the guest refuses it, the fault is in autark-init, not in the enrolment."""
+    print(f"  recovery key from the enrol case: {rig.recovery_key!r} ({len(rig.recovery_key)} characters)")
+    for what, secret in (("passphrase", PASSPHRASE), ("recovery key", rig.recovery_key)):
+        done = subprocess.run(["cryptsetup", "open", "--test-passphrase", "--key-file=-", rig.disk], input=secret.encode(), capture_output=True)
+        print(f"  host cryptsetup on the {what}: {'accepted' if done.returncode == 0 else 'REFUSED (' + done.stderr.decode().strip() + ')'}")
+    dump = subprocess.run(["cryptsetup", "luksDump", rig.disk], capture_output=True, text=True).stdout
+    keep = [line for line in dump.splitlines() if line.startswith(("Keyslots:", "Tokens:", "Digests:")) or line[:3].strip().rstrip(":").isdigit() or "Priority" in line or "PBKDF" in line]
+    print("  header:\n    " + "\n    ".join(keep))
+
+
 def case_recovery_key(rig):
     if not rig.recovery_key:
         raise Fail("no recovery key (the enrol case didn't run or failed)")
+    diagnose_recovery_key(rig)
     vm = Vm(rig, "recovery-key", tpm=True, luks_options="tpm2-device=auto")
     three_wrong_pins(vm)
     vm.send(rig.recovery_key)
