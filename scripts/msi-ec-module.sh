@@ -20,9 +20,12 @@ SHA_MAKEFILE=4963fafaaf054fb3053b69c9f9f76cd981a9cb6efd7c8cb18bbf56c62c11dba2   
 SHA_VARS=395c3b539a9e1ea17bd9ae0229a94b90160dd3c28a3956a4e4051a54c8da2e4f       # Makefile.vars
 FIRMWARE=15K1IMS1.113                                  # this laptop's embedded-controller firmware (the kernel logs it when msi_ec refuses it)
 KVER=${KVER:-$(uname -r)}
-WORK=${WORK:-$HOME/.cache/autark-msi-ec}
+WORK=${WORK:-/var/tmp/autark-msi-ec}   # not under $HOME: root installs what you built, and su -c has root's home (and an old build in it)
 SRC=$WORK/src
-KEYDIR=${KEYDIR:-/root/kernel-keys}
+# The key a module must carry is the one the RUNNING kernel was built with, and every kernel build makes its own, so it comes from that
+# kernel's build tree; /root/kernel-keys (the older kernels' key) is only the fallback.
+KEYDIR=${KEYDIR:-/usr/lib/modules/$KVER/build/certs}
+[ -r "$KEYDIR/signing_key.pem" ] || KEYDIR=/root/kernel-keys
 UPDATES=${UPDATES:-/usr/lib/modules/$KVER/updates}
 SYSFS=/sys/devices/platform/msi-ec
 
@@ -46,7 +49,8 @@ build() {
 check() {
   [ -s "$SRC/msi-ec.ko" ] || die "run build first"
   echo "module: version $(/usr/sbin/modinfo -F version "$SRC/msi-ec.ko"), $(/usr/sbin/modinfo -F vermagic "$SRC/msi-ec.ko")"
-  if strings "$SRC/msi-ec.ko" | grep -qx "$FIRMWARE"; then echo "it lists firmware $FIRMWARE"; else die "the built module doesn't list $FIRMWARE"; fi
+  # No -q: grep -q quits at the first match, strings gets SIGPIPE, and pipefail then calls a found string "not found".
+  if strings "$SRC/msi-ec.ko" | grep -x "$FIRMWARE" >/dev/null; then echo "it lists firmware $FIRMWARE"; else die "the built module doesn't list $FIRMWARE"; fi
   echo "this laptop: $(cat /sys/class/dmi/id/sys_vendor) $(cat /sys/class/dmi/id/product_name)"
   echo "kernel says: $(journalctl -k --no-pager 2>/dev/null | grep -i 'msi_ec' | tail -1 || true)"
   if [ -d "$SYSFS" ]; then echo "msi-ec is loaded now: $(ls "$SYSFS" | tr '\n' ' ')"; else echo "msi-ec is not loaded now"; fi
@@ -57,6 +61,7 @@ install_module() {
   [ -s "$SRC/msi-ec.ko" ] || die "run build first (as yourself)"
   [ -r "$KEYDIR/signing_key.pem" ] && [ -r "$KEYDIR/signing_key.x509" ] || die "no module signing key in $KEYDIR (the kernel build keeps it there)"
   local sign=/usr/lib/modules/$KVER/build/scripts/sign-file
+  case "$(/usr/sbin/modinfo -F vermagic "$SRC/msi-ec.ko")" in "$KVER "*) ;; *) die "the built module is for another kernel; run build again as yourself" ;; esac
   [ -x "$sign" ] || die "no $sign"
   # Sign a copy under a name modinfo recognises as a module (it won't read "msi-ec.ko.new"), check the signature there, then put it in place.
   local signed=$WORK/signed
