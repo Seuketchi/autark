@@ -1,0 +1,28 @@
+#!/usr/sbin/nft -f
+# Proposed /etc/nftables.conf for Autark (not installed). Default-deny for incoming traffic, everything outgoing allowed.
+# Check the syntax first (as root):  nft -c -f /home/tan/nftables.proposed
+# This closes SSH (port 22) from the network. To allow SSH from your home network only, uncomment the ssh line and set the subnet.
+flush ruleset
+
+table inet autark {
+  chain input {
+    type filter hook input priority filter; policy drop;
+
+    iif "lo" accept
+    ct state established,related accept
+    ct state invalid drop
+
+    # IPv6 needs these to work at all (neighbour discovery, router adverts); ping is allowed, rate limited.
+    meta l4proto ipv6-icmp accept
+    meta l4proto icmp limit rate 10/second accept
+
+    # DHCP replies (v4 and v6) for systemd-networkd.
+    udp dport 68 accept
+    udp dport 546 accept
+
+    # ip saddr 192.168.1.0/24 tcp dport 22 accept   # ssh from the home network only
+  }
+  chain forward {
+    type filter hook forward priority filter; policy drop;
+  }
+}
