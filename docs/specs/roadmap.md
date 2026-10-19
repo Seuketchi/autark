@@ -31,7 +31,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 - ⬜ **M7.** No box yet.
 - ✅ **M8.** Notes opens a vault with folders, tags, a note list, the editor, `[[links]]`, backlinks, search and a graph view.
 - ✅ **M9.** Files, Activity (apps by CPU, memory, energy impact, disk and network, with force quit), the widgets and the `autark-stats` service run.
-- 🔶 **M10.** `autark-pkg` (install, remove, upgrade, rollback, verify) and `autark-sandbox` are written. Neither has been run on Autark: `autark-pkg` needs root to read `/var/lib/autark/pkg`, and the recipes folder `/usr/src/autark/scripts/pkg` isn't installed.
+- 🔶 **M10.** `autark-pkg` (install, remove, upgrade, rollback, verify) and `autark-sandbox` are written. On Autark itself it hasn't run: the recipes aren't installed in the root-owned place it reads (`/usr/src/autark/scripts/pkg`) and there is no package database yet (`/var/lib/autark/pkg`). Without root it already works against a scratch folder (`search`, `info`, a dry-run install with dependencies, 149 recipes). [`scripts/autark-pkg-first-run.sh`](../../scripts/autark-pkg-first-run.sh), run once as root, installs the recipes, makes the signing key, imports the 278 file lists the phase scripts recorded, and shows what `upgrade` would change; it hasn't been run as root yet.
 
 Beyond the milestones, also done and running: Settings (23 panes, with a root helper), Terminal, the app icons, window buttons and the show-desktop command.
 
