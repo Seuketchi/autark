@@ -16,7 +16,7 @@ set -euo pipefail
 
 KVER=${KVER:-$(uname -r)}
 SRC_TREE=${SRC_TREE:-/sources/linux-$KVER}
-WORK=${WORK:-$HOME/.cache/autark-nouveau}
+WORK=${WORK:-/var/tmp/autark-nouveau}   # not under $HOME: root installs from what you built, and su -c has root's home
 JOBS=${JOBS:-2}
 STOP_AT=${STOP_AT:-88}
 RESUME_AT=${RESUME_AT:-80}
