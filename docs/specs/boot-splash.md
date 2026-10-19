@@ -1,6 +1,6 @@
 # Boot splash (design)
 
-What you see between the firmware and the login screen: today a text console with a `PIN:` prompt from `autark-init` (see [autark-init.md](autark-init.md)). This is the design for replacing it with a loading screen that has the PIN box on it. **Design only; nothing is built.** It comes after the M4 qemu test, because it sits on top of `autark-init`.
+What you see between the firmware and the login screen: today a text console with a `PIN:` prompt from `autark-init` (see [autark-init.md](autark-init.md)). This is the design for replacing it with a loading screen that has the PIN box on it. **Status: the drawing code is written and tested, but not yet run on the laptop's real screen.** It is off unless the kernel command line has `autark.splash=1`, so the default boot is unchanged. It sits on top of `autark-init`, so the M4 qemu test still comes first.
 
 ## What it looks like
 
@@ -29,9 +29,9 @@ One screen, dark, the same family as the lock screen (`design/canvas/Lock.dc.htm
 | Mark | the **Loop** logo (`M5.5 19.5L12 4.5l6.5 15C14.5 16 9.5 16 5.5 19.5z`, 2.4 stroke) in sage `#4F7561`, centred 40% down |
 | Name | "Autark", Geist 600, `#ECE8E1`, under the mark |
 | PIN box | 260 × 40, fully rounded, `rgba(236,232,225,0.14)`, one dot per key typed; Backspace removes one, Enter submits |
-| Messages | 13 px `#B5AEA3`; errors in the same colour with the text only ("Wrong PIN. 2 tries left."), no red flash |
+| Messages | 14 px `#B5AEA3`; errors in the same colour, no red flash. The words are the ones `autark-init` already says ("That PIN isn't right."); a count of tries left needs the unlock code to pass it on and is not done |
 | Waiting | a slow 2.4 s pulse of the mark's opacity (0.55 → 1) while the TPM works or root mounts; a thin progress bar only if it takes over 3 s |
-| Fonts | one font compiled into `autark-init` (a subset of Geist: the letters of the fixed messages and digits, ~30 KB) |
+| Fonts | Geist Regular and SemiBold, pre-drawn by `autark-splash-font` into two 70 KB alpha-mask files compiled into `autark-init` (printable ASCII, `…` and `’`); no font library in the initramfs |
 
 States, in order: **starting** (mark pulses) → **PIN** (box appears, mark stays) → **checking** (box dims, pulse) → **wrong** (box shakes once, message, box clears) → **opened** (mark stops pulsing, holds 200 ms) → handed to systemd. A **passphrase** fallback uses the same box with the message "Enter your recovery passphrase" and shows dots the same way. Escape on the PIN box shows the console log instead (a debug path; also what appears if drawing fails).
 
@@ -49,11 +49,19 @@ The kernel already gives the initramfs a screen: `CONFIG_SYSFB_SIMPLEFB`, `CONFI
 
 The splash is only calm if the kernel is. The kernel command line (`/etc/kernel/cmdline`) gets `quiet loglevel=3 vt.global_cursor_default=0` once the splash works; without a working splash it stays as it is, so errors remain visible. `autark.splash=0` brings the text back and `Escape` shows the log for one boot.
 
+## What is built
+
+In `autark-tools`, `crates/autark-init/src/splash/`: `canvas.rs` (rounded boxes, circles, the mark's outline, soft edges), `font.rs`, `scene.rs` (the five states), `fb.rs` (maps `/dev/fb0`, any 32-bit channel order), `entry.rs` (what each key does to the secret: Backspace, Ctrl+U, arrow keys ignored, UTF-8), and `console.rs` (the `Console` that `autark-init` uses when the screen allows it, with a thread repainting about 30 times a second). 35 unit tests, including a fake screen that checks the frames drawn while a PIN is typed.
+
+To look at every state without booting: `cargo run --release -p autark-init --bin autark-init-splash-preview -- <folder> [1920x1080]` writes one PPM picture per state. To redo the font files: `cargo run --release -p autark-splash-font -- crates/autark-init/assets`.
+
+Not done: the box shake on a wrong PIN, "Escape shows the log", and the tries-left count.
+
 ## Order of work
 
 1. M4 qemu test passes (the bundle is built; the run needs the Ubuntu partition).
-2. A `Console` implementation that draws to a framebuffer: the background, the mark, the PIN box, tested in qemu by comparing the framebuffer to a reference image.
-3. The same on the laptop through the `try` entry (a one-time boot; the next boot is dracut).
+2. ✅ A `Console` that draws to a framebuffer: the background, the mark, the PIN box; tested against a fake screen. Still to do: in qemu, with a graphical window, to see it.
+3. The same on the laptop through the `try` entry (a one-time boot; the next boot is dracut), with `autark.splash=1 quiet loglevel=3 vt.global_cursor_default=0` added to that entry's command line only.
 4. Make it the default only after a week of `try` boots behaving.
 
 ## Decisions to make
