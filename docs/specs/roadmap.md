@@ -23,8 +23,8 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 ✅ done, 🔶 started, ⬜ not started. "Checked" means the pieces were seen running on the target laptop that day.
 
 - ✅ **M0.** M1 booted from the target laptop's own disk, so Step 0 is done.
-- ✅ **M2.** Wayfire, Wi-Fi (iwd), sound (PipeWire), Firefox 158, the Web browser (Epiphany on WebKitGTK, phase 8c), Node, git, curl, `gh` and Claude Code run. Web is built without GStreamer GL, so video is unaccelerated and it needs `WEBKIT_DISABLE_DMABUF_RENDERER=1`.
-- ✅ **M3.** The bar, dock, launcher, notification centre (`autark-notifyd`) and lock screen (`autark-lock`) run in the session. Still open: the autologin-then-lock flow (see the log), and `autark-power`, which isn't started with the session, so its screen-off and sleep timers don't run.
+- ✅ **M2.** Wayfire, Wi-Fi (iwd), sound (PipeWire), Firefox 158 (the default browser), the Web browser (Epiphany on WebKitGTK, phase 8c: kept installed but not used day to day, since it lacks accelerated video and WebRTC and each WebKit security fix means a rebuild), Node, git, curl, `gh` and Claude Code run. The desktop has a dark mode (`theme = "dark"` in `theme.toml`) that reaches the apps, the wallpaper, the terminal and the browser's pages (`ADW_DISABLE_PORTAL=1`, see the log).
+- ✅ **M3.** The bar, dock, launcher, notification centre (`autark-notifyd`), lock screen (`autark-lock`) and power daemon (`autark-power`, started with the session since 2026-10-19) run. Still open: checking the lock screen's keyring unlock after the PAM-session change, and the autologin-then-lock flow (see the log).
 - 🔶 **M4.** `autark-init` is written and its logic is tested (command line, unlock order and limits, and the real libcryptsetup on a LUKS2 image), but nothing has booted yet: the initramfs image, the second boot entry and the qemu tests with a software TPM are still to do. See [autark-init.md](autark-init.md).
 - 🔶 **M5.** `autark-ai` runs on Ollama: routing, ranking, the command check, chat, approved memory, tasks, suggestions and an MCP server. Not yet checked end to end against the "done when" line.
 - ⬜ **M6.** Needs M4 and M5, and the Ubuntu and Windows retirement is blocked by the retire checklist (large photos still need a USB drive).
@@ -33,7 +33,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 - ✅ **M9.** Files, Activity (apps by CPU, memory, energy impact, disk and network, with force quit), the widgets and the `autark-stats` service run.
 - 🔶 **M10.** `autark-pkg` (install, remove, upgrade, rollback, verify) and `autark-sandbox` are written. On Autark itself it hasn't run: the recipes aren't installed in the root-owned place it reads (`/usr/src/autark/scripts/pkg`) and there is no package database yet (`/var/lib/autark/pkg`). Without root it already works against a scratch folder (`search`, `info`, a dry-run install with dependencies, 149 recipes). [`scripts/autark-pkg-first-run.sh`](../../scripts/autark-pkg-first-run.sh), run once as root, installs the recipes, makes the signing key, imports the 278 file lists the phase scripts recorded, and shows what `upgrade` would change; it hasn't been run as root yet.
 
-Beyond the milestones, also done and running: Settings (23 panes, with a root helper), Terminal, the app icons, window buttons and the show-desktop command.
+Beyond the milestones, also done and running: Settings (23 panes, with a root helper that needs its one-time install, `crates/autark-settings/data/install-helper.sh`), Terminal, the app icons, window buttons at the top right, the show-desktop command, and the dark mode.
 
 After M6, maintenance takes a few hours a month: security advisories, kernel updates, and the yearly LFS releases ([build guide](build-guide.md)).
 
