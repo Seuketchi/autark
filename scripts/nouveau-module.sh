@@ -20,7 +20,10 @@ WORK=${WORK:-/var/tmp/autark-nouveau}   # not under $HOME: root installs from wh
 JOBS=${JOBS:-2}
 STOP_AT=${STOP_AT:-88}
 RESUME_AT=${RESUME_AT:-80}
-KEYDIR=${KEYDIR:-/root/kernel-keys}
+# The key a module must carry is the one the RUNNING kernel was built with, and every kernel build makes its own, so it comes from that
+# kernel's build tree; /root/kernel-keys (the older kernels' key) is only the fallback.
+KEYDIR=${KEYDIR:-/usr/lib/modules/$KVER/build/certs}
+[ -r "$KEYDIR/signing_key.pem" ] || KEYDIR=/root/kernel-keys
 UPDATES=${UPDATES:-/usr/lib/modules/$KVER/updates}
 BUILD=/usr/lib/modules/$KVER/build
 SRC=$WORK/nouveau
@@ -101,6 +104,7 @@ install_module() {
   [ -s "$SRC/nouveau.ko" ] || die "run build first (as yourself)"
   [ -r "$KEYDIR/signing_key.pem" ] && [ -r "$KEYDIR/signing_key.x509" ] || die "no module signing key in $KEYDIR"
   local sign=$BUILD/scripts/sign-file signed=$WORK/signed
+  case "$(/usr/sbin/modinfo -F vermagic "$SRC/nouveau.ko")" in "$KVER "*) ;; *) die "the built module is for another kernel; run build again as yourself" ;; esac
   [ -x "$sign" ] || die "no $sign"
   rm -rf "$signed"; mkdir -p "$signed"
   cp "$SRC/nouveau.ko" "$signed/nouveau.ko"
