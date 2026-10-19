@@ -23,7 +23,7 @@ KVER=${KVER:-$(uname -r)}
 WORK=${WORK:-$HOME/.cache/autark-msi-ec}
 SRC=$WORK/src
 KEYDIR=${KEYDIR:-/root/kernel-keys}
-UPDATES=/usr/lib/modules/$KVER/updates
+UPDATES=${UPDATES:-/usr/lib/modules/$KVER/updates}
 SYSFS=/sys/devices/platform/msi-ec
 
 die() { echo "msi-ec-module.sh: $*" >&2; exit 1; }
@@ -58,10 +58,14 @@ install_module() {
   [ -r "$KEYDIR/signing_key.pem" ] && [ -r "$KEYDIR/signing_key.x509" ] || die "no module signing key in $KEYDIR (the kernel build keeps it there)"
   local sign=/usr/lib/modules/$KVER/build/scripts/sign-file
   [ -x "$sign" ] || die "no $sign"
+  # Sign a copy under a name modinfo recognises as a module (it won't read "msi-ec.ko.new"), check the signature there, then put it in place.
+  local signed=$WORK/signed
+  rm -rf "$signed"; mkdir -p "$signed"
+  cp "$SRC/msi-ec.ko" "$signed/msi-ec.ko"
+  "$sign" sha512 "$KEYDIR/signing_key.pem" "$KEYDIR/signing_key.x509" "$signed/msi-ec.ko"
+  /usr/sbin/modinfo -F sig_id "$signed/msi-ec.ko" | grep -q . || die "the module didn't take a signature"
   install -d -m 755 "$UPDATES"
-  cp "$SRC/msi-ec.ko" "$UPDATES/msi-ec.ko.new"
-  "$sign" sha512 "$KEYDIR/signing_key.pem" "$KEYDIR/signing_key.x509" "$UPDATES/msi-ec.ko.new"
-  /usr/sbin/modinfo -F sig_id "$UPDATES/msi-ec.ko.new" | grep -q . || die "the module didn't take a signature"
+  install -m 644 "$signed/msi-ec.ko" "$UPDATES/msi-ec.ko.new"
   mv "$UPDATES/msi-ec.ko.new" "$UPDATES/msi-ec.ko"
   /usr/sbin/depmod "$KVER"
   echo "installed $UPDATES/msi-ec.ko, signed; modprobe now picks it over the kernel's own: $(/usr/sbin/modinfo -F filename msi-ec)"
