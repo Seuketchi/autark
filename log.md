@@ -525,3 +525,11 @@ Next: user account (you type its password), first desktop boot (Wi-Fi with iwctl
   sudo-rs, oo7-daemon, oo7-pam and all of autark-tools. Not tested: everything inside the chroot (Rust's bootstrap
   with staged stage0, GTK, polkit's PAM file, bindgen on libclang 22, pam_oo7 timing at login).
 Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-8b.sh` through pkexec as in 8a.
+
+## 2026-10-19 — Claude Code login on Autark
+
+- `npm install -g @anthropic-ai/claude-code` worked; login from another device didn't (no browser on Autark).
+- Instead: `claude setup-token` run by you on Ubuntu (token never shown in this session), saved to a 0600 file,
+  copied byte-identical into Autark `~/.config/claude-token` (0600, encrypted /home), Ubuntu copy shredded.
+- Autark `~/.bashrc` (new): ~/.local/bin on PATH for every interactive shell (foot inside Wayfire reads .bashrc, not
+  .bash_profile — `claude` wasn't found there) and `CLAUDE_CODE_OAUTH_TOKEN` from that file.
