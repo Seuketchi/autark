@@ -50,12 +50,41 @@ Run anywhere but as PID 1 it only does read-only checks: `autark-init parse [fil
   PCR 7 (Secure Boot state), and the same shim and key are used, so the TPM should release the key.
 - `remove` deletes the entry, the boot image and the initramfs.
 
+## The qemu test
+
+`scripts/qemu-test/` has three parts. **It has not been run yet**: the driver's typing logic was checked against a stand-in for qemu, and
+every message it waits for was checked against the code, but there is no qemu on Autark, so the first real run is on the Ubuntu partition.
+
+1. On Autark, as you: `cd ~/autark-tools && cargo build --release -p autark-init`, then `sh ~/autark/scripts/qemu-test/autark-init-bundle.sh`.
+   It writes `~/autark-init-test-bundle.tar` (about 42 MB): the kernel, the Rust initramfs, and a small root for the test disk with a test init
+   (`autark-init-test-payload`) and `systemd-cryptenroll`. It changes nothing on Autark.
+2. Carry the tarball to the machine with qemu: a USB stick, or from Ubuntu with `scripts/open-autark-ro.sh`.
+3. There: `sudo apt install qemu-system-x86 swtpm cryptsetup e2fsprogs`, then
+   `sudo python3 autark-init-qemu-test.py autark-init-test-bundle.tar` (`--slow` without KVM, `--keep` to keep the disk and the console logs,
+   `--only NAME…` for some cases). It builds a LUKS2 disk, starts a software TPM, and boots the kernel and initramfs in qemu, typing at the
+   console. A few minutes with KVM.
+
+| Case | What it checks |
+| --- | --- |
+| `passphrase` | the right passphrase unlocks, root mounts, and the test init runs as PID 1 on it with `/proc`, `/sys`, `/dev`, `/run` moved over and the initramfs gone |
+| `passphrase-retry` | a wrong one is refused and the right one then works |
+| `three-wrong` | three wrong ones stop with the restart message, and Enter restarts |
+| `no-disk` | no encrypted disk: it waits `rd.timeout`, says so, and offers a restart |
+| `bad-root` | a good unlock but a bad `root=`: the error names the device |
+| `tpm-without-token` | a TPM present but nothing enrolled: it says so and falls back to the passphrase |
+| `enroll` | `systemd-cryptenroll` enrols a TPM2 + PIN and a recovery key from inside the guest (the one case that writes the disk) |
+| `tpm-pin` | the PIN unlocks through the TPM token |
+| `tpm-wrong-pin` | three wrong PINs, then it falls back and the passphrase works |
+| `recovery-key` | the recovery key from `enroll` unlocks after the PIN is given up on |
+
+A pass shows the logic, the TPM token with a software TPM, mounting and the handover. It doesn't cover the signed boot image, shim, Secure Boot and
+PCR 7 on the real firmware, the real TPM, or the laptop's keyboard: those are the one-time boot on the laptop. The test boots the kernel directly
+(no UEFI), with `console=ttyS0`, and the image built without root, so without the `/dev/console` node: the stricter case.
+
 ## Still to do
 
 1. Run `uki`, `entry` and `try` as root on the laptop, or (better first) the qemu tests below.
-2. **qemu tests** (on Ubuntu, with OVMF and `swtpm`): a disk with a LUKS2 root enrolled for TPM2 + PIN (`systemd-cryptenroll`), boot the
-   kernel 7.1.8 and the new initramfs, and check each case: right PIN; wrong PIN three times then the passphrase; no TPM; recovery key; a
-   missing disk (timeout and restart message); a bad `root=`.
+2. Run the qemu test (above) and fix what it finds.
 3. Make it the default only after it has booted reliably, and keep dracut as the hidden fallback ([roadmap](roadmap.md), M4).
 
 ## Open questions and risks
