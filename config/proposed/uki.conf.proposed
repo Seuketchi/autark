@@ -1,0 +1,10 @@
+# Proposed /etc/kernel/uki.conf for Autark (not installed). Lets `kernel-install` build and sign a UKI on Autark itself.
+# Why SecureBootSigningTool/SignKernel: `ukify build` insists on `sbverify` (sbsigntools), which Autark does not have;
+# systemd-sbsign signs the UKI, and the kernel inside it is not separately signed (the usual setup: the UKI is the signed unit).
+# The key and certificate below are the db pair already in /etc/autark/secureboot (root-only, root reads them when
+# kernel-install runs). This file contains no key material, only the paths.
+[UKI]
+SecureBootSigningTool=systemd-sbsign
+SignKernel=no
+SecureBootPrivateKey=/etc/autark/secureboot/db.key
+SecureBootCertificate=/etc/autark/secureboot/db.crt
