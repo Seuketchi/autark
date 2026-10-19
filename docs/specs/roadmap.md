@@ -10,7 +10,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 | M1 ✅ (2026-10-17) | Bootable base | System | 2026-11-08 | Steps 1–7: an encrypted, hardened Autark boots from the target laptop's own disk, with your Secure Boot keys and TPM-plus-PIN unlock enrolled | M0 |
 | M2 ✅ (checked 2026-10-19) | Desktop | System | 2026-12-06 | Step 8: Wayfire, Wi-Fi, sound, Firefox and work tools run on Autark | M1 |
 | M3 ✅ (checked 2026-10-19) | Shell v1 | Shell | 2027-02-14 | Step 9, pieces 1–5: bar, dock, launcher, notification centre and lock screen, written in Rust and GTK4, run on Wayfire with nothing borrowed | Starts now on Ubuntu; moves to Autark after M2 |
-| M4 | Rust initramfs | System | 2027-01-17 | `autark-init` unlocks the disk with TPM plus PIN and replaces dracut; dracut stays as a hidden fallback | M1 |
+| M4 🔶 started | Rust initramfs | System | 2027-01-17 | `autark-init` unlocks the disk with TPM plus PIN and replaces dracut; dracut stays as a hidden fallback | M1 |
 | M5 🔶 in progress | Kith | Shell | 2027-04-18 | Kith runs standalone on the laptop (Hermes and Ollama): launcher actions, chat, approved memory, tasks and suggestions | M3 |
 | M6 | Daily driver | System | 2027-05-16 | A full week on Autark with no fallback; then decide what Ubuntu's space becomes (it sits before Autark's partitions, so `/home` can't simply grow into it) | M2–M5 |
 | M7 | Kith everywhere | Shell | When the box exists | Kith moves to your own box: reachable over Signal from the phone, laptop actions through MCP, Wren migrated and retired | M5, and a box with about 16 GB of RAM where only you have root |
@@ -25,7 +25,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 - ✅ **M0.** M1 booted from the target laptop's own disk, so Step 0 is done.
 - ✅ **M2.** Wayfire, Wi-Fi (iwd), sound (PipeWire), Firefox 158, the Web browser (Epiphany on WebKitGTK, phase 8c), Node, git, curl, `gh` and Claude Code run. Web is built without GStreamer GL, so video is unaccelerated and it needs `WEBKIT_DISABLE_DMABUF_RENDERER=1`.
 - ✅ **M3.** The bar, dock, launcher, notification centre (`autark-notifyd`) and lock screen (`autark-lock`) run in the session. Still open: the autologin-then-lock flow (see the log), and `autark-power`, which isn't started with the session, so its screen-off and sleep timers don't run.
-- ⬜ **M4.** `autark-init` is a three-line placeholder.
+- 🔶 **M4.** `autark-init` is written and its logic is tested (command line, unlock order and limits, and the real libcryptsetup on a LUKS2 image), but nothing has booted yet: the initramfs image, the second boot entry and the qemu tests with a software TPM are still to do. See [autark-init.md](autark-init.md).
 - 🔶 **M5.** `autark-ai` runs on Ollama: routing, ranking, the command check, chat, approved memory, tasks, suggestions and an MCP server. Not yet checked end to end against the "done when" line.
 - ⬜ **M6.** Needs M4 and M5, and the Ubuntu and Windows retirement is blocked by the retire checklist (large photos still need a USB drive).
 - ⬜ **M7.** No box yet.
