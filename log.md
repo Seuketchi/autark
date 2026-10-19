@@ -533,3 +533,37 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
   copied byte-identical into Autark `~/.config/claude-token` (0600, encrypted /home), Ubuntu copy shredded.
 - Autark `~/.bashrc` (new): ~/.local/bin on PATH for every interactive shell (foot inside Wayfire reads .bashrc, not
   .bash_profile — `claude` wasn't found there) and `CLAUDE_CODE_OAUTH_TOKEN` from that file.
+
+## 2026-10-19 — GitHub, boot order, network hardening, CVE watch
+
+- GitHub: `gh` 2.102.0 (release binary, sha256 checked) in `~/.local/bin`; logged in with the device flow, git over SSH; this
+  machine's key added to the account; global git identity set (GitHub noreply address). Autark has no keyring, so the gh
+  token sits in `~/.config/gh/hosts.yml` (plain text, 0600).
+- autark-tools: the work done on Autark (14 new crates, vendor-extra, autark-ai changes) went to GitHub as PR #1 on top of
+  the 46 existing commits (the local repo's history was unrelated: one `base` commit). Icons for files, monitor, notes and
+  settings are PR #2. Files that were loose in `~` (specs, checklists, scripts, proposed configs) are PR #1 here.
+- `cargo check --workspace --offline` passes on autark-tools. `cargo test` not recorded here yet.
+- Disk: `/home` was 94% full. Removed the Ollama installer archive (1.4 GB; Ollama 0.40.6 is installed from it and running)
+  and the npm cache: 585 MB free became 2.1 GB. `autark-tools/target` (4 GB) is the next thing to trim if needed.
+- Boot order: `efibootmgr -o 0001,0003,0000,0002,0004` (Autark, Autark previous, Windows, Ubuntu, UEFI OS). No more F11.
+  Windows and Ubuntu are still installed and still bootable from the firmware menu.
+- sudo: `/etc/sudoers.d/8c-build` had a syntax error (line 7), which made every `sudo` fail. Phase 8c is finished, so the file
+  was removed instead of repaired (checklist item 27). `sudo` now parses and asks for a password.
+- Network: the live `/etc/nftables.conf` was already default-deny with no allow rules, stricter than `nftables.proposed`
+  (which accepted rate-limited ping and DHCP from anywhere), so the proposal was dropped and its file removed from
+  `config/proposed/`. LLMNR and mDNS turned off (`/etc/systemd/resolved.conf.d/autark-llmnr.conf`); `resolvectl` shows
+  `-LLMNR -mDNS` globally and on both links, DNS over TLS unaffected. sshd stays on: key-only, no root, blocked by the
+  firewall, and there is no `authorized_keys` yet. Tailscale is not installed here; allowing SSH from `tailscale0` only
+  is the plan when it is.
+- CVE watch: `scripts/autark-cve-watch.py` checks 26 packages against NVD. Scheduled as a user timer,
+  `~/.config/systemd/user/autark-cve-watch.{service,timer}`, Mondays 09:00. It writes reports to
+  `~/.local/state/autark-cve-watch/` and does not notify, so someone has to read them.
+- Login (prepared, not yet applied at the time of writing): `autark_lock_start = autark-lock` in `~/.config/wayfire.ini`
+  (backup `wayfire.ini.bak-autologin`) locks the desktop at start. Autologin on tty1 is a getty drop-in
+  (`ExecStart=-/usr/sbin/agetty --autologin tan --noreset --noclear - ${TERM}`) applied by root; other consoles keep the
+  normal login. With it the boot is disk PIN, then the lock screen password. Open: whether the lock screen's password also
+  unlocks the oo7 keyring (login does it through `pam_oo7`; autologin skips that).
+- Retiring Ubuntu and Windows: not done, still blocked by section B/C of `docs/autark-retire-checklist.md`. Both disks were
+  mounted read-only and checked; the irreplaceable files were copied into `~/backup-from-ubuntu` (owner-only, holds private
+  keys, so encrypt before it leaves the laptop) and every copy was compared byte for byte. The large photos and one video
+  did not fit in `/home` and still need a USB drive or cloud storage.
