@@ -31,25 +31,32 @@ Run anywhere but as PID 1 it only does read-only checks: `autark-init parse [fil
 | The unlock order and limits (TPM → PIN ×3 → passphrase ×3, fallbacks, lockout, nobody answering) | ✅ | 10 unit tests with a scripted fake volume and keyboard |
 | Device scanning rules, `rootflags` splitting, `init=` choice | ✅ | 7 unit tests |
 | The real libcryptsetup: open a LUKS2 volume, wrong passphrase, retries, give up, not-LUKS, TPM requested but absent → passphrase | ✅ | 6 integration tests on a LUKS2 image file, no root |
+| The initramfs image: every library it and the TPM plugin need, and a real LUKS2 unlock (wrong passphrase refused, right one accepted) from inside a chroot of only the image's 19 files | ✅ | `scripts/autark-rust-initramfs.sh build selftest`, no root (6.6 MB; dracut's is 19 MB) |
+| The signed boot image, the firmware entry, the one-time boot | ⬜ | the script's `uki`, `entry` and `try` steps, which need root and haven't been run |
 | The TPM token and PIN with a real TPM | ⬜ | needs swtpm in qemu, then the laptop |
 | Device-mapper node creation with no udev running | ⬜ | qemu; the main open question (below) |
 | Mounting root and `switch_root` into systemd | ⬜ | qemu |
 | Console and keyboard in the initramfs | ⬜ | qemu, then the laptop |
 
-## What is still to write
+## The script, and how it stays safe
 
-1. **The image.** `scripts/lfs/step6-initramfs-rust.sh`: collect `autark-init`, the glibc loader and every shared library it needs (`ldd`),
-   libcryptsetup and its dependencies, the token plugin `/usr/lib/cryptsetup/libcryptsetup-token-systemd-tpm2.so`, and the libtss2 libraries
-   it loads with `dlopen` (esys, mu, rc, tcti-device); pack them as a zstd cpio after the microcode cpio. dracut's image already shows which
-   libraries are needed (`lsinitrd`).
-2. **A second boot image.** `ukify` builds `autark-rust.efi` from the same kernel and command line with the new initramfs, signed with the same
-   key; add it as its own firmware entry (`efibootmgr`). **`autark.efi` (dracut) is never replaced**; it stays the default until the Rust one has
-   booted reliably, and then stays as the hidden fallback ([roadmap](roadmap.md), M4).
-3. **qemu tests** (on Ubuntu, with OVMF and `swtpm`): a disk with a LUKS2 root enrolled for TPM2 + PIN (`systemd-cryptenroll`), boot the
+`scripts/autark-rust-initramfs.sh` has one step per command: `build`, `selftest`, `uki`, `entry`, `try`, `status`, `remove`.
+
+- `build` and `selftest` work as any user and touch nothing outside their work folder (set `WORK` and `OUT`).
+- `uki` builds a second signed boot image into `EFI/autark-rust/` with shim beside it, the same way `EFI/autark/` is laid out. `autark.efi`, dracut's
+  image and `/etc/kernel/cmdline` are never changed.
+- `entry` adds a firmware entry "Autark (Rust initramfs, test)" and then **puts BootOrder back exactly as it was**, so the machine keeps booting dracut.
+- `try` sets BootNext: the next boot, and only that one, starts the Rust image. If it fails, the boot after is the normal one. The TPM token binds
+  PCR 7 (Secure Boot state), and the same shim and key are used, so the TPM should release the key.
+- `remove` deletes the entry, the boot image and the initramfs.
+
+## Still to do
+
+1. Run `uki`, `entry` and `try` as root on the laptop, or (better first) the qemu tests below.
+2. **qemu tests** (on Ubuntu, with OVMF and `swtpm`): a disk with a LUKS2 root enrolled for TPM2 + PIN (`systemd-cryptenroll`), boot the
    kernel 7.1.8 and the new initramfs, and check each case: right PIN; wrong PIN three times then the passphrase; no TPM; recovery key; a
    missing disk (timeout and restart message); a bad `root=`.
-4. **The laptop.** Boot the Rust entry once from the firmware menu with dracut one entry away. The TPM token binds PCR 7 (Secure Boot state),
-   not the image, so a differently built image signed by the same key still unlocks.
+3. Make it the default only after it has booted reliably, and keep dracut as the hidden fallback ([roadmap](roadmap.md), M4).
 
 ## Open questions and risks
 
