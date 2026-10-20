@@ -50,6 +50,8 @@ fi
 install -m755 "$here/viber.sh" /usr/bin/viber
 # A PNG: the dock's GTK has no SVG loader here.
 install -Dm644 "$ubuntu/usr/share/pixmaps/viber.png" /usr/share/icons/hicolor/256x256/apps/viber.png
+# GTK trusts icon-theme.cache over the folders while it is newer than them, so a new icon needs the cache rebuilt.
+gtk4-update-icon-cache -f -t /usr/share/icons/hicolor
 cat > /usr/share/applications/viber.desktop << 'EOF'
 [Desktop Entry]
 Name=Viber
