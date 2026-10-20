@@ -70,7 +70,12 @@ KVER=$(ls "$ROOT/usr/lib/modules" | sort -V | tail -1)
 [ -n "$KVER" ] && [ -s "$ROOT/boot/vmlinuz-$KVER-autark" ] || die "the rootfs has no kernel (usr/lib/modules, boot/vmlinuz-*-autark)"
 
 echo "== live-system settings (this copy only; the tarball is untouched)"
+# autark-install looks for its helper scripts beside itself (it copies them into the new system).
 install -m 0755 "$INSTALLER" "$ROOT/usr/bin/autark-install"
+for h in autark-mkuki.sh autark-tpm-enroll.sh; do
+  [ -f "$(dirname "$INSTALLER")/$h" ] || die "no $h beside $INSTALLER"
+  install -m 0755 "$(dirname "$INSTALLER")/$h" "$ROOT/usr/bin/$h"
+done
 install -d "$ROOT/etc/autark"
 [ -z "$PUBKEY" ] || install -m 0644 "$PUBKEY" "$ROOT/etc/autark/installer-release.pub"
 # Console login as root with no password, on every console that has no user logged in; the machine is the stick's.
