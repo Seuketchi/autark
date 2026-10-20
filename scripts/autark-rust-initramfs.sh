@@ -8,11 +8,13 @@
 #                                      (any user; run after build)
 #   autark-rust-initramfs.sh uki       builds the signed boot image into EFI/autark-rust/ with shim beside it (root)
 #   autark-rust-initramfs.sh entry     adds the firmware entry "Autark (Rust initramfs, test)" and puts BootOrder back as it was (root)
-#   autark-rust-initramfs.sh try       makes the NEXT boot, and only that one, start it (root). If it fails, the boot after is normal
+#   autark-rust-initramfs.sh try       makes the next boot start it: BootNext, and the entry first in BootOrder (root). Then run untry
+#   autark-rust-initramfs.sh untry     puts BootOrder back as try found it (root); run it after the test boot, whatever happened
 #   autark-rust-initramfs.sh status    what is installed and the boot order (root, to see the ESP)
 #   autark-rust-initramfs.sh remove    deletes the entry, its boot image and the initramfs (root)
 #
-# As root on Autark:  su -c 'sh /path/to/autark-rust-initramfs.sh build uki entry'  then  su -c '... try'  and reboot.
+# As root on Autark:  su -c 'sh /path/to/autark-rust-initramfs.sh build uki entry'  then  su -c '... try'  and reboot (without F11: this firmware
+# ignores BootNext and its F11 menu doesn't list the entry, so try puts the entry first in BootOrder instead), then  su -c '... untry'.
 # Nothing here changes autark.efi, /boot/initramfs-<kver>.img, the boot order, or /etc/kernel/cmdline.
 set -euo pipefail
 
@@ -149,34 +151,41 @@ uki() {
 
 entry_number() { efibootmgr | sed -n "s/^Boot\([0-9A-Fa-f]\{4\}\)\*\{0,1\} $LABEL.*/\1/p" | head -1; }
 
-entry() {
-  need_root entry; need_autark entry
-  [ -e "$ENTRY_DIR/grubx64.efi" ] || die "run uki first"
-  if [ -n "$(entry_number)" ]; then echo "the entry is already there: Boot$(entry_number)"; return 0; fi
-  local before dev disk part
-  before=$(efibootmgr | sed -n 's/^BootOrder: //p')
-  dev=$(findmnt -no SOURCE "$ESP")
-  disk=/dev/$(lsblk -no PKNAME "$dev")
-  part=$(cat "/sys/class/block/$(basename "$dev")/partition")
-  efibootmgr --create --disk "$disk" --part "$part" --label "$LABEL" --loader '\EFI\autark-rust\shimx64.efi' >/dev/null
-  # efibootmgr puts a new entry first. Put the order back, so nothing changes unless you ask for it.
-  efibootmgr --bootorder "$before" >/dev/null
-  efibootmgr | grep -E "^BootOrder|$LABEL"
+enORDER_FILE=$ENTRY_DIR/bootorder-before
+
+# The boot order "a,b,c" with entry $1 moved to the front (added if it wasn't there).
+first_in_order() {
+  local rest
+  rest=$(printf '%s\n' "$2" | tr ',' '\n' | grep -v -x -e "$1" -e '' | paste -sd, -)
+  echo "$1${rest:+,$rest}"
 }
 
 try() {
   need_root try; need_autark try
-  local n
+  local n before
   n=$(entry_number)
   [ -n "$n" ] || die "no entry yet: run entry first"
+  before=$(efibootmgr | sed -n 's/^BootOrder: //p')
+  # Remember the order once: a second try must not save the already-changed one.
+  [ -s "$ORDER_FILE" ] || echo "$before" > "$ORDER_FILE"
   efibootmgr --bootnext "$n" >/dev/null
-  echo "The next boot, and only that one, starts Boot$n ($LABEL). Reboot now to try it."
-  echo "If it fails, restart: the boot after that follows the normal order (dracut). Hold the power button if the screen freezes."
+  efibootmgr --bootorder "$(first_in_order "$n" "$(cat "$ORDER_FILE")")" >/dev/null
+  echo "The next boot starts Boot$n ($LABEL): it is first in BootOrder (and BootNext), so don't press F11. Reboot now."
+  echo "Afterwards run:  untry   (puts BootOrder back as it was: $(cat "$ORDER_FILE"))"
+  echo "If it fails or freezes: hold the power button, then press F11 and pick plain Autark, and run untry."
+}
+
+untry() {
+  need_root untry; need_autark untry
+  [ -s "$ORDER_FILE" ] || die "nothing to put back: try hasn't saved a BootOrder"
+  efibootmgr --bootorder "$(cat "$ORDER_FILE")" >/dev/null
+  rm -f "$ORDER_FILE"
+  efibootmgr | grep -E "^Boot(Current|Next|Order)"
 }
 
 status() {
   need_root status
-  efibootmgr | grep -E "^Boot(Current|Next|Order)|$LABEL|Autark" || true
+  efibootmgr | grep -E "^Boot(Current|Next|Order)|Autark" || true
   ls -la "$ENTRY_DIR" "$OUT" 2>&1 | sed 's/^/  /'
 }
 
@@ -189,10 +198,10 @@ remove() {
   echo "removed the entry, $ENTRY_DIR and $OUT"
 }
 
-[ $# -gt 0 ] || die "usage: $0 build|selftest|uki|entry|try|status|remove [more steps]"
+[ $# -gt 0 ] || die "usage: $0 build|selftest|uki|entry|try|untry|status|remove [more steps]"
 for step in "$@"; do
   case "$step" in
-    build|selftest|uki|entry|try|status|remove) "$step" ;;
+    build|selftest|uki|entry|try|untry|status|remove) "$step" ;;
     *) die "not a step: $step" ;;
   esac
 done

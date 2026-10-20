@@ -32,11 +32,11 @@ Run anywhere but as PID 1 it only does read-only checks: `autark-init parse [fil
 | Device scanning rules, `rootflags` splitting, `init=` choice | ✅ | 7 unit tests |
 | The real libcryptsetup: open a LUKS2 volume, wrong passphrase, retries, give up, not-LUKS, TPM requested but absent → passphrase | ✅ | 6 integration tests on a LUKS2 image file, no root |
 | The initramfs image: every library it and the TPM plugin need, and a real LUKS2 unlock (wrong passphrase refused, right one accepted) from inside a chroot of only the image's 19 files | ✅ | `scripts/autark-rust-initramfs.sh build selftest`, no root (6.6 MB; dracut's is 19 MB) |
-| The signed boot image, the firmware entry, the one-time boot | ⬜ | the script's `uki`, `entry` and `try` steps, which need root and haven't been run |
+| The signed boot image, the firmware entry, the test boot | ✅ | the script's `build selftest uki entry` then `try`, on the laptop (2026-10-20): shim and Secure Boot accepted the image, the kernel booted it, `BootCurrent` was the test entry, and systemd's boot time shows no initrd stage |
 | The TPM token and PIN | ✅ with a software TPM | qemu: `enroll`, `tpm-pin`, `tpm-wrong-pin`, `recovery-key`. A real TPM is still ⬜ (the laptop) |
 | Device-mapper node creation with no udev running | ✅ | qemu: `/dev/mapper/autark` appears and root mounts, with no udev in the image |
 | Mounting root and `switch_root` | ✅ | qemu: the test init runs as PID 1 on the unlocked root, with `/proc`, `/sys`, `/dev` and `/run` moved over and the initramfs gone. Into systemd itself: ⬜ (the laptop) |
-| Console and keyboard in the initramfs | ✅ serial console only | qemu types at `ttyS0`. The laptop's own keyboard and screen are ⬜ |
+| Console and keyboard in the initramfs | ✅ | qemu types at `ttyS0`; on the laptop the disk was unlocked from its own keyboard and screen |
 
 ## The script, and how it stays safe
 
@@ -46,8 +46,10 @@ Run anywhere but as PID 1 it only does read-only checks: `autark-init parse [fil
 - `uki` builds a second signed boot image into `EFI/autark-rust/` with shim beside it, the same way `EFI/autark/` is laid out. `autark.efi`, dracut's
   image and `/etc/kernel/cmdline` are never changed.
 - `entry` adds a firmware entry "Autark (Rust initramfs, test)" and then **puts BootOrder back exactly as it was**, so the machine keeps booting dracut.
-- `try` sets BootNext: the next boot, and only that one, starts the Rust image. If it fails, the boot after is the normal one. The TPM token binds
-  PCR 7 (Secure Boot state), and the same shim and key are used, so the TPM should release the key.
+- `try` makes the next boot start the Rust image. This laptop's firmware **ignores BootNext** and its F11 menu doesn't list the test entry, so `try` also puts
+  the entry first in BootOrder (saving the old order), and `untry` puts the order back. Don't press F11 for the test boot. If it freezes, hold the power button,
+  press F11, pick plain Autark and run `untry`. The TPM token binds PCR 7 (Secure Boot state), and the same shim and key are used, so the TPM releases the key.
+- `untry` restores the BootOrder that `try` saved. Run it after the test boot, whatever happened.
 - `remove` deletes the entry, the boot image and the initramfs.
 
 ## The qemu test
@@ -83,8 +85,9 @@ PCR 7 on the real firmware, the real TPM, or the laptop's keyboard: those are th
 ## Still to do
 
 1. ✅ The qemu test passes.
-2. Run `uki`, `entry` and `try` as root on the laptop: the signed boot image, shim, Secure Boot, the real TPM (PCR 7) and the laptop's keyboard.
-3. Make it the default only after it has booted reliably, and keep dracut as the hidden fallback ([roadmap](roadmap.md), M4).
+2. ✅ `uki`, `entry` and `try` on the laptop: it booted.
+3. Try the splash on a test boot (`autark.splash=1` on the test entry's command line only).
+4. Boot the test entry a few more times, then make it the default only after it has booted reliably, and keep dracut as the hidden fallback ([roadmap](roadmap.md), M4).
 
 ## Open questions and risks
 
