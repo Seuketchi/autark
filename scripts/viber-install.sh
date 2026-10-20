@@ -30,7 +30,7 @@ packages="$libs libglvnd mesa"
 for p in $packages; do
   [ -f "$recipes/$p.sh" ] || { echo "viber-install.sh: no recipe $recipes/$p.sh" >&2; exit 1; }
 done
-[ -x "$ubuntu/opt/viber/Viber" ] || [ -x /opt/viber/Viber ] || {
+[ -f "$ubuntu/opt/viber/Viber" ] || [ -x /opt/viber/Viber ] || {
   echo "viber-install.sh: Viber isn't at $ubuntu/opt/viber; mount the Ubuntu disk read-only first" >&2; exit 1; }
 
 echo "== recipes"
