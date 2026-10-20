@@ -27,7 +27,7 @@ The kernel's module-signing key is the build machine's, so modules built after t
 ## What the installer does
 
 1. **Check the machine.** UEFI mode, Secure Boot state, TPM 2.0 present, RAM and disk size. Say plainly what is missing: no TPM means passphrase-only unlock, not a failed install.
-2. **Choose where.** List disks and their partitions. Offer free space or a whole disk the user selects by typing its name; show exactly what will be created and erased, and require typing the disk name to confirm. Layout: ESP (1 GiB), root A, `/home`, and optionally root B (an A/B update slot, as in [maintenance.md](maintenance.md)); sizes scale to the free space.
+2. **Choose where.** List the disks and their partitions. The user picks a blank disk by typing its name; show exactly what will be created and erased, and require typing the disk name to confirm. Layout: ESP (1 GiB), root and `/home`, with sizes scaled to the disk. Version 1 has no root B (the A/B update slot in [maintenance.md](maintenance.md)), and works on a blank disk only.
 3. **Choose secrets.** Disk passphrase, TPM PIN, user name and password, hostname. Typed into the installer's own prompt, never passed as an argument or logged.
 4. **Format.** LUKS2 on root A and `/home`, ext4 inside, FAT32 on the ESP. The UUIDs are new, so nothing in the rootfs can know them in advance.
 5. **Unpack** the rootfs tarball (checksum and signature checked first) onto the new root.
@@ -46,12 +46,14 @@ An installer failure before step 4 leaves the disk untouched. After it, the half
 - A repository publisher: sign the packages, write the index, upload.
 - An installer test: qemu with OVMF (Secure Boot variables), an emulated NVMe disk and a software TPM (`swtpm`), booting the ISO, running the installer unattended, then booting the result and checking that it unlocks.
 
-## Questions for the author
+## Decisions for the first version
 
-1. Where do releases and the package repository live (GitHub releases for a start, a mirror later)? Whoever hosts the signing key is trusted by every user.
-2. A/B root: does the first version create root B, or leave a single root and add the second slot later?
-3. Text-mode installer first, or a graphical one built with the Autark shell toolkit?
-4. Which disks to support first: a blank disk only (simplest and safest), or free space beside other systems too?
+Settled 2026-10-20; each can be revisited once something works.
+
+1. **Hosting:** GitHub releases for the rootfs, ISO and package repository. A mirror comes later. The signing key is the project's, kept offline, and its public half ships in the rootfs.
+2. **Root slots:** a single root. The installer leaves room to add root B later, but does not create it.
+3. **Interface:** text mode. A graphical installer comes after the base works.
+4. **Disks:** a blank disk only. Installing into free space beside other systems comes later, because it is where data loss happens.
 
 ## Order of work
 
