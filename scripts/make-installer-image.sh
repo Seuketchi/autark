@@ -13,7 +13,7 @@
 # It is an image and not an ISO because it needs only tools every build machine has (sfdisk, mkfs.vfat, mke2fs, dracut,
 # ukify); an ISO builder comes with libisoburn or squashfs-tools later. Needs root (loop mounts). --rootfs must be the
 # tarball make-rootfs.sh made; its .minisig (make-rootfs --sign) is copied beside it. Without --pubkey the image can only
-# install with --no-verify. Staging needs about 3 times the rootfs size: set TMPDIR to a folder with room. The live system boots to a root prompt on the first console, and tells you to run
+# install with --no-verify. Staging needs about twice the unpacked system size: set TMPDIR to a folder with room. The live system boots to a root prompt on the first console, and tells you to run
 # autark-install; it has no password and no network login, and nothing in it is written to the disk.
 set -euo pipefail
 
@@ -106,6 +106,7 @@ USED=$(du -s --block-size=1M "$ROOT" | cut -f1)
 IMG=$WORK/rootfs.img
 truncate -s "$((USED * 12 / 10 + 256))M" "$IMG"
 mke2fs -q -t ext4 -L autark-live-root -d "$ROOT" "$IMG"
+rm -rf "$ROOT"   # no longer needed; frees as much space as the system takes
 
 echo "== disk image $OUT"
 ESPMB=$(( $(stat -c %s "$WORK/BOOTX64.EFI") / 1048576 + 64 ))
@@ -125,7 +126,7 @@ mke2fs -q -t ext4 -L AUTARK-LIVE "${LOOP}p2"
 mount "${LOOP}p1" "$ESPMNT"; mount "${LOOP}p2" "$DATAMNT"
 install -d "$ESPMNT/EFI/BOOT" "$DATAMNT/LiveOS" "$DATAMNT/autark"
 install -m 0644 "$WORK/BOOTX64.EFI" "$ESPMNT/EFI/BOOT/BOOTX64.EFI"
-install -m 0644 "$IMG" "$DATAMNT/LiveOS/rootfs.img"
+cp --sparse=always "$IMG" "$DATAMNT/LiveOS/rootfs.img"; rm -f "$IMG"; chmod 0644 "$DATAMNT/LiveOS/rootfs.img"
 install -m 0644 "$ROOTFS" "$DATAMNT/autark/"
 [ ! -f "$ROOTFS.minisig" ] || install -m 0644 "$ROOTFS.minisig" "$DATAMNT/autark/"
 [ -z "$PUBKEY" ] || install -m 0644 "$PUBKEY" "$DATAMNT/autark/autark-release.pub"
