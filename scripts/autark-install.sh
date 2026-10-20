@@ -136,8 +136,8 @@ fi
 # --- 3. partition and format ----------------------------------------------------------------------------------------
 if [ -n "$IMAGE" ]; then
   say "attaching $IMAGE"
-  if [ "$DRY" = 1 ]; then echo "  + losetup --find --show $IMAGE"; DEV=/dev/loopN
-  else LOOP=$(losetup --find --show "$IMAGE"); DEV=$LOOP; fi
+  if [ "$DRY" = 1 ]; then echo "  + losetup --find --show --partscan $IMAGE"; DEV=/dev/loopN
+  else LOOP=$(losetup --find --show --partscan "$IMAGE"); DEV=$LOOP; fi
 else
   DEV=$DISK
 fi
