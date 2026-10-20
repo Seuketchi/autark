@@ -28,6 +28,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -79,8 +80,13 @@ done
 
 def http(url, binary=True):
     request = urllib.request.Request(url, headers=AGENT)
-    with urllib.request.urlopen(request, timeout=60) as reply:
-        data = reply.read()
+    try:
+        with urllib.request.urlopen(request, timeout=60) as reply:
+            data = reply.read()
+    except urllib.error.HTTPError as err:
+        raise SystemExit(f"{url}: HTTP {err.code}" + (" (Arch has no such page)" if err.code == 404 else ""))
+    except urllib.error.URLError as err:
+        raise SystemExit(f"{url}: {err.reason}")
     return data if binary else data.decode()
 
 
@@ -353,6 +359,7 @@ class Importer:
                 body.append(f'  top=$(tar -tf "$srcdir/{file}" | sed -n \'1{{s|^\\./||;s|/.*||;p}}\')')
                 body.append(f'  [ -e "{clone}" ] || mv "$top" "{clone}"')
         body += [
+            "  set +u  # PKGBUILDs assume makepkg's environment, where CPPFLAGS, RUSTFLAGS and the like always exist",
             "  startdir=$srcdir pkgdir=$DESTDIR CARCH=x86_64 CHOST=x86_64-pc-linux-gnu",
             f"  pkgname={name} pkgbase={pkgbase} pkgver={meta['pkgver']} pkgrel={meta.get('pkgrel', '1')}",
         ]
