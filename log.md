@@ -662,3 +662,14 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
   the stale kept build (the importer now raises the release).
 - Not importable yet: `tree` (Arch's GitLab has no project for it), `dos2unix` (SourceForge git).
 
+
+## 2026-10-20 — No sound in Firefox: pipewire-pulse was not enabled
+
+- YouTube in Firefox was silent. The sound card (`sof-hda-dsp`, ALC256) was detected, PipeWire and WirePlumber were running, and the
+  speakers were the default sink, but `pipewire-pulse.socket` was disabled, so there was no PulseAudio server for Firefox to play to
+  (`$XDG_RUNTIME_DIR/pulse` didn't exist, and `wpctl status` showed no Firefox stream).
+- Fixed on the laptop with `systemctl --user enable --now pipewire-pulse.socket`; the sound worked after a reload. For every user and
+  fresh installs, `step_services` in `scripts/lfs/phase8a-inside.sh` now enables it with the other PipeWire units. An existing system
+  needs `sudo systemctl --global enable pipewire-pulse.socket` once (the global link replaces the one in `~/.config/systemd/user/`).
+- Also seen, not fixed: `pw-play` isn't installed; the SOF firmware ABI is 3:22:1 against the kernel's 3:23:1 (works); the digital microphone
+  is the default input and is muted.
