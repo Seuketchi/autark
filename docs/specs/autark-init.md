@@ -113,7 +113,8 @@ PCR 7 on the real firmware, the real TPM, or the laptop's keyboard: those are th
 1. ✅ The qemu test passes.
 2. ✅ `uki`, `entry` and `try` on the laptop: it booted.
 3. ✅ The splash on a test boot (`autark.splash=1`, `quiet loglevel=3 vt.global_cursor_default=0`, on the test entry's command line only), and the PIN alone unlocking through the real TPM.
-4. Boot the test entry a few more times, then make it the default only after it has booted reliably, and keep dracut as the hidden fallback ([roadmap](roadmap.md), M4).
+4. ✅ The Rust init is the default boot (2026-10-20): `build uki default` made it the normal "Autark" entry; it booted from F11 → Autark with the splash, the PIN alone through the real TPM, live PCR 7 `D635820E…`, and no initrd stage. dracut's image is what "Autark (previous)" boots.
+5. Still to do: make `build uki default` part of the kernel-update routine (step 6's `uki` puts dracut's image back in `EFI/autark`), drop `autark.log` from the default command line once a few more boots have gone well, and the splash's wrong-PIN shake, Escape-for-log and tries-left count.
 
 ## Open questions and risks
 
