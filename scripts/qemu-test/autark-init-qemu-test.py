@@ -183,7 +183,8 @@ class Vm:
             self._read(0.2)
 
     def capture(self, pattern, timeout=60):
-        """Like expect, for a regex; returns its first group."""
+        """Like expect, for a regex; returns its first group. The console arrives in pieces, so a pattern that ends in `\\S+` would match
+        the first piece of a word: end it with a lookahead for the whitespace after it, `(?=\\s)`."""
         deadline = time.time() + timeout * self.rig.scale
         while True:
             match = re.compile(pattern).search(self.buffer, self.at)
@@ -301,7 +302,7 @@ def case_enroll(rig):
     vm.send(PASSPHRASE)
     vm.expect("autark unlocked.")
     vm.expect("TEST ok: enrolled the TPM2 + PIN", 120)
-    rig.recovery_key = vm.capture(r"TEST recovery-key: (\S+)")
+    rig.recovery_key = vm.capture(r"TEST recovery-key: (\S+)(?=\s)")  # the (?=\s): not before the line is complete
     passes(vm)
     return vm
 
