@@ -33,10 +33,10 @@ Run anywhere but as PID 1 it only does read-only checks: `autark-init parse [fil
 | The real libcryptsetup: open a LUKS2 volume, wrong passphrase, retries, give up, not-LUKS, TPM requested but absent → passphrase | ✅ | 6 integration tests on a LUKS2 image file, no root |
 | The initramfs image: every library it and the TPM plugin need, and a real LUKS2 unlock (wrong passphrase refused, right one accepted) from inside a chroot of only the image's 19 files | ✅ | `scripts/autark-rust-initramfs.sh build selftest`, no root (6.6 MB; dracut's is 19 MB) |
 | The signed boot image, the firmware entry, the one-time boot | ⬜ | the script's `uki`, `entry` and `try` steps, which need root and haven't been run |
-| The TPM token and PIN with a real TPM | ⬜ | needs swtpm in qemu, then the laptop |
-| Device-mapper node creation with no udev running | ⬜ | qemu; the main open question (below) |
-| Mounting root and `switch_root` into systemd | ⬜ | qemu |
-| Console and keyboard in the initramfs | ⬜ | qemu, then the laptop |
+| The TPM token and PIN | ✅ with a software TPM | qemu: `enroll`, `tpm-pin`, `tpm-wrong-pin`, `recovery-key`. A real TPM is still ⬜ (the laptop) |
+| Device-mapper node creation with no udev running | ✅ | qemu: `/dev/mapper/autark` appears and root mounts, with no udev in the image |
+| Mounting root and `switch_root` | ✅ | qemu: the test init runs as PID 1 on the unlocked root, with `/proc`, `/sys`, `/dev` and `/run` moved over and the initramfs gone. Into systemd itself: ⬜ (the laptop) |
+| Console and keyboard in the initramfs | ✅ serial console only | qemu types at `ttyS0`. The laptop's own keyboard and screen are ⬜ |
 
 ## The script, and how it stays safe
 
@@ -52,8 +52,7 @@ Run anywhere but as PID 1 it only does read-only checks: `autark-init parse [fil
 
 ## The qemu test
 
-`scripts/qemu-test/` has three parts. **It has not been run yet**: the driver's typing logic was checked against a stand-in for qemu, and
-every message it waits for was checked against the code, but there is no qemu on Autark, so the first real run is on the Ubuntu partition.
+`scripts/qemu-test/` has three parts. **All 10 cases pass** (run on the Ubuntu partition on 2026-10-20: the first run found two bugs in the test itself, not in `autark-init`: the software TPM was started once but exits when qemu disconnects, and the recovery key was read before the whole line had arrived; the last two cases were rerun on their own after the fixes).
 
 1. On Autark, as you: `cd ~/autark-tools && cargo build --release -p autark-init`, then `sh ~/autark/scripts/qemu-test/autark-init-bundle.sh`.
    It writes `~/autark-init-test-bundle.tar` (about 42 MB): the kernel, the Rust initramfs, and a small root for the test disk with a test init
@@ -83,16 +82,15 @@ PCR 7 on the real firmware, the real TPM, or the laptop's keyboard: those are th
 
 ## Still to do
 
-1. Run `uki`, `entry` and `try` as root on the laptop, or (better first) the qemu tests below.
-2. Run the qemu test (above) and fix what it finds.
+1. ✅ The qemu test passes.
+2. Run `uki`, `entry` and `try` as root on the laptop: the signed boot image, shim, Secure Boot, the real TPM (PCR 7) and the laptop's keyboard.
 3. Make it the default only after it has booted reliably, and keep dracut as the hidden fallback ([roadmap](roadmap.md), M4).
 
 ## Open questions and risks
 
-- **No udev.** `libdevmapper` creates `/dev/mapper/<name>` itself when udev isn't running, as far as I know; this must be confirmed in qemu.
-  If it isn't so, the fix is to run `systemd-udevd` in the initramfs as dracut does, which makes the image bigger but changes little else.
-- **Which error means "wrong PIN".** The token plugin's error codes for a refused PIN versus a missing or locked TPM were not checked
-  against a real TPM. The code counts anything it doesn't recognise as a refused PIN, so the limit of three holds either way.
+- **No udev.** Settled in qemu: `libdevmapper` creates `/dev/mapper/<name>` itself, so the image needs no udev.
+- **Which error means "wrong PIN".** Seen with the software TPM: a wrong PIN is TPM error `0x98e` ("Bad PIN"), and a TPM in dictionary-attack lockout is `0x921`.
+  Both are shown as "That PIN isn't right.", and the limit of three holds either way. A real TPM may word them differently.
 - **USB keyboards.** The laptop's own keyboard (PS/2 `i8042`/`atkbd`), NVMe, ext4, dm-crypt and the TPM drivers are built into the kernel, so
   `autark-init` loads no modules. USB and I2C HID are modules, and `MODULE_SIG_FORCE` only accepts ones signed by the current key, so an
   external USB keyboard won't type the PIN until module loading is added (or those drivers are built in).
