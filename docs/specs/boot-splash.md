@@ -1,6 +1,6 @@
 # Boot splash (design)
 
-What you see between the firmware and the login screen: today a text console with a `PIN:` prompt from `autark-init` (see [autark-init.md](autark-init.md)). This is the design for replacing it with a loading screen that has the PIN box on it. **Status: the drawing code is written and tested, but not yet run on the laptop's real screen.** It is off unless the kernel command line has `autark.splash=1`, so the default boot is unchanged. It sits on top of `autark-init`, so the M4 qemu test still comes first.
+What you see between the firmware and the login screen: today a text console with a `PIN:` prompt from `autark-init` (see [autark-init.md](autark-init.md)). This is the design for replacing it with a loading screen that has the PIN box on it. **Status: written, tested, and working on the laptop's real screen (2026-10-20, through the Rust-init test boot).** It is off unless the kernel command line has `autark.splash=1`, so the default boot is unchanged. It sits on top of `autark-init`.
 
 ## What it looks like
 
@@ -57,11 +57,16 @@ To look at every state without booting: `cargo run --release -p autark-init --bi
 
 Not done: the box shake on a wrong PIN, "Escape shows the log", and the tries-left count.
 
+### Two things the real screen taught
+
+- **The firmware logo stays until the console takes over.** The kernel is built with `CONFIG_FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER=y`, so the screen keeps showing the MSI logo until the console prints its first real text; the kernel's dummy console ignores blank-only output, so `ESC[2J` alone does nothing. `SplashConsole` therefore prints `ESC[2J ESC[H . ESC[?25l` first (a real character, then hides the cursor) and only then starts painting; the log shows `fbcon: Taking over console` before the first frame. Without it the first test boot sat on the MSI logo.
+- **Why a splash that doesn't draw is debugged from a log, not a screen.** See "Debugging a test boot" in [autark-init.md](autark-init.md): `autark.log=<ESP device>` keeps a synced log on the ESP.
+
 ## Order of work
 
 1. M4 qemu test passes (the bundle is built; the run needs the Ubuntu partition).
 2. ✅ A `Console` that draws to a framebuffer: the background, the mark, the PIN box; tested against a fake screen. Still to do: in qemu, with a graphical window, to see it.
-3. The same on the laptop through the `try` entry (a one-time boot; the next boot is dracut), with `autark.splash=1 quiet loglevel=3 vt.global_cursor_default=0` added to that entry's command line only.
+3. ✅ The same on the laptop through the `try` entry (a one-time boot; the next boot is dracut), with `EXTRA_CMDLINE="autark.splash=1 quiet loglevel=3 vt.global_cursor_default=0"` for `uki`, which adds them to that entry's command line only.
 4. Make it the default only after a week of `try` boots behaving.
 
 ## Decisions to make

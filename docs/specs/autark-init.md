@@ -33,10 +33,33 @@ Run anywhere but as PID 1 it only does read-only checks: `autark-init parse [fil
 | The real libcryptsetup: open a LUKS2 volume, wrong passphrase, retries, give up, not-LUKS, TPM requested but absent → passphrase | ✅ | 6 integration tests on a LUKS2 image file, no root |
 | The initramfs image: every library it and the TPM plugin need, and a real LUKS2 unlock (wrong passphrase refused, right one accepted) from inside a chroot of only the image's 19 files | ✅ | `scripts/autark-rust-initramfs.sh build selftest`, no root (6.6 MB; dracut's is 19 MB) |
 | The signed boot image, the firmware entry, the test boot | ✅ | the script's `build selftest uki entry` then `try`, on the laptop (2026-10-20): shim and Secure Boot accepted the image, the kernel booted it, `BootCurrent` was the test entry, and systemd's boot time shows no initrd stage |
-| The TPM token and PIN | ✅ with a software TPM | qemu: `enroll`, `tpm-pin`, `tpm-wrong-pin`, `recovery-key`. A real TPM is still ⬜ (the laptop) |
+| The TPM token and PIN | ✅ | qemu with a software TPM: `enroll`, `tpm-pin`, `tpm-wrong-pin`, `recovery-key`. On the laptop's real TPM (2026-10-20) the PIN alone unlocks the disk, once the init does the OS-separator extend (below) |
 | Device-mapper node creation with no udev running | ✅ | qemu: `/dev/mapper/autark` appears and root mounts, with no udev in the image |
 | Mounting root and `switch_root` | ✅ | qemu: the test init runs as PID 1 on the unlocked root, with `/proc`, `/sys`, `/dev` and `/run` moved over and the initramfs gone. Into systemd itself: ⬜ (the laptop) |
 | Console and keyboard in the initramfs | ✅ | qemu types at `ttyS0`; on the laptop the disk was unlocked from its own keyboard and screen |
+| The boot splash | ✅ | on the laptop's real screen (2026-10-20), with `autark.splash=1`; see [boot-splash.md](boot-splash.md) |
+
+## The TPM and the OS separator
+
+The first real-TPM test boot asked for the PIN and then for the recovery passphrase: the TPM answered "policy does not match" and the init fell back. The cause:
+
+- systemd 261's initramfs starts with "TPM PCR OS Separator", which extends PCRs 0-7 with `sha256("os-separator")`.
+- A key enrolled from the running system (`systemd-cryptenroll --tpm2-pcrs=7 --tpm2-with-pin=yes`) is therefore sealed to PCR 7 *after* that extend.
+- The init is not systemd, so it unsealed at the firmware's own value and the TPM refused.
+
+Checked with the real numbers: the firmware's event log replays to PCR 7 = `FE18323E…`; the dracut boot reads `D635820E…` = `sha256(FE18323E… ‖ sha256("os-separator"))`; and the LUKS token's policy hash is exactly PolicyPCR(`D635820E…`) followed by PolicyAuthValue (the PIN).
+
+`src/tpm.rs` does the same extend before the first unlock attempt: one raw `TPM2_PCR_Extend` per PCR 0-7 on `/dev/tpmrm0` (no TPM library). It runs only when a volume has `tpm2`; if it fails the init logs why and carries on, since the recovery passphrase still works. `check` doesn't extend (it runs on a live system that already has). After an init boot the live PCR 7 reads the same as after a dracut boot, so a key enrolled from either boot works for both.
+
+If the TPM ever refuses again, the same two numbers are the quick check: replay the firmware log (`/sys/kernel/security/tpm0/binary_bios_measurements`, root) and compare with the live `/sys/class/tpm/tpm0/pcr-sha256/7`.
+
+## Debugging a test boot
+
+A boot that freezes leaves nothing in pstore here (`CONFIG_EFI_VARS_PSTORE` is a module), so the init keeps its own log:
+
+- Always: breadcrumbs on the kernel log, `journalctl -b -k | grep autark-init`. They never include the PIN or its length.
+- With `autark.log=<device>` on the command line (the ESP, e.g. `autark.log=/dev/nvme0n1p6`): the same lines are appended to `EFI/autark-rust/init.log` on that FAT partition, synced after every line, so they survive a hang.
+- `autark.splash=1` turns the splash on; if the framebuffer or fonts are unavailable the init says why in this log and uses the text prompt.
 
 ## The script, and how it stays safe
 
@@ -48,7 +71,7 @@ Run anywhere but as PID 1 it only does read-only checks: `autark-init parse [fil
 - `entry` adds a firmware entry "Autark (Rust initramfs, test)" and then **puts BootOrder back exactly as it was**, so the machine keeps booting dracut.
 - `try` makes the next boot start the Rust image. This laptop's firmware **ignores BootNext** and its F11 menu doesn't list the test entry, so `try` also puts
   the entry first in BootOrder (saving the old order), and `untry` puts the order back. Don't press F11 for the test boot. If it freezes, hold the power button,
-  press F11, pick plain Autark and run `untry`. The TPM token binds PCR 7 (Secure Boot state), and the same shim and key are used, so the TPM releases the key.
+  press F11, pick plain Autark and run `untry`. The TPM token binds PCR 7 (Secure Boot state); see the next section for what else the init must do for the TPM to release the key.
 - `untry` restores the BootOrder that `try` saved. Run it after the test boot, whatever happened.
 - `remove` deletes the entry, the boot image and the initramfs.
 
@@ -86,7 +109,7 @@ PCR 7 on the real firmware, the real TPM, or the laptop's keyboard: those are th
 
 1. ✅ The qemu test passes.
 2. ✅ `uki`, `entry` and `try` on the laptop: it booted.
-3. Try the splash on a test boot (`autark.splash=1` on the test entry's command line only).
+3. ✅ The splash on a test boot (`autark.splash=1`, `quiet loglevel=3 vt.global_cursor_default=0`, on the test entry's command line only), and the PIN alone unlocking through the real TPM.
 4. Boot the test entry a few more times, then make it the default only after it has booted reliably, and keep dracut as the hidden fallback ([roadmap](roadmap.md), M4).
 
 ## Open questions and risks
