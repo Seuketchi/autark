@@ -1,0 +1,9 @@
+# Keys on the MSI Cyborg 15 A13UCK that the kernel's AT keyboard driver doesn't know, so it logs
+#   atkbd serio0: Unknown key pressed (translated set 2, code 0xd7 ...)
+# and sends nothing. Installed by scripts/msi-keys-hwdb.sh; udev applies it to the keyboard at every boot.
+#
+# Fn+F6 is the Bluetooth key and sends scancode d7 (the code in that log line; the kernel prints it as "e057" for the console tool).
+# Found with a key probe (libinput debug-events plus the kernel log), 2026-10-20. The other Fn keys need no entry: Fn+F4 (touchpad)
+# sends Ctrl+Super+F24 and Fn+F11 (projection) sends Super+P, both known keys; Fn+F11 also logs an unknown 0xc0, which does nothing.
+evdev:name:AT Translated Set 2 keyboard:dmi:*svnMicro-Star*:pnCyborg*:*
+ KEYBOARD_KEY_d7=bluetooth
