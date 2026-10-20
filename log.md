@@ -593,3 +593,24 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
   `[ollama]` in ai.toml. This laptop has `model = "gemma3:4b"` and `answer_model = "gemma3:12b"`; the 12B model is about three times slower
   (5.5 against 16 tokens/s) and writes better answers. "What can you do" is answered from code, not the model.
 - Open: lock screen flicker (no cause found; waiting on when it happens), the VPNs untested, `/home` at 89%.
+
+## 2026-10-20 — Viber on Autark (glvnd Mesa, 16 library recipes)
+
+- Viber (Ubuntu's `/opt/viber`: bundled Qt6 and QtWebEngine) runs. First crash: Qt links glvnd's `libOpenGL`/`libGLX`, but Mesa was built
+  without glvnd, so `glGetString` returned NULL. Fix: new `libglvnd` recipe (egl, gles1, gles2 on), and `mesa.sh` rebuilt with
+  `-D glvnd=enabled` (release 2, depends on libglvnd). Reinstall both with `autark-pkg --force install libglvnd mesa`, then log out so the
+  compositor loads the new Mesa.
+- New recipes for what Viber's libraries need: libXScrnSaver, libXtst, libxkbfile (meson), libxshmfence, nspr, nss (`nss.pc` written by
+  hand, gtests off), snappy, openjpeg, libsndfile (`CMAKE_POLICY_VERSION_MINIMUM=3.5`), libpulse (PulseAudio 17.0, client only), libvdpau,
+  libva, openssl3-libs (only `libssl.so.3` and `libcrypto.so.3`, next to the system OpenSSL), krb5 (`WARN_CFLAGS=-Wall`, `--disable-pkinit`,
+  sbin/ksu/sample clients pruned) and libssh.
+- `scripts/viber.sh` is the launcher (`QT_QPA_PLATFORM=wayland`, `LD_LIBRARY_PATH=/opt/viber/lib` for the bundled ICU 74; `VIBER_NO_SANDBOX=1`
+  turns the Chromium sandbox off if it ever fails; it works with the sandbox on). `scripts/viber-install.sh` installs the libraries, copies
+  `/opt/viber` from the old Ubuntu disk (tests with `-f`, because `-x` is false on a noexec mount), and adds `/usr/bin/viber`, the desktop
+  entry and a 256x256 PNG icon.
+- Icon: GTK here has no SVG loader, so the icon is a PNG. A stale `~/.local/share/icons/hicolor/icon-theme.cache` hid it until rebuilt
+  (`gtk4-update-icon-cache`). `autark-dock` remembers "no desktop file" for an app id until it restarts, so a newly installed app shows no
+  icon in the dock until then.
+- Viber ignores SIGTERM and SIGINT; close it from its own quit menu. The profile is the user's own activation in `~/.ViberPC`, made on
+  Autark, not copied from Ubuntu.
+- `mesa.sh` here conflicts with the uncommitted NVK edits on branch `nvk-mesa` (both are release 2): merge by hand and bump to release 3.
