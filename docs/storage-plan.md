@@ -50,8 +50,21 @@ datasets. If Windows is retired too, p3 and p4 join the free space (a single 410
    ever refuses to unlock, this is the way in. (The same is true for p9.)
 4. **p8 is really empty**: `sudo blkid /dev/nvme0n1p8` prints nothing.
 5. `sudo umount /mnt/ubuntu-ro`.
-6. A USB stick (4 GB or more) with **GParted Live**, written from another computer or with `dd` from Autark. **Keep Secure Boot on** when you
-   boot it: turning it off changes what the TPM measures (PCR 7) and root would ask for the recovery passphrase.
+6. **The USB stick**, with `scripts/make-recovery-usb.sh`: GParted Live on a FAT32 partition (it boots with Secure Boot on, through
+   Debian's signed shim, and enrolls no key) and the rest as a LUKS2 partition for the backup. Autark has no FAT formatter yet, so first
+   install the recipe (`dosfstools`), then:
+   ```
+   sudo install -m644 -o root -g root ~/autark-storage/scripts/pkg/dosfstools.sh /usr/src/autark/scripts/pkg/
+   sudo autark-pkg install dosfstools
+   lsblk                                    # the stick is the removable USB disk (sda); check size and model
+   sudo ~/autark-storage/scripts/make-recovery-usb.sh make   /dev/sda  <path to gparted-live-1.8.1-6-amd64.iso>
+   sudo ~/autark-storage/scripts/make-recovery-usb.sh backup /dev/sda
+   sudo ~/autark-storage/scripts/make-recovery-usb.sh verify /dev/sda
+   ```
+   `make` erases the whole stick and asks you to type its name; `backup` copies `~/backup-from-ubuntu` and what the Ubuntu disk holds
+   that nothing else does (Downloads without the re-downloadable files, Grad Photos, Gov Docs); `verify` reads it all back from the stick
+   and checks every checksum. Keep Secure Boot on when you boot the stick: turning it off changes what the TPM measures (PCR 7) and root
+   would ask for the recovery passphrase. A stick is one copy; keep a second one somewhere else (cloud) if the data matters.
 
 ## Session 1: GParted Live
 
