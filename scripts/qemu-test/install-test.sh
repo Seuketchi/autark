@@ -54,6 +54,8 @@ VARS=${DISK%.img}-vars.fd
 if [ -z "$DISPLAY_" ]; then
   if qemu-system-x86_64 -display help 2> /dev/null | grep -qx gtk; then DISPLAY_=gtk; else DISPLAY_=none; fi
 fi
+# The installer needs no network, so a qemu built without user-mode networking (slirp) still works.
+nic=(-nic none); if qemu-system-x86_64 -netdev help 2> /dev/null | grep -qx user; then nic=(-nic user,model=virtio-net-pci); fi
 accel=(); [ "$KVM" = 0 ] || accel=(-enable-kvm -cpu host)
 drives=(-drive "file=$DISK,format=raw,if=none,id=target" -device nvme,drive=target,serial=autark-target,bootindex=2)
 if [ "$BOOTDISK" = 1 ]; then
@@ -65,4 +67,4 @@ exec qemu-system-x86_64 "${accel[@]}" -smp 4 -m 4G \
   -drive if=pflash,format=raw,readonly=on,file="$CODE" \
   -drive if=pflash,format=raw,file="$VARS" \
   "${drives[@]}" "${stick[@]}" \
-  -nic user,model=virtio-net-pci -display "$DISPLAY_" -serial mon:stdio
+  "${nic[@]}" -display "$DISPLAY_" -serial mon:stdio
