@@ -63,7 +63,7 @@ A boot that freezes leaves nothing in pstore here (`CONFIG_EFI_VARS_PSTORE` is a
 
 ## The script, and how it stays safe
 
-`scripts/autark-rust-initramfs.sh` has one step per command: `build`, `selftest`, `uki`, `entry`, `try`, `status`, `remove`.
+`scripts/autark-rust-initramfs.sh` has one step per command: `build`, `selftest`, `uki`, `entry`, `try`, `untry`, `default`, `undefault`, `status`, `remove`.
 
 - `build` and `selftest` work as any user and touch nothing outside their work folder (set `WORK` and `OUT`).
 - `uki` builds a second signed boot image into `EFI/autark-rust/` with shim beside it, the same way `EFI/autark/` is laid out. `autark.efi`, dracut's
@@ -73,6 +73,9 @@ A boot that freezes leaves nothing in pstore here (`CONFIG_EFI_VARS_PSTORE` is a
   the entry first in BootOrder (saving the old order), and `untry` puts the order back. Don't press F11 for the test boot. If it freezes, hold the power button,
   press F11, pick plain Autark and run `untry`. The TPM token binds PCR 7 (Secure Boot state); see the next section for what else the init must do for the TPM to release the key.
 - `untry` restores the BootOrder that `try` saved. Run it after the test boot, whatever happened.
+- `default` makes the Rust image the **normal "Autark" entry**: it copies the Rust boot image over `EFI/autark/grubx64.efi` (through a temporary file) and puts dracut's image (`EFI/Linux/autark.efi`) in `EFI/autark-prev/`, so "Autark (previous)" is now dracut's image for the current kernel (what was there is kept as `grubx64.efi.before-rust`). The firmware entries, BootOrder, `EFI/BOOT` (the "UEFI OS" fallback) and `autark.efi` are not touched. It refuses if the Rust image isn't for the running kernel. `status` says which init is the default.
+- `undefault` puts dracut's image back as the normal entry.
+- **After a kernel update** step 6's `uki` puts dracut's image back in `EFI/autark` (a safe direction), so run `build uki default` again for the new kernel. If the Rust image fails to boot: hold the power button, press F11, pick "Autark (previous)", then `undefault`.
 - `remove` deletes the entry, the boot image and the initramfs.
 
 ## The qemu test
