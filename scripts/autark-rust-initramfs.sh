@@ -11,12 +11,18 @@
 #   autark-rust-initramfs.sh entry     adds the firmware entry "Autark (Rust initramfs, test)" and puts BootOrder back as it was (root)
 #   autark-rust-initramfs.sh try       makes the next boot start it: BootNext, and the entry first in BootOrder (root). Then run untry
 #   autark-rust-initramfs.sh untry     puts BootOrder back as try found it (root); run it after the test boot, whatever happened
-#   autark-rust-initramfs.sh status    what is installed and the boot order (root, to see the ESP)
+#   autark-rust-initramfs.sh default   makes the Rust boot image the normal "Autark" entry (root). dracut's image (EFI/Linux/autark.efi) becomes the one
+#                                      "Autark (previous)" boots, so there is always a way back; BootOrder and EFI/BOOT are not touched
+#   autark-rust-initramfs.sh undefault puts dracut's image back as the normal "Autark" entry (root)
+#   autark-rust-initramfs.sh status    what is installed, which init is the default and the boot order (root, to see the ESP)
 #   autark-rust-initramfs.sh remove    deletes the entry, its boot image and the initramfs (root)
 #
 # As root on Autark:  su -c 'sh /path/to/autark-rust-initramfs.sh build uki entry'  then  su -c '... try'  and reboot (without F11: this firmware
 # ignores BootNext and its F11 menu doesn't list the entry, so try puts the entry first in BootOrder instead), then  su -c '... untry'.
-# Nothing here changes autark.efi, /boot/initramfs-<kver>.img, the boot order, or /etc/kernel/cmdline.
+# Nothing here changes autark.efi, /boot/initramfs-<kver>.img, the boot order, or /etc/kernel/cmdline. (default and undefault change what
+# EFI/autark/grubx64.efi is, and EFI/autark-prev/grubx64.efi: still not autark.efi, which stays dracut's image and the way back.)
+# The usual order for a new build: build uki (try, boot, untry), then default. After a kernel update, step6's uki puts dracut's image back
+# in EFI/autark, so run  build uki default  again for the new kernel.
 set -euo pipefail
 
 INIT_BIN=${INIT_BIN:-/home/tan/autark-tools/target/release/autark-init}
@@ -204,8 +210,48 @@ untry() {
   efibootmgr | grep -E "^Boot(Current|Next|Order)"
 }
 
+DRACUT_UKI=$ESP/EFI/Linux/autark.efi
+NORMAL=$ESP/EFI/autark
+PREV=$ESP/EFI/autark-prev
+MARKER=$NORMAL/rust-default
+
+# Replaces $2 by a copy of $1 through a temporary file, so a failed copy never leaves a missing or half-written image.
+put() { cp "$1" "$2.new" && cmp -s "$1" "$2.new" && mv "$2.new" "$2" || { rm -f "$2.new"; die "couldn't copy $1 to $2"; }; }
+
+default() {
+  need_root default; need_autark default
+  [ -s "$ENTRY_DIR/grubx64.efi" ] || die "no Rust boot image: run build uki first"
+  [ -s "$DRACUT_UKI" ] || die "no $DRACUT_UKI: dracut's image is the way back, and it isn't there"
+  [ -e "$NORMAL/shimx64.efi" ] && [ -d "$PREV" ] || die "no $NORMAL/shimx64.efi or $PREV: this isn't the layout Autark boots through"
+  # The Rust image must be for the running kernel (its modules are the ones on the root file system).
+  ukify inspect "$ENTRY_DIR/grubx64.efi" | grep "$KVER" >/dev/null || die "the Rust boot image isn't for kernel $KVER: run build uki again"
+  # Dracut's image becomes the fallback (what "Autark (previous)" boots); what was there is kept beside it.
+  if ! cmp -s "$DRACUT_UKI" "$PREV/grubx64.efi"; then
+    [ ! -e "$PREV/grubx64.efi" ] || cp -f "$PREV/grubx64.efi" "$PREV/grubx64.efi.before-rust"
+    put "$DRACUT_UKI" "$PREV/grubx64.efi"
+  fi
+  [ -e "$PREV/shimx64.efi" ] && [ -e "$PREV/mmx64.efi" ] || cp "$NORMAL/shimx64.efi" "$NORMAL/mmx64.efi" "$PREV/"
+  put "$ENTRY_DIR/grubx64.efi" "$NORMAL/grubx64.efi"
+  echo "$(date -Is) $KVER $(sha256sum "$NORMAL/grubx64.efi" | cut -d' ' -f1)" > "$MARKER"
+  sync
+  echo "the normal Autark entry now boots the Rust init ($KVER); \"Autark (previous)\" boots dracut's image"
+  echo "if it ever fails: hold the power button, press F11, pick \"Autark (previous)\", then run  su -c 'sh $0 undefault'"
+}
+
+undefault() {
+  need_root undefault; need_autark undefault
+  [ -s "$DRACUT_UKI" ] || die "no $DRACUT_UKI to put back"
+  put "$DRACUT_UKI" "$NORMAL/grubx64.efi"
+  rm -f "$MARKER"
+  sync
+  echo "the normal Autark entry boots dracut's image again"
+}
+
 status() {
   need_root status
+  if [ -e "$MARKER" ]; then echo "default boot init: Rust ($(cut -d' ' -f1,2 "$MARKER"))"; else echo "default boot init: dracut"; fi
+  cmp -s "$DRACUT_UKI" "$NORMAL/grubx64.efi" && echo "EFI/autark/grubx64.efi is dracut's image" || echo "EFI/autark/grubx64.efi is not dracut's image"
+  cmp -s "$DRACUT_UKI" "$PREV/grubx64.efi" && echo "\"Autark (previous)\" boots dracut's current image" || echo "\"Autark (previous)\" boots something else"
   efibootmgr | grep -E "^Boot(Current|Next|Order)|Autark" || true
   ls -la "$ENTRY_DIR" "$OUT" 2>&1 | sed 's/^/  /'
 }
@@ -219,10 +265,10 @@ remove() {
   echo "removed the entry, $ENTRY_DIR and $OUT"
 }
 
-[ $# -gt 0 ] || die "usage: $0 build|selftest|uki|entry|try|untry|status|remove [more steps]"
+[ $# -gt 0 ] || die "usage: $0 build|selftest|uki|entry|try|untry|default|undefault|status|remove [more steps]"
 for step in "$@"; do
   case "$step" in
-    build|selftest|uki|entry|try|untry|status|remove) "$step" ;;
+    build|selftest|uki|entry|try|untry|default|undefault|status|remove) "$step" ;;
     *) die "not a step: $step" ;;
   esac
 done
