@@ -168,3 +168,5 @@ libssh
 vulkan-headers
 vulkan-loader
 vulkan-tools
+temurin-jdk
+gradle
