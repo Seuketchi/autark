@@ -69,8 +69,8 @@ Everything is configurable, so someone else running Autark can point Kith at the
 
 Kith dispatches company work but never does it. Your Claude account is company-owned (the reason Wren runs on Hermes), so company code goes to Claude Code and personal work stays with Kith. Hermes ships a `claude-code` skill for exactly this handoff.
 
-1. **Recognise.** You tell Kith something like "build this feature in the mobile app". Kith classifies it as work for a known repo, using a project map in config (for example `the-mobile-app` → `~/projects/the-mobile-app`).
-2. **Confirm.** Kith asks before starting: "Start Claude Code in `~/projects/the-mobile-app` with: …?" Starting a work task is always an *ask* action.
+1. **Recognise.** You tell Kith something like "build this feature in the mobile app". Kith classifies it as work for a known repo, using a project map in config (for example `mobile-app` → `~/projects/mobile-app`).
+2. **Confirm.** Kith asks before starting: "Start Claude Code in `~/projects/mobile-app` with: …?" Starting a work task is always an *ask* action.
 3. **Run on the laptop.** Kith calls the laptop's MCP tool `start_coding_task(repo, prompt)`. Claude Code runs there, with the company login, in a terminal you can watch and step into. Small, read-only jobs can use headless mode (`claude -p`). This holds even after Kith moves to its own box: company code and credentials never leave the laptop.
 4. **Keep the boundary.** Only your request text goes to Claude Code. Kith gets back a short status (running, needs your input, PR ready, failed) and a link, never the code or the transcript. Claude Code never sees Kith's memory.
 5. **Report back.** A Claude Code hook tells `autark-ai` when the session stops or needs you. Kith then notifies you on the laptop, and over Signal once it has its own box.

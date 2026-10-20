@@ -306,7 +306,7 @@ copy). [ ] Secure Boot enrollment method on the MSI firmware. [ ] backup + shrin
 - Decision (yours): real-disk root B **15 GB** (was 40). Root B isn't copied from the image, so the image is unchanged.
   Real layout after Ubuntu: ESP 1 + A 40 + B 15 + /home 9 = 65 GiB.
 - Backup to the Ventoy stick, `autark-backup-2026-10-17/` (verified: every archive read back, bundle verified):
-  patches + untracked files for 5 repos, a bundle of the-mobile-app_mobile's 5 unpushed commits, `data.tar.gz` 15 GB
+  patches + untracked files for 5 repos, a bundle of one app's 5 unpushed commits, `data.tar.gz` 15 GB
   (datasets, Documents, Pictures, Downloads, Videos, non-git folders incl. the camera-trap project, Claude memory),
   and `backup-ch8.tar.xz`. Not on the stick: autark.img (7.4 GB, rebuildable from ch8 + scripts), .ssh/.gnupg.
 - Shrink plan (GParted live): nvme0n1p5 296631 MiB → **229950 MiB**, start unchanged → 66681 MiB freed + 903 MiB
@@ -572,9 +572,9 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
 
 - Ubuntu's disk (`/dev/nvme0n1p5`) mounted read-only at `/mnt/ubuntu-ro` (`ro,noload,nodev,nosuid,noexec`) to bring things across. Still mounted
   when this was written; `sudo umount /mnt/ubuntu-ro` when done. Not copied: Ubuntu's Claude login (`.credentials.json`) and
-  `work-otel-headers.sh`. The files copied were scanned for secrets first (none found).
-- VPN: Ubuntu had two OpenVPN profiles. They're in `~/.config/openvpn/{work,the-mobile-app}/` (folders 0700, files 0600). the work account's `.ovpn` lost its
-  NetworkManager-only `user`/`group nm-openvpn` lines and now points at its `.pem` files there; the mobile app's is unchanged (inline keys, asks for a
+  a work telemetry-headers script. The files copied were scanned for secrets first (none found).
+- VPN: Ubuntu had two OpenVPN profiles. They're in `~/.config/openvpn/<profile>/` (folders 0700, files 0600). The first profile's `.ovpn` lost its
+  NetworkManager-only `user`/`group nm-openvpn` lines and now points at its `.pem` files there; the second is unchanged (inline keys, asks for a
   2FA code). Saved usernames and passwords lived in Ubuntu's keyring and weren't copied. **Not yet tested: no connection has been made.**
 - Packages (recipes in `scripts/pkg/`, installed with `autark-pkg install`): openvpn 2.7.8, libcap-ng 0.9.6 (OpenVPN needs it on Linux),
   tmux 3.8, libevent 2.1.13, starship 1.27.0, eza 0.23.5, bat 0.26.1, atuin 18.24.1. OpenVPN is built with iproute2 (no kernel offload, no
