@@ -129,6 +129,8 @@ spirv-tools
 glslang
 llvm
 spirv-llvm-translator
+bindgen
+cbindgen
 mesa
 yyjson
 glm
