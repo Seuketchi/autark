@@ -20,7 +20,7 @@ Releases are signed with their own key, never with the key the build machine sig
 
 ## Where it lives
 
-GitHub releases on this repository: one release per version tag, `release-<N>`, holding the rootfs, its signature and checksums, and the ISO. The package repository is a second release, `packages-<N>`, holding every package archive with its `.minisig` and the `index` (about two files per package, well inside GitHub's limit of 1000 assets per release). A system uses it with
+GitHub releases on this repository: one release per version tag, `release-<N>`, holding the rootfs, its signature and checksums, and the installer image (`autark-installer-<N>.img`). The package repository is a second release, `packages-<N>`, holding every package archive with its `.minisig` and the `index` (about two files per package, well inside GitHub's limit of 1000 assets per release). A system uses it with
 `repo = "https://github.com/Seuketchi/autark/releases/download/packages-<N>"` in `/etc/autark/pkg.toml`.
 
 The format is just files in a folder, so any static web server can host the same layout later; moving hosts means changing that line.
