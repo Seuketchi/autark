@@ -17,7 +17,7 @@ if [ ! -e /sources/wget-list-systemd ] || grep -qi ubuntu /etc/os-release 2>/dev
   exit 1
 fi
 
-KVER=7.1.8
+KVER=${KVER:-7.2.11}
 SRC=/sources/linux-$KVER
 LOG=/sources/logs/kernel.log
 mkdir -p /sources/logs
@@ -43,6 +43,7 @@ IPV6 y
 UEVENT_HELPER n
 DEVTMPFS y
 DEVTMPFS_MOUNT y
+DELL_RBU n
 FW_LOADER_USER_HELPER n
 DMIID y
 SYSFB_SIMPLEFB y

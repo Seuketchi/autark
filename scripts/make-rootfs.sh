@@ -9,7 +9,7 @@
 # Prefer a system built for release, not a daily-driver one: whatever is installed on it ships. Output, in --out
 # (default: the current folder): autark-rootfs-<version>.tar.zst and a SHA256SUMS file; --sign KEY also writes a
 # minisign signature next to the tarball. --keep leaves the staging folder for inspection. --dry-run only lists what
-# would be left out.
+# would be left out. The staging copy is as big as the system: set TMPDIR to a folder with room (not the live root).
 set -euo pipefail
 
 SRC= VERSION= OUT=. SIGN= KEEP=0 DRY=0
@@ -39,11 +39,13 @@ EXCLUDES=(
   ./proc ./sys ./dev ./run ./tmp ./var/tmp ./mnt ./media ./sources ./lost+found
   ./home ./root                          # people and their files, including /root/kernel-keys and build keys
   ./var/log ./var/cache ./var/lib/iwd ./var/lib/bluetooth ./var/lib/NetworkManager
+  ./var/lib/ollama ./var/lib/private ./var/lib/tpm2-tss     # a service's own identity key and models; DynamicUser state; this machine's TPM store
   ./var/lib/systemd/random-seed ./var/lib/systemd/credential.secret ./var/lib/systemd/coredump ./var/lib/systemd/pstore
   ./var/lib/dbus/machine-id ./var/lib/systemd/linger
   ./etc/machine-id ./etc/hostname ./etc/fstab ./etc/crypttab ./etc/kernel/cmdline ./etc/cryptsetup-keys.d
   './etc/ssh/ssh_host_*' ./etc/autark/secureboot ./etc/autark/pkg-secret.key ./etc/autark/*.key
-  ./etc/sudoers.d ./etc/resolv.conf ./etc/openvpn ./etc/adjtime
+  ./etc/systemd/system/getty@tty1.service.d ./etc/systemd/system/multi-user.target.wants/sshd.service   # autologin of the build machine's user; sshd stays off until enabled
+  ./etc/crypttab.bak* ./etc/sudoers.d ./etc/resolv.conf ./etc/openvpn ./etc/adjtime
   ./boot/efi ./boot/initramfs-*.img ./boot/*.old
   './root/.*' ./etc/shadow- ./etc/passwd- ./etc/group- ./etc/gshadow-
 )
@@ -57,7 +59,7 @@ if [ "$DRY" = 1 ]; then
   exit 0
 fi
 
-STAGE=$(mktemp -d /var/tmp/autark-rootfs.XXXXXX)
+STAGE=$(mktemp -d "${TMPDIR:-/var/tmp}/autark-rootfs.XXXXXX")
 cleanup() { [ "$KEEP" = 1 ] || rm -rf "$STAGE"; }
 trap cleanup EXIT
 
@@ -87,9 +89,9 @@ for f in etc/machine-id etc/hostname etc/fstab etc/crypttab etc/kernel/cmdline e
   if [ -e "$STAGE/$f" ]; then echo "  ! $f is in the copy"; bad=1; fi
 done
 if [ -n "$(find "$STAGE/home" "$STAGE/root" -mindepth 1 2> /dev/null | head -1)" ]; then echo "  ! /home or /root is not empty"; bad=1; fi
-# Private keys anywhere outside the system's certificate store (public CA bundles hold none).
+# Private keys anywhere outside the system's certificate store: a PEM header on a line of its own (docs that only mention one are not keys).
 while IFS= read -r f; do echo "  ! private key material: ${f#"$STAGE"}"; bad=1; done < <(
-  grep -rIl --exclude-dir=proc --exclude-dir=sys -e '-----BEGIN [A-Z ]*PRIVATE KEY-----' "$STAGE/etc" "$STAGE/var" "$STAGE/usr/share" "$STAGE/opt" 2> /dev/null | head -20)
+  grep -rIlE --exclude-dir=proc --exclude-dir=sys -e '^-----BEGIN [A-Z ]*PRIVATE KEY-----[[:space:]]*$' "$STAGE/etc" "$STAGE/var" "$STAGE/usr/share" "$STAGE/opt" 2> /dev/null | head -20)
 [ "$bad" = 0 ] || die "the copy failed its checks (see above); nothing was packed"
 echo "  ok"
 
