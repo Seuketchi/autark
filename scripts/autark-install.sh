@@ -237,11 +237,16 @@ EOF
 run rm -f "$MNT/etc/machine-id"
 run systemd-machine-id-setup --root="$MNT"
 if [ "$DRY" = 1 ]; then
-  echo "  + useradd --root $MNT -m -s /bin/bash $USER_   (and chpasswd from the password file)"
+  echo "  + useradd --root $MNT -m -s /bin/bash $USER_   (and its password hash into shadow)"
 else
   grep -q '^wheel:' "$MNT/etc/group" && groups=(-G wheel) || groups=()
   useradd --root "$MNT" -m -s /bin/bash "${groups[@]}" "$USER_"
-  printf '%s:%s\n' "$USER_" "$(cat "$SECRETS/user")" | chpasswd --root "$MNT"
+  # Hashed here and written into shadow directly: chpasswd would go through the new system's PAM, which can't be
+  # started from outside it. The hash is passed in the environment, not as an argument.
+  HASH=$(openssl passwd -6 -stdin < "$SECRETS/user") USERNAME_=$USER_ \
+    awk -F: -v OFS=: '$1 == ENVIRON["USERNAME_"] { $2 = ENVIRON["HASH"] } 1' "$MNT/etc/shadow" > "$SECRETS/shadow"
+  grep -q "^$USER_:"'\$6\$' "$SECRETS/shadow" || die "couldn't set $USER_'s password"
+  cat "$SECRETS/shadow" > "$MNT/etc/shadow"
 fi
 
 if [ "$UNTIL" = configure ]; then
