@@ -266,11 +266,11 @@ if [ "$DRY" = 0 ]; then
   for d in dev proc sys run; do mount --rbind "/$d" "$MNT/$d"; mount --make-rslave "$MNT/$d"; done
 fi
 inchroot() { if [ "$DRY" = 1 ]; then printf '  + (in the new system) %s\n' "$*"; else chroot "$MNT" /bin/bash -c "$*"; fi; }
-SB=/etc/autark/secureboot
-inchroot "install -d -m 0700 $SB && [ -s $SB/db.key ] || openssl req -new -x509 -newkey rsa:2048 -nodes -sha256 -days 3650 -subj '/CN=Autark Secure Boot db/' -keyout $SB/db.key -out $SB/db.crt; chmod 0400 $SB/db.key; openssl x509 -in $SB/db.crt -outform DER -out $SB/db.der"
-inchroot 'KVER=$(ls /usr/lib/modules | sort -V | tail -1); dracut --force --kver $KVER /boot/initramfs-$KVER.img'
-inchroot 'KVER=$(ls /usr/lib/modules | sort -V | tail -1); mkdir -p /boot/efi/EFI/Linux /boot/efi/EFI/BOOT /boot/efi/EFI/autark; ukify build --linux=/boot/vmlinuz-$KVER-autark --initrd=/boot/microcode.img --initrd=/boot/initramfs-$KVER.img --cmdline=@/etc/kernel/cmdline --os-release=@/etc/os-release --uname=$KVER --signtool=systemd-sbsign --no-sign-kernel --secureboot-private-key=/etc/autark/secureboot/db.key --secureboot-certificate=/etc/autark/secureboot/db.crt --output=/boot/efi/EFI/Linux/autark.efi'
-inchroot 'cp /boot/efi/EFI/Linux/autark.efi /boot/efi/EFI/BOOT/BOOTX64.EFI; cp /etc/autark/secureboot/db.der /boot/efi/EFI/autark/autark-db.der'
+# The same two scripts keep the boot image up to date after kernel updates, so they go into the new system.
+HERE=$(cd "$(dirname "$0")" && pwd)
+run install -m 0755 "$HERE/autark-mkuki.sh" "$MNT/usr/sbin/autark-mkuki"
+run install -m 0755 "$HERE/autark-tpm-enroll.sh" "$MNT/usr/sbin/autark-tpm-enroll"
+inchroot autark-mkuki
 if [ -d /sys/firmware/efi ] && command -v efibootmgr > /dev/null 2>&1 && [ -z "$IMAGE" ]; then
   run efibootmgr --create --disk "$DEV" --part 1 --label Autark --loader '\EFI\Linux\autark.efi'
 fi
@@ -280,7 +280,6 @@ cat << EOF
 Autark is on $TARGET. Before the first boot:
   - Secure Boot: enrol /EFI/autark/autark-db.der from the ESP in the firmware's setup screen (db), then turn Secure
     Boot on. Automatic enrolment is not in this version.
-  - TPM: after that first boot, bind the disk to it with  systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 \\
-    --tpm2-with-pin=yes --recovery-key /dev/disk/by-uuid/$ROOTUUID  (write the recovery key down), then add
-    tpm2-device=auto to /etc/kernel/cmdline and rebuild the boot image.
+  - TPM: boot Autark once, then run  sudo autark-tpm-enroll  (it needs Secure Boot on first, asks for the passphrase
+    and a PIN, and prints a recovery key: write it down).
 EOF

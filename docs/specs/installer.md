@@ -39,6 +39,13 @@ The kernel's module-signing key is the build machine's, so modules built after t
 
 An installer failure before step 4 leaves the disk untouched. After it, the half-made partitions can be removed by running the installer again on the same space.
 
+## Pieces that exist
+
+- `scripts/autark-install.sh`: steps 1 to 7 above, tested up to the machine's files on a loop image with a fake rootfs.
+- `scripts/autark-mkuki.sh`: the initramfs and the signed unified kernel image, for any kernel and any machine. The installer runs it in the new system, and it is the command to run after a kernel update. Tested with the real Autark 7.1.8 kernel into a scratch ESP.
+- `scripts/autark-tpm-enroll.sh`: the TPM-plus-PIN enrolment, run once after the first boot with Secure Boot on (the TPM binding is to PCR 7, which changes when Secure Boot turns on, so it cannot be done from the installer). Tested for its checks and command-line edits; the `systemd-cryptenroll` call itself needs a TPM.
+- `scripts/make-rootfs.sh`: the release rootfs from a finished system.
+
 ## Pieces to write
 
 - `autark-install`, a root-only program in the live ISO. A Rust binary fits the rest of the project, but the first version can be a shell script that wraps `sfdisk`, `cryptsetup`, `ukify` and `systemd-cryptenroll`, as the current build scripts do. It should keep every step idempotent and have a `--dry-run` that prints the plan without changing anything.
