@@ -8,14 +8,16 @@
 #
 # --dry-run prints every command and changes nothing. Secrets are only ever read from a prompt or from files
 # (--passphrase-file, --user-password-file), never from arguments, and live in a 0700 folder on tmpfs until exit.
+# --log FILE also writes everything it prints to FILE (readable by the user who ran sudo), ending with its exit status.
 # --until configure stops after the machine's files are written (before the boot image) and shows them; a test aid.
 # --image FILE works on a disk image file instead of a device (for tests: it is attached as a loop device).
 set -euo pipefail
 
-DISK= IMAGE= ROOTFS= PUBKEY= HOSTNAME_= USER_= DRY=0 NOVERIFY=0 CONFIRM= PASSFILE= USERPASSFILE= UNTIL=boot
+DISK= IMAGE= ROOTFS= PUBKEY= HOSTNAME_= USER_= DRY=0 NOVERIFY=0 CONFIRM= PASSFILE= USERPASSFILE= UNTIL=boot LOG=
 usage() { sed -n '2,/^set -e/p' "$0" | sed '$d;s/^# \{0,1\}//' >&2; exit 2; }
 die() { echo "autark-install: $*" >&2; exit 1; }
 
+ARGS=$*
 while [ $# -gt 0 ]; do
   case $1 in
     --disk) DISK=${2:?}; shift ;;
@@ -29,6 +31,7 @@ while [ $# -gt 0 ]; do
     --user-password-file) USERPASSFILE=${2:?}; shift ;;
     --confirm-erase) CONFIRM=${2:?}; shift ;;
     --until) UNTIL=${2:?}; shift ;;
+    --log) LOG=${2:?}; shift ;;
     --dry-run|-n) DRY=1 ;;
     -h|--help) usage ;;
     *) echo "unknown option: $1" >&2; usage ;;
@@ -53,11 +56,21 @@ fi
 run() { if [ "$DRY" = 1 ]; then printf '  + %s\n' "$*"; else "$@"; fi; }
 say() { printf '== %s\n' "$*"; }
 
+if [ -n "$LOG" ]; then
+  : >> "$LOG" || die "can't write $LOG"
+  [ -z "${SUDO_UID:-}" ] || chown "$SUDO_UID:${SUDO_GID:-$SUDO_UID}" "$LOG"
+  chmod 0644 "$LOG"
+  exec > >(tee -a "$LOG") 2>&1
+  TEEPID=$!
+  echo "== autark-install $(date '+%F %T'): $ARGS"
+fi
+
 SECRETS= LOOP= MNT=/mnt/autark-install
 # The installer's own mapper names: the installed system calls its volumes autark and autark-home (fstab, crypttab and the
 # kernel command line below), and a machine that already runs Autark has those names taken.
 MAPR=autark-install-root MAPH=autark-install-home
 cleanup() {
+  local rc=$?
   set +e
   if [ "$DRY" = 0 ]; then
     mountpoint -q "$MNT" && umount -R "$MNT"
@@ -66,6 +79,11 @@ cleanup() {
     [ -z "$LOOP" ] || losetup -d "$LOOP"
   fi
   [ -z "$SECRETS" ] || rm -rf "$SECRETS"
+  if [ -n "$LOG" ]; then
+    echo "== autark-install finished with exit status $rc at $(date +%T)"
+    exec >&- 2>&-
+    wait "$TEEPID" 2> /dev/null
+  fi
 }
 trap cleanup EXIT
 
