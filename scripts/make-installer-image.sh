@@ -13,7 +13,7 @@
 # It is an image and not an ISO because it needs only tools every build machine has (sfdisk, mkfs.vfat, mke2fs, dracut,
 # ukify); an ISO builder comes with libisoburn or squashfs-tools later. Needs root (loop mounts). --rootfs must be the
 # tarball make-rootfs.sh made; its .minisig (make-rootfs --sign) is copied beside it. Without --pubkey the image can only
-# install with --no-verify. The live system boots to a root prompt on the first console, and tells you to run
+# install with --no-verify. Staging needs about 3 times the rootfs size: set TMPDIR to a folder with room. The live system boots to a root prompt on the first console, and tells you to run
 # autark-install; it has no password and no network login, and nothing in it is written to the disk.
 set -euo pipefail
 
@@ -52,7 +52,7 @@ if [ "$DRY" = 1 ]; then
   exit 0
 fi
 
-WORK=$(mktemp -d /var/tmp/autark-installer.XXXXXX)
+WORK=$(mktemp -d "${TMPDIR:-/var/tmp}/autark-installer.XXXXXX")
 LOOP= ESPMNT=$WORK/esp DATAMNT=$WORK/data
 cleanup() {
   mountpoint -q "$ESPMNT" 2> /dev/null && umount "$ESPMNT"

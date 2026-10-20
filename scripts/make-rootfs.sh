@@ -9,7 +9,7 @@
 # Prefer a system built for release, not a daily-driver one: whatever is installed on it ships. Output, in --out
 # (default: the current folder): autark-rootfs-<version>.tar.zst and a SHA256SUMS file; --sign KEY also writes a
 # minisign signature next to the tarball. --keep leaves the staging folder for inspection. --dry-run only lists what
-# would be left out.
+# would be left out. The staging copy is as big as the system: set TMPDIR to a folder with room (not the live root).
 set -euo pipefail
 
 SRC= VERSION= OUT=. SIGN= KEEP=0 DRY=0
@@ -57,7 +57,7 @@ if [ "$DRY" = 1 ]; then
   exit 0
 fi
 
-STAGE=$(mktemp -d /var/tmp/autark-rootfs.XXXXXX)
+STAGE=$(mktemp -d "${TMPDIR:-/var/tmp}/autark-rootfs.XXXXXX")
 cleanup() { [ "$KEEP" = 1 ] || rm -rf "$STAGE"; }
 trap cleanup EXIT
 
