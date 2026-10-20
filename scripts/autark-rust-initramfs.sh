@@ -6,7 +6,8 @@
 #                                      (any user; set OUT to write somewhere other than /boot)
 #   autark-rust-initramfs.sh selftest  runs the staged tree in a user-namespace chroot and checks every library is there
 #                                      (any user; run after build)
-#   autark-rust-initramfs.sh uki       builds the signed boot image into EFI/autark-rust/ with shim beside it (root)
+#   autark-rust-initramfs.sh uki       builds the signed boot image into EFI/autark-rust/ with shim beside it (root). EXTRA_CMDLINE="…" adds words
+#                                      to this image's command line only (e.g. autark.splash=1); /etc/kernel/cmdline is not changed
 #   autark-rust-initramfs.sh entry     adds the firmware entry "Autark (Rust initramfs, test)" and puts BootOrder back as it was (root)
 #   autark-rust-initramfs.sh try       makes the next boot start it: BootNext, and the entry first in BootOrder (root). Then run untry
 #   autark-rust-initramfs.sh untry     puts BootOrder back as try found it (root); run it after the test boot, whatever happened
@@ -129,12 +130,15 @@ uki() {
   [ -e "$SB/db.key" ] || die "no signing key at $SB"
   [ -e "$ESP/EFI/autark/shimx64.efi" ] || die "no shim in $ESP/EFI/autark: this is the layout Autark boots through"
   install -d "$ENTRY_DIR"
+  # The system's command line, plus whatever this image alone should have.
+  mkdir -p "$WORK"
+  echo "$(cat /etc/kernel/cmdline) ${EXTRA_CMDLINE:-}" | sed 's/ *$//' > "$WORK/cmdline"
   local new=$ENTRY_DIR/grubx64.efi.new
   rm -f "$new"
   ukify build --linux="/boot/vmlinuz-$KVER-autark" \
               --initrd=/boot/microcode.img \
               --initrd="$OUT" \
-              --cmdline=@/etc/kernel/cmdline \
+              --cmdline=@"$WORK/cmdline" \
               --os-release=@/etc/os-release \
               --uname="$KVER" \
               --signtool=systemd-sbsign \
@@ -146,12 +150,28 @@ uki() {
   mv "$new" "$ENTRY_DIR/grubx64.efi"
   cp "$ESP/EFI/autark/shimx64.efi" "$ESP/EFI/autark/mmx64.efi" "$ENTRY_DIR/"
   ukify inspect "$ENTRY_DIR/grubx64.efi" | grep -E '^\.(linux|initrd|cmdline|osrel|uname)|size' || true
+  echo "command line of this image: $(cat "$WORK/cmdline")"
   echo "boot image in $ENTRY_DIR (autark.efi is untouched)"
 }
 
 entry_number() { efibootmgr | sed -n "s/^Boot\([0-9A-Fa-f]\{4\}\)\*\{0,1\} $LABEL.*/\1/p" | head -1; }
 
-enORDER_FILE=$ENTRY_DIR/bootorder-before
+entry() {
+  need_root entry; need_autark entry
+  [ -e "$ENTRY_DIR/grubx64.efi" ] || die "run uki first"
+  if [ -n "$(entry_number)" ]; then echo "the entry is already there: Boot$(entry_number)"; return 0; fi
+  local before dev disk part
+  before=$(efibootmgr | sed -n 's/^BootOrder: //p')
+  dev=$(findmnt -no SOURCE "$ESP")
+  disk=/dev/$(lsblk -no PKNAME "$dev")
+  part=$(cat "/sys/class/block/$(basename "$dev")/partition")
+  efibootmgr --create --disk "$disk" --part "$part" --label "$LABEL" --loader '\EFI\autark-rust\shimx64.efi' >/dev/null
+  # efibootmgr puts a new entry first. Put the order back, so nothing changes unless you ask for it.
+  efibootmgr --bootorder "$before" >/dev/null
+  efibootmgr | grep -F -e "BootOrder" -e "$LABEL"
+}
+
+ORDER_FILE=$ENTRY_DIR/bootorder-before
 
 # The boot order "a,b,c" with entry $1 moved to the front (added if it wasn't there).
 first_in_order() {
@@ -179,6 +199,7 @@ untry() {
   need_root untry; need_autark untry
   [ -s "$ORDER_FILE" ] || die "nothing to put back: try hasn't saved a BootOrder"
   efibootmgr --bootorder "$(cat "$ORDER_FILE")" >/dev/null
+  efibootmgr --delete-bootnext >/dev/null 2>&1 || true
   rm -f "$ORDER_FILE"
   efibootmgr | grep -E "^Boot(Current|Next|Order)"
 }
