@@ -3,6 +3,7 @@
 # Changes $LFS's owner to root (7.2), mounts the virtual filesystems (7.3), runs ch7-inside.sh in the
 # chroot (7.4–7.14), unmounts them whatever happens, and with `backup` writes the chapter 7 checkpoint.
 # Usage: sudo LFS=/mnt/lfs bash scripts/lfs/ch7-chroot.sh [inside phase...]
+#        KVER=7.2.11 passes the kernel version to ch10-kernel-inside.sh and step6-boot-inside.sh (default 7.2.11)
 #        sudo LFS=/mnt/lfs INSIDE=ch8-inside.sh bash scripts/lfs/ch7-chroot.sh [package...]   (chapter 8)
 #        sudo LFS=/mnt/lfs bash scripts/lfs/ch7-chroot.sh backup <file.tar.xz>
 set -euo pipefail
@@ -62,6 +63,7 @@ chroot "$LFS" /usr/bin/env -i   \
     HOME=/root                  \
     TERM="${TERM:-xterm}"       \
     PATH=/usr/bin:/usr/sbin     \
+    ${KVER:+KVER="$KVER"}       \
     MAKEFLAGS="-j$(nproc)"      \
     TESTSUITEFLAGS="-j$(nproc)" \
     /bin/bash "/sources/$inside" "$@"

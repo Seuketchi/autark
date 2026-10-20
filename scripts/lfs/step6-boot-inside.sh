@@ -15,7 +15,7 @@ if [ ! -e /sources/wget-list-systemd ] || grep -qi ubuntu /etc/os-release 2>/dev
   exit 1
 fi
 
-KVER=7.1.8
+KVER=${KVER:-7.2.11}
 FW=linux-firmware-20260916
 UCODE=Intel-Linux-Processor-Microcode-Data-Files-microcode-20260925
 
