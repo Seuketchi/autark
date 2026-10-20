@@ -37,7 +37,12 @@ for d in /usr/share/OVMF /usr/share/edk2/ovmf /usr/share/ovmf /usr/share/edk2-ov
   for v in OVMF_VARS_4M.fd OVMF_VARS.fd; do [ -f "$d/$v" ] && VARS_TEMPLATE=$d/$v && break; done
   [ -z "$CODE" ] || [ -z "$VARS_TEMPLATE" ] || break
 done
-[ -n "$CODE" ] && [ -n "$VARS_TEMPLATE" ] || die "no OVMF firmware found (autark-pkg install ovmf)"
+# qemu's own package ships an edk2 build too (the x86_64 variable store is the i386 file).
+if [ -z "$CODE" ] || [ -z "$VARS_TEMPLATE" ]; then
+  q=/usr/share/qemu
+  if [ -f $q/edk2-x86_64-code.fd ] && [ -f $q/edk2-i386-vars.fd ]; then CODE=$q/edk2-x86_64-code.fd VARS_TEMPLATE=$q/edk2-i386-vars.fd; fi
+fi
+[ -n "$CODE" ] && [ -n "$VARS_TEMPLATE" ] || die "no UEFI firmware found (qemu's edk2 files, or autark-pkg install ovmf)"
 VARS=${DISK%.img}-vars.fd
 [ -f "$VARS" ] || cp "$VARS_TEMPLATE" "$VARS"
 [ -f "$DISK" ] || { truncate -s "$SIZE" "$DISK"; echo "made a blank $SIZE disk: $DISK"; }
