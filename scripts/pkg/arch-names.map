@@ -1,0 +1,16 @@
+# arch-names.map: Arch package name -> Autark recipe name, read by scripts/arch-import.py.
+# `-` means nothing to depend on: it is in the base system or installed outside autark-pkg.
+gcc-libs gcc
+gcc gcc
+sh bash
+glibc glibc
+linux-api-headers -
+git -
+curl -
+base-devel -
+pkg-config pkgconf
+openssl openssl
+python3 python
+ncurses ncurses
+libgcc gcc
+libstdc++ gcc

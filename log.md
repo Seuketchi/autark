@@ -648,3 +648,17 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
   vkGetPhysicalDeviceDisplayProperties…" loader warnings are harmless (NVK doesn't implement those display extensions).
 - Only listing the devices was tested, not a workload. Mesa's nouveau OpenGL driver does not start on the NVIDIA chip (`failed to create dri2
   screen`, checked with a small EGL program); the Intel and llvmpipe EGL devices work.
+
+## 2026-10-20 — Recipes from Arch Linux
+
+- `scripts/arch-import.py` imports an Arch PKGBUILD as an autark recipe (details in `scripts/pkg/README.md`), and `autark-pkg install <name>`
+  now runs it, as the build user, for a package with no recipe (new `arch` and `refresh` commands, `-y`, `--no-arch`; autark-tools).
+  Imported recipes are kept apart (`/var/lib/autark/imported`), the hand-written ones win a name both have, and only staged ones are read.
+- Built and installed from imported recipes: `oniguruma`, `jq`, `libnl`, `lm_sensors` (without `sensord`/`rrdtool`), `htop`, `figlet`,
+  `libtirpc`, `lsof` and `hexedit`; all run.
+- Found on the way: the recipe header parser stopped at an empty list (`depends=()`) and ignored what followed; `ureq` can't fetch `ftp://`
+  (curl does it now); `DESTDIR` in the environment plus the PKGBUILD's `prefix=$pkgdir/usr` installed `hexedit` under its staging
+  folder twice (importer unsets `DESTDIR`; autark-pkg now refuses such a build); a regenerated recipe with the same version reused
+  the stale kept build (the importer now raises the release).
+- Not importable yet: `tree` (Arch's GitLab has no project for it), `dos2unix` (SourceForge git).
+

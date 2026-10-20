@@ -45,5 +45,22 @@ Delete the `GENERATED` line to take a recipe over by hand: the converter never t
 Not converted: chapter 8's stripping and cleanup, and the machine's own steps (initramfs, Secure Boot key,
 UKI, services), which stay in their phase scripts; the kernel stays with `ch10-kernel-inside.sh`.
 
+## Recipes imported from Arch Linux
 
+`scripts/arch-import.py <package>...` turns Arch's recipe (its PKGBUILD, from gitlab.archlinux.org, pinned to the commit it read)
+into one of ours. `autark-pkg install <package>` runs it for a package with no recipe (as the `autark-build` user), into
+`/var/lib/autark/imported`, below the hand-written recipes here.
+
+- Every source is downloaded and checked against the PKGBUILD's hash; the recipe records its sha256. A `git+https://github.com/o/r#tag=X`
+  source becomes the host's tag archive, which has no hash to check, so it is pinned by the sha256 first seen (the recipe says so).
+- `depends` and `makedepends` are mapped through `pkg/arch-names.map` (`archname autarkname`; `-` means nothing to depend on). Runtime
+  dependencies with no recipe are imported too (`-r`, which `autark-pkg` passes); missing build-time ones are only reported, unless `--make-deps`.
+- `build()` unpacks the sources as makepkg does and runs the PKGBUILD's own `prepare()`, `build()` and `package()` with `$srcdir` and
+  `$pkgdir` set (and `DESTDIR` unset, as under makepkg). `check()` is not run.
+- `arch-overrides/<name>.map` records a deliberate difference: `drop <dependency>` and `sub <old> => <new>` in the PKGBUILD's functions
+  (it must match, so an Arch update that moves it is noticed). `lm_sensors` drops `rrdtool` and the `sensord` logger it needs.
+- Importing again keeps a recipe's release when nothing changed, and raises it when the contents did, so a kept build of the old
+  contents is not reused.
+- Not handled, and reported: git sources from hosts other than GitHub and GitLab, without a tag or commit, or with submodules; install
+  scripts (`*.install`); a split package's own `depends`; packages whose PKGBUILD fetches during the build (most Rust and Go ones).
 
