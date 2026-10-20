@@ -1,0 +1,8 @@
+# Keys on the MSI Cyborg 15 A13UCK that the kernel's AT keyboard driver doesn't know, so it logs
+#   atkbd serio0: Unknown key pressed (translated set 2, code 0xd7 ...)
+# and sends nothing. Installed by scripts/msi-keys-hwdb.sh; udev applies it to the keyboard at every boot.
+#
+# Fn+F4 is the touchpad key. The kernel prints its scancode as "e057" for the console tool; the scancode udev sets is the
+# code in that log line, d7.
+evdev:name:AT Translated Set 2 keyboard:dmi:*svnMicro-Star*:pnCyborg*:*
+ KEYBOARD_KEY_d7=touchpad_toggle
