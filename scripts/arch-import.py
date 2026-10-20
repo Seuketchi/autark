@@ -318,10 +318,26 @@ class Importer:
         version = meta["pkgver"].replace(":", "_")
         release = int(re.match(r"\d+", meta.get("pkgrel", "1")).group(0))
         description = re.sub(r'["$`\\]', "", meta.get("pkgdesc", ""))
-        text = self.render(name, pkgbase, commit, version, release, description, sources, depends, pkg, functions,
-                           package_function, meta, notes)
+        render = lambda number: self.render(name, pkgbase, commit, version, number, description, sources, depends, pkg,
+                                            functions, package_function, meta, notes)
+        text = render(release)
+        # A recipe rewritten with other contents under the same version must not reuse the build kept for the old
+        # one (autark-pkg keys builds on version-release), so its release goes up.
+        target = os.path.join(self.args.out, f"{name}.sh")
+        if os.path.exists(target):
+            old = open(target).read()
+            old_version = re.search(r"^version=(.*)$", old, re.M)
+            old_release = re.search(r"^release=(\d+)$", old, re.M)
+            if old_version and old_release and old_version.group(1) == version:
+                number = int(old_release.group(1))
+                undated = lambda text: re.sub(r"on \d{4}-\d\d-\d\d", "", text)
+                if undated(render(number)) == undated(old):
+                    text, release = old, number
+                else:
+                    release = max(release, number + 1)
+                    text = render(release)
         os.makedirs(self.args.out, exist_ok=True)
-        with open(os.path.join(self.args.out, f"{name}.sh"), "w") as out:
+        with open(target, "w") as out:
             out.write(text)
         self.known.add(name)
         self.done.add(name)
@@ -361,6 +377,7 @@ class Importer:
         body += [
             "  set +u  # PKGBUILDs assume makepkg's environment, where CPPFLAGS, RUSTFLAGS and the like always exist",
             "  startdir=$srcdir pkgdir=$DESTDIR CARCH=x86_64 CHOST=x86_64-pc-linux-gnu",
+            "  unset DESTDIR  # makepkg does not set it, and a Makefile given both it and prefix=$pkgdir/usr installs under it twice",
             f"  pkgname={name} pkgbase={pkgbase} pkgver={meta['pkgver']} pkgrel={meta.get('pkgrel', '1')}",
         ]
         for declaration in pkg["vars"]:
