@@ -2,6 +2,11 @@
 # Build guide Step 6.3 and 6.5: firmware, CPU microcode, initramfs (dracut) and the unified kernel image (ukify).
 # Runs INSIDE the chroot as root, started by ch7-chroot.sh with INSIDE=step6-boot-inside.sh, after the kernel
 # (ch10-kernel-inside.sh) is installed. The image is signed with Autark's own Secure Boot db key.
+# What belongs to the machine comes from the hardware profile that scripts/lfs/stage-profile.sh staged in /sources:
+#   profile-boot.env        ROOT_LUKS_UUID (required), and CPU_UCODE, the one microcode file for the CPU (optional)
+#   profile-firmware.list   optional: the firmware files the machine loads, relative to the linux-firmware tree
+# Without a firmware list the whole linux-firmware tree is installed; without CPU_UCODE the early microcode image
+# carries every Intel and AMD file, and the kernel picks the one that matches the CPU.
 # Sources and how each was verified: log.md, 2026-10-17 "Step 6".
 set -euo pipefail
 
@@ -11,10 +16,12 @@ if [ ! -e /sources/wget-list-systemd ] || grep -qi ubuntu /etc/os-release 2>/dev
 fi
 
 KVER=7.1.8
-ROOT_LUKS_UUID=33727520-d460-4861-b27f-bef08d44c11f
 FW=linux-firmware-20260916
 UCODE=Intel-Linux-Processor-Microcode-Data-Files-microcode-20260925
-CPU_UCODE=06-ba-02          # family 6, model 186 (0xBA), stepping 2: hardware/target/lscpu.txt
+
+ROOT_LUKS_UUID=; CPU_UCODE=
+[ ! -e /sources/profile-boot.env ] || source /sources/profile-boot.env
+[ -n "$ROOT_LUKS_UUID" ] || { echo "step6-boot-inside.sh: no ROOT_LUKS_UUID; run scripts/lfs/stage-profile.sh with --luks-uuid" >&2; exit 1; }
 
 logs=/sources/logs
 mkdir -p "$logs" /sources/.done /sources/.track /var/lib/autark/files
@@ -60,33 +67,48 @@ pkg_cpio() {
   make install
 }
 
-# Exactly this laptop's firmware (hardware/target/firmware.txt), plus the old-name links linux-firmware's
-# WHENCE defines for Wi-Fi. SOF audio firmware isn't in linux-firmware (sof-bin, before Step 7b).
+# The profile's firmware (hardware/<profile>/firmware.list), or all of linux-firmware without a list, plus the
+# old-name links linux-firmware's WHENCE defines for Wi-Fi. SOF audio firmware isn't in linux-firmware (sof-bin,
+# before Step 7b).
 step_firmware() {
-  local t; t=$(mktemp -d)
-  tar -xJf /sources/$FW.tar.xz -C "$t" \
-    $FW/i915/adlp_dmc.bin $FW/i915/adlp_guc_70.bin $FW/i915/tgl_huc.bin \
-    $FW/intel/ibt-0040-0041.sfi $FW/intel/ibt-0040-0041.ddc \
-    $FW/rtl_nic/rtl8168h-2.fw \
-    --wildcards "$FW/intel/iwlwifi/iwlwifi-so-a0-gf-a0*"
+  local t list=/sources/profile-firmware.list; t=$(mktemp -d)
+  local -a wanted=()
+  [ ! -s "$list" ] || mapfile -t wanted < <(grep -vE '^[[:space:]]*(#|$)' "$list")
+  if [ "${#wanted[@]}" -gt 0 ]; then
+    tar -xJf /sources/$FW.tar.xz -C "$t" --wildcards "${wanted[@]/#/$FW/}"
+  else
+    tar -xJf /sources/$FW.tar.xz -C "$t"
+  fi
   ( cd "$t/$FW" && find . -type f -exec install -vDm644 {} /usr/lib/firmware/{} \; )
-  for f in "$t/$FW"/intel/iwlwifi/iwlwifi-so-a0-gf-a0*; do
+  for f in "$t/$FW"/intel/iwlwifi/iwlwifi-*; do
+    [ -e "$f" ] || continue
     ln -sfv "intel/iwlwifi/$(basename "$f")" "/usr/lib/firmware/$(basename "$f")"
   done
   rm -rf "$t"
 }
 
-# CPU microcode: the file for this CPU, and an early-load cpio that the boot image puts first, so the
-# microcode loads before anything else (build guide 6.5). The CPU itself rejects microcode Intel didn't sign.
+# CPU microcode, and an early-load cpio that the boot image puts first, so the microcode loads before anything
+# else (build guide 6.5). The CPU itself rejects microcode its vendor didn't sign. With CPU_UCODE set only that
+# Intel file is used; without it the cpio carries every Intel file and every AMD file linux-firmware installed.
 step_microcode() {
-  local t; t=$(mktemp -d)
-  tar -xzf /sources/intel-microcode-20260925.tar.gz -C "$t" "$UCODE/intel-ucode/$CPU_UCODE"
-  install -vDm644 "$t/$UCODE/intel-ucode/$CPU_UCODE" /usr/lib/firmware/intel-ucode/$CPU_UCODE
-  mkdir -p "$t/early/kernel/x86/microcode"
-  cp "$t/$UCODE/intel-ucode/$CPU_UCODE" "$t/early/kernel/x86/microcode/GenuineIntel.bin"
+  local t early; t=$(mktemp -d); early=$t/early/kernel/x86/microcode
+  mkdir -p "$early"
+  if [ -n "$CPU_UCODE" ]; then
+    tar -xzf /sources/intel-microcode-20260925.tar.gz -C "$t" "$UCODE/intel-ucode/$CPU_UCODE"
+    install -vDm644 "$t/$UCODE/intel-ucode/$CPU_UCODE" /usr/lib/firmware/intel-ucode/$CPU_UCODE
+    cp "$t/$UCODE/intel-ucode/$CPU_UCODE" "$early/GenuineIntel.bin"
+  else
+    tar -xzf /sources/intel-microcode-20260925.tar.gz -C "$t" "$UCODE/intel-ucode"
+    install -vDm644 -t /usr/lib/firmware/intel-ucode "$t/$UCODE"/intel-ucode/*
+    cat "$t/$UCODE"/intel-ucode/* > "$early/GenuineIntel.bin"
+    if ls /usr/lib/firmware/amd-ucode/microcode_amd*.bin > /dev/null 2>&1; then
+      cat /usr/lib/firmware/amd-ucode/microcode_amd*.bin > "$early/AuthenticAMD.bin"
+    fi
+  fi
   ( cd "$t/early" && find . | cpio -o -H newc --reproducible ) > /boot/microcode.img
   rm -rf "$t"
 }
+
 
 # dracut-ng (not in BLFS). No man pages (need asciidoc), no Rust cpio helper (no rustc yet).
 pkg_dracut() {

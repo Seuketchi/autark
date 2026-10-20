@@ -1,0 +1,9 @@
+# The firmware files this laptop loads (see firmware.txt), relative to the linux-firmware tree. Patterns are allowed.
+# scripts/lfs/stage-profile.sh copies this file to the build as profile-firmware.list.
+i915/adlp_dmc.bin
+i915/adlp_guc_70.bin
+i915/tgl_huc.bin
+intel/ibt-0040-0041.sfi
+intel/ibt-0040-0041.ddc
+rtl_nic/rtl8168h-2.fw
+intel/iwlwifi/iwlwifi-so-a0-gf-a0*

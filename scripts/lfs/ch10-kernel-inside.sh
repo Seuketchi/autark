@@ -1,10 +1,14 @@
 #!/bin/bash
-# Build guide Step 6.2: Autark's kernel, trimmed to the target laptop. Runs INSIDE the chroot as root, started
-# by ch7-chroot.sh with INSIDE=ch10-kernel-inside.sh. The host copies hardware/target/{kernel.config,lsmod.txt}
-# into $LFS/sources as target-kernel.config and target-lsmod.txt first.
+# Build guide Step 6.2: Autark's kernel. Runs INSIDE the chroot as root, started by ch7-chroot.sh with
+# INSIDE=ch10-kernel-inside.sh, after scripts/lfs/stage-profile.sh has copied a hardware profile into $LFS/sources:
+#   target-kernel.config      the starting config (a distro's, captured by scripts/capture-hardware.sh)
+#   target-lsmod.txt          optional: the modules that machine loads. With it the kernel is trimmed to them
+#                             (localmodconfig); without it every module of the starting config is built, so the
+#                             kernel boots on hardware this script has never seen
+#   profile-kernel.fragment   optional: options only that machine needs, same format as REQUIRED below
 #
-# Order: Ubuntu's config for this laptop → only the modules it loads (localmodconfig) → the required options
-# below → olddefconfig → every required option checked in the final .config (the build stops on a mismatch,
+# Order: the starting config → (only the modules it loads) → the required options below, then the profile's
+# → olddefconfig → every required option checked in the final .config (the build stops on a mismatch,
 # because olddefconfig silently drops an option whose dependencies aren't met).
 set -euo pipefail
 
@@ -193,10 +197,6 @@ MEDIA_SUPPORT m
 MEDIA_USB_SUPPORT y
 USB_VIDEO_CLASS m
 SND_USB_AUDIO m
-# Raptor Lake audio (8086:51ca) is in the Alder Lake SOF family. This option makes no module of its own (it extends
-# the Tiger Lake driver), so localmodconfig dropped it; without it dspcfg falls back to plain HDA and the digital
-# mics are lost (first real boot, log.md).
-SND_SOC_SOF_ALDERLAKE m
 BT_HCIBTUSB m
 TYPEC m
 TYPEC_UCSI m
@@ -208,6 +208,11 @@ ISO9660_FS m
 UDF_FS m
 FUSE_FS m
 EOF
+
+# The profile's own options (hardware/<profile>/kernel.fragment)
+if [ -e /sources/profile-kernel.fragment ]; then
+  REQUIRED+=$'\n'"$(cat /sources/profile-kernel.fragment)"
+fi
 
 apply() {
   local sym val
@@ -247,9 +252,13 @@ set +e
   make mrproper
   cp /sources/target-kernel.config .config
   make olddefconfig
-  # `yes` answers NEW-option prompts with the default. It dies of SIGPIPE when make exits, which pipefail
-  # would count as a failure, so its own status is ignored; make's still counts.
-  (yes '' || true) | make LSMOD=/sources/target-lsmod.txt localmodconfig
+  if [ -e /sources/target-lsmod.txt ]; then
+    # `yes` answers NEW-option prompts with the default. It dies of SIGPIPE when make exits, which pipefail
+    # would count as a failure, so its own status is ignored; make's still counts.
+    (yes '' || true) | make LSMOD=/sources/target-lsmod.txt localmodconfig
+  else
+    echo "== no target-lsmod.txt: generic kernel, every module of the starting config is built"
+  fi
   # Twice: enabling an option can reveal dependent options that a second pass then sets.
   apply; make olddefconfig
   apply; make olddefconfig
