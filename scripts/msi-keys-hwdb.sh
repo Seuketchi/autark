@@ -1,6 +1,6 @@
 #!/bin/bash
 # Teaches the kernel the keys it logs as "Unknown key" on this laptop (hardware/target/udev/70-autark-keyboard.hwdb): today Fn+F4,
-# the touchpad key, as KEY_TOUCHPAD_TOGGLE.
+# Fn+F6, the Bluetooth key, as KEY_BLUETOOTH.
 #
 #   msi-keys-hwdb.sh check      is the mapping installed, and does udev apply it to the keyboard (any user)
 #   msi-keys-hwdb.sh install    copy it to /etc/udev/hwdb.d, rebuild the hardware database and re-apply it to the input devices (root)
