@@ -1,0 +1,8 @@
+# Kernel options only this laptop (MSI Cyborg 15 A13UCK) needs, in the format of REQUIRED in
+# scripts/lfs/ch10-kernel-inside.sh. scripts/lfs/stage-profile.sh copies this file to the build as
+# profile-kernel.fragment.
+
+# Raptor Lake audio (8086:51ca) is in the Alder Lake SOF family. This option makes no module of its own (it extends
+# the Tiger Lake driver), so localmodconfig dropped it; without it dspcfg falls back to plain HDA and the digital
+# mics are lost (first real boot, log.md).
+SND_SOC_SOF_ALDERLAKE m
