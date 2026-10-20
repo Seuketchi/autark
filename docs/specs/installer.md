@@ -19,7 +19,7 @@ Built once per release on a build machine, signed with the project's key, and pu
 | --- | --- |
 | `autark-rootfs-<version>.tar.zst` | The finished system as files: LFS base, generic kernel and modules (`stage-profile.sh generic`), all firmware and microcode, desktop and tools, and the `autark-pkg` database. No keys, no machine-id, no fstab/crypttab, no boot image. |
 | Package repository | Signed `.tar.zst` packages for every recipe, so a user installs and upgrades without compiling (`autark-pkg` reads the project's public key from the rootfs). |
-| `autark-<version>.iso` | A small live system that runs the installer and carries the rootfs tarball. |
+| `autark-installer-<version>.img` | A USB-stick disk image: a live system that runs the installer, and the rootfs tarball. (An `.iso` for optical media and some VM tools comes later; it needs libisoburn or squashfs-tools.) |
 | `SHA256SUMS` + signature | For the above. |
 
 The kernel's module-signing key is the build machine's, so modules built after the release (out-of-tree drivers such as `msi-ec`) cannot load under `MODULE_SIG_FORCE`. They have to be built into the release or into the kernel package, and kernel updates arrive from the repository as packages.
@@ -48,16 +48,16 @@ An installer failure before step 4 leaves the disk untouched. After it, the half
 
 ## Pieces to write
 
-- `autark-install`, a root-only program in the live ISO. A Rust binary fits the rest of the project, but the first version can be a shell script that wraps `sfdisk`, `cryptsetup`, `ukify` and `systemd-cryptenroll`, as the current build scripts do. It should keep every step idempotent and have a `--dry-run` that prints the plan without changing anything.
-- The rootfs and ISO builders, run on the build machine from the finished LFS system. These replace the dd copy in Step 7b.
+- `autark-install`, a root-only program in the live installer image. A Rust binary fits the rest of the project, but the first version can be a shell script that wraps `sfdisk`, `cryptsetup`, `ukify` and `systemd-cryptenroll`, as the current build scripts do. It should keep every step idempotent and have a `--dry-run` that prints the plan without changing anything.
+- The installer-image builder: written (`scripts/make-installer-image.sh`, an unsigned UEFI live image, so Secure Boot must be off to boot the stick), not yet run with a real rootfs because that needs the generic-kernel build. It replaces the dd copy in Step 7b together with `make-rootfs.sh`.
 - A repository publisher: sign the packages, write the index, upload.
-- An installer test: qemu with OVMF (Secure Boot variables), an emulated NVMe disk and a software TPM (`swtpm`), booting the ISO, running the installer unattended, then booting the result and checking that it unlocks.
+- An installer test: qemu with OVMF (Secure Boot variables), an emulated NVMe disk and a software TPM (`swtpm`), booting the installer image (`scripts/qemu-test/install-test.sh`, written, without the TPM and Secure Boot parts), running the installer unattended, then booting the result and checking that it unlocks.
 
 ## Decisions for the first version
 
 Settled 2026-10-20; each can be revisited once something works.
 
-1. **Hosting:** GitHub releases for the rootfs, ISO and package repository. A mirror comes later. The signing key is the project's, kept offline, and its public half ships in the rootfs.
+1. **Hosting:** GitHub releases for the rootfs, installer image and package repository. A mirror comes later. The signing key is the project's, kept offline, and its public half ships in the rootfs.
 2. **Root slots:** a single root. The installer leaves room to add root B later, but does not create it.
 3. **Interface:** text mode. A graphical installer comes after the base works.
 4. **Disks:** a blank disk only. Installing into free space beside other systems comes later, because it is where data loss happens.
@@ -67,4 +67,4 @@ Settled 2026-10-20; each can be revisited once something works.
 1. Rootfs tarball builder and a generic-profile build (needs the build machine to rebuild the kernel with `stage-profile.sh generic`).
 2. `autark-install` against a blank qemu disk, without Secure Boot or the TPM; then add each.
 3. The package repository and `autark-pkg` pointing at it.
-4. ISO builder, then the full qemu test, then a real second machine.
+4. Installer image builder, then the full qemu test, then a real second machine.
