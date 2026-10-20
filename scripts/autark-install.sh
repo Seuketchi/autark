@@ -10,6 +10,7 @@
 # (--passphrase-file, --user-password-file), never from arguments, and live in a 0700 folder on tmpfs until exit.
 # --log FILE also writes everything it prints to FILE (readable by the user who ran sudo), ending with its exit status.
 # --cmdline-extra "ARGS" adds kernel options to the new system (e.g. "console=ttyS0,115200" to watch a qemu test boot).
+# --autologin logs the new user in on the first console without a password (the disk passphrase is then the only lock).
 # --until configure stops after the machine's files are written (before the boot image) and shows them; a test aid.
 # --image FILE works on a disk image file instead of a device (for tests: it is attached as a loop device).
 set -euo pipefail
@@ -20,7 +21,7 @@ if [ -z "${AUTARK_INSTALL_NS:-}" ] && [ "$(id -u)" = 0 ] && command -v unshare >
   case " $* " in *" --dry-run "*|*" -n "*|*" -h "*|*" --help "*) ;; *) export AUTARK_INSTALL_NS=1; exec unshare --mount --propagation private "$0" "$@" ;; esac
 fi
 
-DISK= IMAGE= ROOTFS= PUBKEY= HOSTNAME_= USER_= DRY=0 NOVERIFY=0 CONFIRM= PASSFILE= USERPASSFILE= UNTIL=boot LOG= CMDEXTRA=
+DISK= IMAGE= ROOTFS= PUBKEY= HOSTNAME_= USER_= DRY=0 NOVERIFY=0 CONFIRM= PASSFILE= USERPASSFILE= UNTIL=boot LOG= CMDEXTRA= AUTOLOGIN=0
 usage() { sed -n '2,/^set -e/p' "$0" | sed '$d;s/^# \{0,1\}//' >&2; exit 2; }
 die() { echo "autark-install: $*" >&2; exit 1; }
 
@@ -40,6 +41,7 @@ while [ $# -gt 0 ]; do
     --until) UNTIL=${2:?}; shift ;;
     --log) LOG=${2:?}; shift ;;
     --cmdline-extra) CMDEXTRA=${2:?}; shift ;;
+    --autologin) AUTOLOGIN=1 ;;
     --dry-run|-n) DRY=1 ;;
     -h|--help) usage ;;
     *) echo "unknown option: $1" >&2; usage ;;
@@ -278,6 +280,17 @@ inchroot() { if [ "$DRY" = 1 ]; then printf '  + (in the new system) %s\n' "$*";
 HERE=$(cd "$(dirname "$0")" && pwd)
 run install -m 0755 "$HERE/autark-mkuki.sh" "$MNT/usr/sbin/autark-mkuki"
 run install -m 0755 "$HERE/autark-tpm-enroll.sh" "$MNT/usr/sbin/autark-tpm-enroll"
+# Host keys are this machine's own (the release leaves them out). The release ships sshd switched off; with keys in
+# place it works as soon as it is enabled.
+inchroot 'command -v ssh-keygen > /dev/null && ssh-keygen -A'
+if [ "$AUTOLOGIN" = 1 ]; then
+  run install -d "$MNT/etc/systemd/system/getty@tty1.service.d"
+  write etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/usr/sbin/agetty --autologin $USER_ --noreset --noclear - \${TERM}
+EOF
+fi
 inchroot autark-mkuki
 if [ -d /sys/firmware/efi ] && command -v efibootmgr > /dev/null 2>&1 && [ -z "$IMAGE" ]; then
   run efibootmgr --create --disk "$DEV" --part 1 --label Autark --loader '\EFI\Linux\autark.efi'
