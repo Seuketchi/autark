@@ -1162,7 +1162,7 @@ EOF
 
 # [Autark] bluez5/alsa/libsystemd forced on so a missing dependency fails the build; no GStreamer, PulseAudio
 # client, V4L2 or JACK (PipeWire has its own PulseAudio server module); tests off (they need a running daemon).
-# Its user units (pipewire.socket, pipewire-pulse.socket) are installed but not enabled.
+# Its user units (pipewire.socket, pipewire-pulse.socket) are installed; step_services enables them.
 pkg_pipewire() {
   mkdir build
   cd    build
@@ -1220,7 +1220,7 @@ pkg_iwd() {
 # directly avoids the Makefile, which wants a private signing key to regenerate them. The kernel reads them from
 # /usr/lib/firmware (merged usr: same as /lib/firmware).
 # [Autark] What starts by itself: iwd (Wi-Fi), with systemd-networkd doing DHCP on any wireless link like the
-# wired one; PipeWire and WirePlumber for every user session. Bluetooth stays off until wanted (systemctl enable
+# wired one; PipeWire, its PulseAudio socket and WirePlumber for every user session. Bluetooth stays off until wanted (systemctl enable
 # --now bluetooth). sshd stays off.
 step_services() {
   cat > /etc/systemd/network/20-wireless-dhcp.network << "EOF"
@@ -1234,7 +1234,9 @@ EOF
   systemctl enable iwd.service
   # pipewire.service too, not only its socket: socket activation starts PipeWire on the first client, so the first
   # `wpctl status` after login saw no devices (WirePlumber still scanning). Starting it at login avoids that.
-  systemctl --global enable pipewire.socket pipewire.service wireplumber.service
+  # pipewire-pulse.socket is the PulseAudio server that Firefox and most other apps play sound through; without it
+  # they have no audio (YouTube was silent on the laptop until it was enabled, log.md).
+  systemctl --global enable pipewire.socket pipewire.service pipewire-pulse.socket wireplumber.service
 }
 
 pkg_wireless_regdb() {
