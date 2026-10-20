@@ -1,6 +1,7 @@
-# libglvnd 1.7.0: libGL, libGLX and libOpenGL for programs that link them (Viber, Qt). EGL and GLES stay with Mesa
-# (Mesa installs those libraries itself), so this package carries only the GL/GLX dispatch libraries. Its headers and
-# pkg-config files are dropped: Mesa owns /usr/include/GL and KHR, and nothing here builds against libGL.
+# libglvnd 1.7.0: the vendor-neutral GL dispatch layer: libGL, libGLX, libOpenGL, libEGL, libGLESv1_CM and libGLESv2.
+# Programs link these (Viber's bundled Qt6 needs libOpenGL and libGLX, and crashes without a glvnd-aware Mesa), and glvnd
+# passes their calls to the driver Mesa installs as libEGL_mesa.so.0 (mesa.sh builds with glvnd=enabled). It takes over
+# libEGL.so.1 and the GLES libraries and headers that Mesa used to install itself, so install it together with mesa.
 # The sha256 is of GitLab's tag archive, as downloaded 2026-10-20.
 name=libglvnd
 version=1.7.0
@@ -17,10 +18,9 @@ build() {
   meson setup ..             \
         --prefix=/usr        \
         --buildtype=release  \
-        -D egl=false         \
-        -D gles1=false       \
-        -D gles2=false
+        -D egl=true          \
+        -D gles1=true        \
+        -D gles2=true
   ninja
   DESTDIR="$DESTDIR" ninja install
-  rm -r "$DESTDIR"/usr/include "$DESTDIR"/usr/lib/pkgconfig
 }
