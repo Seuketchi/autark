@@ -170,3 +170,4 @@ vulkan-loader
 vulkan-tools
 temurin-jdk
 gradle
+qemu
