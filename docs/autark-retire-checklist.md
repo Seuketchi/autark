@@ -50,10 +50,13 @@ a step says so, and those steps are for Tan to run as root.
 ## D. Things only the other systems do today
 
 14. [TODO] MSI firmware / BIOS / EC updates: usually need Windows or MSI's own tools. Decide: do the last update before wiping Windows.
-15. [TODO] Fan and thermal control: this laptop reaches 90+ C under load; MSI Center (Windows) sets fan profiles. On Linux look at the
-    msi-ec driver / manual fan control; without it heavy builds need the thermal guard.
-16. [TODO] NVIDIA RTX GPU: no driver on Autark, so the dGPU is idle (games, GPU compute, video encode, external displays on some
-    ports). Decide: add the open kernel modules + userspace, or accept iGPU only.
+15. [PARTLY, 2026-10-20] Fan and thermal control: this laptop reaches 90+ C under load; MSI Center (Windows) sets fan profiles. The newer
+    out-of-tree `msi-ec` driver is built, signed and loads (`scripts/msi-ec-module.sh`; fan mode, shift mode, cooler boost, charge limit
+    and backlight controls appear under `/sys/devices/platform/msi-ec/`, and the charge limit of 80% is checked). Setting a fan mode has not
+    been tried, and heavy builds still use the thermal guard. See [verified-on-laptop.md](verified-on-laptop.md).
+16. [PARTLY, 2026-10-20] NVIDIA RTX GPU: the open `nouveau` driver is built as a signed module (`scripts/nouveau-module.sh`) and loads, and the
+    GPU suspends when idle. 3D and Vulkan still need Mesa rebuilt with NVK. Games, GPU compute, video encode and external displays on the
+    dGPU's ports are not checked.
 17. [TODO] Apps and files that only exist on Ubuntu/Windows (Office, games, anything licensed): list them, move or replace each.
 18. [TODO] Windows: BitLocker/licence key, anything needing a Windows licence later. Back up the licence key before deleting.
 
