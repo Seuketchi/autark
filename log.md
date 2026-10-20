@@ -638,3 +638,13 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
   `--auth-user-pass`; a 2FA code (static-challenge) is still asked each time. With none, openvpn asks as before.
 - `autark-vpn` with no argument now marks the profiles that have a saved login.
 - Still untested against a real server: waiting for the work VPN logins.
+
+## 2026-10-20 — Vulkan loader and vulkaninfo; NVK works on the RTX 3050
+
+- New recipes `vulkan-headers`, `vulkan-loader` and `vulkan-tools` 1.4.357.0 (the same Vulkan SDK release as `spirv-tools`). The loader is
+  Wayland-only (no X11 libraries here); `vulkaninfo` is built without `vkcube` and without the mock driver (`BUILD_ICD=OFF`).
+- With `mesa` 26.1.7-3 (NVK and nouveau, PR #30) installed, `vulkaninfo --summary` lists three devices: `NVIDIA GeForce RTX 3050 Laptop GPU
+  (NVK GA107)` (discrete, Vulkan 1.4 conformance 1.4.3.0), `Intel(R) Graphics (RPL-P)` and `llvmpipe`. Three "ICD does not export
+  vkGetPhysicalDeviceDisplayProperties…" loader warnings are harmless (NVK doesn't implement those display extensions).
+- Only listing the devices was tested, not a workload. Mesa's nouveau OpenGL driver does not start on the NVIDIA chip (`failed to create dri2
+  screen`, checked with a small EGL program); the Intel and llvmpipe EGL devices work.

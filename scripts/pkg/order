@@ -165,3 +165,6 @@ libva
 openssl3-libs
 krb5
 libssh
+vulkan-headers
+vulkan-loader
+vulkan-tools
