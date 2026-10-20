@@ -614,3 +614,19 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
 - Viber ignores SIGTERM and SIGINT; close it from its own quit menu. The profile is the user's own activation in `~/.ViberPC`, made on
   Autark, not copied from Ubuntu.
 - `mesa.sh` here conflicts with the uncommitted NVK edits on branch `nvk-mesa` (both are release 2): merge by hand and bump to release 3.
+## 2026-10-20 — Ubuntu removed, /home moved to a 160 GiB volume
+
+- Backups first: `~/backup-from-ubuntu` (keys, diffs, bundles, secrets) and the keep list (Downloads, Grad Photos, Gov Docs) were copied to the
+  encrypted partition of a USB stick with `scripts/make-recovery-usb.sh` (GParted Live 1.8.1-6 on the first partition, boots with Secure
+  Boot on); `verify` read all 433 files back and every checksum matched. An encrypted copy of `backup-from-ubuntu` (openssl AES-256, zstd)
+  was made for cloud storage (restore: `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 | zstd -dq | tar -x`).
+- Boot order set to Autark first (`0001,0000,0003,0005,0004`) and the Ubuntu entries removed.
+- GParted Live: deleted Ubuntu (p5) and the unformatted root B (p8), grew root A (p7) to 55 GiB, made a new 160 GiB p5. Root grown from
+  Autark: `cryptsetup resize autark`, `resize2fs /dev/mapper/autark`. The old 10 GiB p9 `/home` is kept for a week, then it is deleted and root
+  grows to 65 GiB; ~64.6 GiB stay unallocated for root B.
+- `scripts/migrate-home.sh all /dev/nvme0n1p5`: LUKS2 with the same key file, plus a recovery passphrase, ext4, `cp -a`, a full comparison
+  (metadata and sha256 of every file), then `/etc/crypttab` points at the new UUID (backup `/etc/crypttab.bak-before-newhome-<time>`).
+  After the reboot `/home` is 157 GiB with 141 GiB free.
+- Lessons: tty1 auto-logs in (`login -f`), so killing the session starts a new desktop. Before the script, stop it with
+  `systemctl stop getty@tty1`, then `loginctl terminate-user tan`; `fuser -vm /home` must list nothing. `blkid -p` exits 0 whenever a
+  partition-table entry exists, so the blank check asks for `TYPE` and `PTTYPE` only; and `blkid` is not on a user's PATH (`/usr/sbin`).
