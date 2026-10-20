@@ -54,12 +54,15 @@ run() { if [ "$DRY" = 1 ]; then printf '  + %s\n' "$*"; else "$@"; fi; }
 say() { printf '== %s\n' "$*"; }
 
 SECRETS= LOOP= MNT=/mnt/autark-install
+# The installer's own mapper names: the installed system calls its volumes autark and autark-home (fstab, crypttab and the
+# kernel command line below), and a machine that already runs Autark has those names taken.
+MAPR=autark-install-root MAPH=autark-install-home
 cleanup() {
   set +e
   if [ "$DRY" = 0 ]; then
     mountpoint -q "$MNT" && umount -R "$MNT"
-    [ -e /dev/mapper/autark-home ] && cryptsetup close autark-home
-    [ -e /dev/mapper/autark ] && cryptsetup close autark
+    [ -e /dev/mapper/$MAPH ] && cryptsetup close $MAPH
+    [ -e /dev/mapper/$MAPR ] && cryptsetup close $MAPR
     [ -z "$LOOP" ] || losetup -d "$LOOP"
   fi
   [ -z "$SECRETS" ] || rm -rf "$SECRETS"
@@ -164,17 +167,17 @@ say "formatting"
 run mkfs.vfat -F 32 -n ESP "$P1"
 DISKKEY=${SECRETS:+$SECRETS/disk}; DISKKEY=${DISKKEY:-<passphrase file>}
 run cryptsetup luksFormat --type luks2 --batch-mode --key-file "$DISKKEY" "$P2"
-run cryptsetup open --key-file "$DISKKEY" "$P2" autark
-run mkfs.ext4 -q -L autark /dev/mapper/autark
+run cryptsetup open --key-file "$DISKKEY" "$P2" "$MAPR"
+run mkfs.ext4 -q -L autark /dev/mapper/$MAPR
 HOMEKEY=$MNT/etc/cryptsetup-keys.d/autark-home.key
 run mkdir -p "$MNT"
-run mount /dev/mapper/autark "$MNT"
+run mount /dev/mapper/$MAPR "$MNT"
 run install -d -m 0700 "$MNT/etc/cryptsetup-keys.d"
 run dd if=/dev/urandom of="$HOMEKEY" bs=64 count=1 status=none
 run chmod 0400 "$HOMEKEY"
 run cryptsetup luksFormat --type luks2 --batch-mode --key-file "$HOMEKEY" "$P3"
-run cryptsetup open --key-file "$HOMEKEY" "$P3" autark-home
-run mkfs.ext4 -q -L autark-home /dev/mapper/autark-home
+run cryptsetup open --key-file "$HOMEKEY" "$P3" "$MAPH"
+run mkfs.ext4 -q -L autark-home /dev/mapper/$MAPH
 
 # --- 4. unpack ------------------------------------------------------------------------------------------------------
 say "checking and unpacking $(basename "$ROOTFS")"
@@ -186,7 +189,7 @@ else
   zstd -dc "$ROOTFS" | tar -x -C "$MNT" --numeric-owner --xattrs --acls -p
 fi
 run mkdir -p "$MNT/home" "$MNT/boot/efi"
-run mount /dev/mapper/autark-home "$MNT/home"
+run mount /dev/mapper/$MAPH "$MNT/home"
 run mount "$P1" "$MNT/boot/efi"
 
 # --- 5. the machine's own files -------------------------------------------------------------------------------------
