@@ -8,10 +8,11 @@
 #
 # --dry-run prints every command and changes nothing. Secrets are only ever read from a prompt or from files
 # (--passphrase-file, --user-password-file), never from arguments, and live in a 0700 folder on tmpfs until exit.
+# --until configure stops after the machine's files are written (before the boot image) and shows them; a test aid.
 # --image FILE works on a disk image file instead of a device (for tests: it is attached as a loop device).
 set -euo pipefail
 
-DISK= IMAGE= ROOTFS= PUBKEY= HOSTNAME_= USER_= DRY=0 NOVERIFY=0 CONFIRM= PASSFILE= USERPASSFILE=
+DISK= IMAGE= ROOTFS= PUBKEY= HOSTNAME_= USER_= DRY=0 NOVERIFY=0 CONFIRM= PASSFILE= USERPASSFILE= UNTIL=boot
 usage() { sed -n '2,/^set -e/p' "$0" | sed '$d;s/^# \{0,1\}//' >&2; exit 2; }
 die() { echo "autark-install: $*" >&2; exit 1; }
 
@@ -27,6 +28,7 @@ while [ $# -gt 0 ]; do
     --passphrase-file) PASSFILE=${2:?}; shift ;;
     --user-password-file) USERPASSFILE=${2:?}; shift ;;
     --confirm-erase) CONFIRM=${2:?}; shift ;;
+    --until) UNTIL=${2:?}; shift ;;
     --dry-run|-n) DRY=1 ;;
     -h|--help) usage ;;
     *) echo "unknown option: $1" >&2; usage ;;
@@ -35,6 +37,7 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$DISK$IMAGE" ] || usage
+case $UNTIL in boot|configure) ;; *) die "--until: boot or configure" ;; esac
 [ -z "$DISK" ] || [ -z "$IMAGE" ] || die "give --disk or --image, not both"
 [ -n "$ROOTFS" ] && [ -n "$HOSTNAME_" ] && [ -n "$USER_" ] || usage
 [[ $HOSTNAME_ =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] || die "hostname: lowercase letters, digits and dashes"
@@ -218,6 +221,17 @@ else
   grep -q '^wheel:' "$MNT/etc/group" && groups=(-G wheel) || groups=()
   useradd --root "$MNT" -m -s /bin/bash "${groups[@]}" "$USER_"
   printf '%s:%s\n' "$USER_" "$(cat "$SECRETS/user")" | chpasswd --root "$MNT"
+fi
+
+if [ "$UNTIL" = configure ]; then
+  say "stopping before the boot image (--until configure); what was written:"
+  if [ "$DRY" = 0 ]; then
+    lsblk -f "$DEV"
+    for f in etc/fstab etc/crypttab etc/hostname etc/kernel/cmdline; do echo "--- $f"; cat "$MNT/$f"; done
+    echo "--- $USER_ in etc/passwd"; grep "^$USER_:" "$MNT/etc/passwd"
+    echo "--- machine-id: $(wc -c < "$MNT/etc/machine-id") bytes; home key: $(stat -c '%a %s bytes' "$HOMEKEY")"
+  fi
+  exit 0
 fi
 
 # --- 6. boot image --------------------------------------------------------------------------------------------------
