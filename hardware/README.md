@@ -12,10 +12,15 @@ Each profile holds `lscpu.txt`, `memory.txt`, `lspci.txt`, `lsusb.txt`, `lsmod.t
 
 ## Using a profile
 
-`LFS=/mnt/lfs scripts/lfs/stage-profile.sh <profile>` copies the profile's kernel inputs into `$LFS/sources` for `scripts/lfs/ch10-kernel-inside.sh`:
+`LFS=/mnt/lfs scripts/lfs/stage-profile.sh <profile> --luks-uuid <uuid>` copies the profile's inputs into `$LFS/sources` for the kernel script (`ch10-kernel-inside.sh`) and the boot script (`step6-boot-inside.sh`):
 
 - `kernel.config` is the starting config.
-- `lsmod.txt` trims the kernel to the modules that machine loads. Add `--generic` (or leave `lsmod.txt` out) and every module of the starting config is built, which boots on hardware the profile never saw but takes longer.
+- `lsmod.txt` trims the kernel to the modules that machine loads.
 - `kernel.fragment` (optional) lists options only that machine needs, in the format of `REQUIRED` in the kernel script.
+- `firmware.list` (optional) is the firmware files that machine loads, one pattern per line, relative to the linux-firmware tree.
+- `boot.env` (optional) sets `CPU_UCODE`, the one Intel microcode file for its CPU.
+- `--luks-uuid` is the UUID of the encrypted root. It belongs to one installed disk, so it is never kept in a profile.
 
-Still tied to the `target` laptop and not yet profile-driven: the firmware files, CPU microcode and root LUKS UUID in `scripts/lfs/step6-boot-inside.sh`, and the `msi-*` and `nouveau-module.sh` scripts.
+`--generic` leaves out `lsmod.txt`, `kernel.fragment`, `firmware.list` and `boot.env`: the kernel keeps every module, all of linux-firmware is installed, and the early microcode image carries every Intel and AMD file, so the same build boots on hardware the profile never saw. It's larger and slower to build.
+
+Still tied to the `target` laptop: the `msi-*` and `nouveau-module.sh` scripts, and the Secure Boot enrolment through Ubuntu's shim in Step 7b.
