@@ -26,3 +26,7 @@ The Rust tools (shell, Kith's daemon, Notes, Files, the package manager and more
 ## Status
 
 The specs are settled. The build hasn't started yet; see the [roadmap](docs/specs/roadmap.md).
+
+## Licence
+
+Autark's own code, scripts and documents are licensed under either of [Apache License 2.0](LICENSE-APACHE) or [MIT licence](LICENSE-MIT), at your option. The software the recipes in `scripts/pkg/` build keeps its own licences.
