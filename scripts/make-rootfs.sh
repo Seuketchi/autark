@@ -44,7 +44,7 @@ EXCLUDES=(
   ./var/lib/dbus/machine-id ./var/lib/systemd/linger
   ./etc/machine-id ./etc/hostname ./etc/fstab ./etc/crypttab ./etc/kernel/cmdline ./etc/cryptsetup-keys.d
   './etc/ssh/ssh_host_*' ./etc/autark/secureboot ./etc/autark/pkg-secret.key ./etc/autark/*.key
-  ./etc/sudoers.d ./etc/resolv.conf ./etc/openvpn ./etc/adjtime
+  ./etc/crypttab.bak* ./etc/sudoers.d ./etc/resolv.conf ./etc/openvpn ./etc/adjtime
   ./boot/efi ./boot/initramfs-*.img ./boot/*.old
   './root/.*' ./etc/shadow- ./etc/passwd- ./etc/group- ./etc/gshadow-
 )
