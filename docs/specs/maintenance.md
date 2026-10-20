@@ -11,14 +11,26 @@ Autark stays secure with a weekly check and a monthly update session, and every 
 | Major upgrades | Each new LFS release you choose to adopt, about once a year | A/B rebuild (below) |
 | Health report | Weekly, from Kith | A task notification (below) |
 | Firmware and microcode | Checked in the monthly batch | `fwupd` for BIOS, SSD and dock firmware; microcode updates arrive with linux-firmware and Intel's microcode releases |
-| Out-of-tree drivers | On every kernel update | Their `kmod-<name>.sh` scripts rebuild and sign them before the reboot |
+| Out-of-tree drivers and the Rust init's boot image | On every kernel update | `scripts/autark-kernel-post.sh` (below) |
 
 Nothing updates itself. Kith reports, you decide, and the scripts (later `autark-pkg`) do the work.
+
+## After a kernel update
+
+A kernel update wipes `/usr/lib/modules/<kver>/updates` (the out-of-tree `msi-ec` and `nouveau` drivers) and leaves the Rust init's boot image built for the old kernel. The kernel's own install boots through dracut's image, which is safe. Then, from the new kernel:
+
+```
+bash scripts/autark-kernel-post.sh check build             # as yourself: compiles both drivers and the init, checks the image
+su -c 'bash scripts/autark-kernel-post.sh install'         # as root: signs and loads the drivers, makes the Rust init the default
+autark-hw doctor                                           # "Every device that needs a driver has one"; then reboot once
+```
+
+`check` says what is missing without changing anything. `build` refuses unless `autark-tools` is on a clean `main` (this becomes the default boot). `install` refuses to promote the Rust image unless dracut's image in `EFI/Linux` is for the running kernel, because that image is the way back. `NO_DEFAULT=1` installs the drivers and builds the Rust image but leaves the normal entry alone, for a `try` boot first. `install` also adds `/etc/modules-load.d/msi-ec.conf`, since `msi-ec` has no alias and nothing else loads it after a reboot.
 
 ## Undo
 
 - **Packages:** the last two builds of every package are kept as archives in `/var/cache/autark/pkgs/`. Rolling back means reinstalling the older archive, using the package's file list to remove the newer one cleanly.
-- **Kernel:** the previous signed kernel image stays as the "Autark (previous)" boot entry.
+- **Kernel:** the previous signed kernel image stays as the "Autark (previous)" boot entry, until the Rust init is made the default: then "Autark (previous)" boots dracut's image for the current kernel (the way back from the Rust init; `autark-rust-initramfs.sh undefault` makes dracut the normal entry again).
 - **Data:** a rustic backup runs at the start of every update session.
 
 ## Major upgrades: A/B roots
