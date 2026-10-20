@@ -17,6 +17,7 @@
 # emergency shell and put /etc/crypttab.bak-before-newhome-* back.
 
 set -eu
+PATH=$PATH:/usr/sbin:/sbin
 
 KEY=${HOME_KEY:-/etc/cryptsetup-keys.d/autark-home.key}
 CRYPTTAB=${CRYPTTAB:-/etc/crypttab}
@@ -61,11 +62,17 @@ check_target() {
   command -v cryptsetup >/dev/null || die "cryptsetup is missing"
 }
 
+# What file system, encryption, RAID or partition table is on it, if any. A bare `blkid -p` also prints the partition's own entry
+# (PART_ENTRY_*), which is not a signature, so only the types are asked for.
+signature() {
+  command -v blkid >/dev/null || die "blkid is missing: cannot tell whether $1 is blank"
+  { blkid -p -o value -s TYPE "$1" 2>/dev/null; blkid -p -o value -s PTTYPE "$1" 2>/dev/null; } | tr '\n' ' ' | sed 's/ $//'
+}
+
 # Whether the partition is still blank, for prepare.
 check_blank() {
-  if blkid -p "$1" >/dev/null 2>&1; then
-    die "$1 already has a file system or encryption on it ($(blkid -p -o value -s TYPE "$1")). Prepare only takes an empty one."
-  fi
+  sig=$(signature "$1")
+  [ -z "$sig" ] || die "$1 already has a file system or encryption on it ($sig). Prepare only takes an empty one."
 }
 
 report() {
@@ -207,7 +214,13 @@ main() {
     check)
       check_target "$dev"
       report "$dev"
-      echo "-- looks usable for: $(cryptsetup isLuks "$dev" 2>/dev/null && echo 'copy and switch' || { blkid -p "$dev" >/dev/null 2>&1 && echo 'nothing (it has a signature but is not LUKS)' || echo 'prepare'; })"
+      if cryptsetup isLuks "$dev" 2>/dev/null; then
+        echo "-- looks usable for: copy and switch"
+      elif [ -n "$(signature "$dev")" ]; then
+        echo "-- looks usable for: nothing (it has a $(signature "$dev") signature but is not LUKS)"
+      else
+        echo "-- looks usable for: prepare"
+      fi
       ;;
     prepare)
       check_target "$dev"; check_blank "$dev"; report "$dev"
