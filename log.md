@@ -567,3 +567,29 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
   mounted read-only and checked; the irreplaceable files were copied into `~/backup-from-ubuntu` (owner-only, holds private
   keys, so encrypt before it leaves the laptop) and every copy was compared byte for byte. The large photos and one video
   did not fit in `/home` and still need a USB drive or cloud storage.
+
+## 2026-10-20 — OpenVPN, terminal tools from Ubuntu, Kith answers
+
+- Ubuntu's disk (`/dev/nvme0n1p5`) mounted read-only at `/mnt/ubuntu-ro` (`ro,noload,nodev,nosuid,noexec`) to bring things across. Still mounted
+  when this was written; `sudo umount /mnt/ubuntu-ro` when done. Not copied: Ubuntu's Claude login (`.credentials.json`) and
+  `work-otel-headers.sh`. The files copied were scanned for secrets first (none found).
+- VPN: Ubuntu had two OpenVPN profiles. They're in `~/.config/openvpn/{work,the-mobile-app}/` (folders 0700, files 0600). the work account's `.ovpn` lost its
+  NetworkManager-only `user`/`group nm-openvpn` lines and now points at its `.pem` files there; the mobile app's is unchanged (inline keys, asks for a
+  2FA code). Saved usernames and passwords lived in Ubuntu's keyring and weren't copied. **Not yet tested: no connection has been made.**
+- Packages (recipes in `scripts/pkg/`, installed with `autark-pkg install`): openvpn 2.7.8, libcap-ng 0.9.6 (OpenVPN needs it on Linux),
+  tmux 3.8, libevent 2.1.13, starship 1.27.0, eza 0.23.5, bat 0.26.1, atuin 18.24.1. OpenVPN is built with iproute2 (no kernel offload, no
+  libnl), without LZO; its tarball's sha256 matched on GitHub and on swupdate.openvpn.org, but its `.asc` signature wasn't checked (no gpg).
+  The Rust tools are built from the crates.io `.crate` files, whose sha256 match the crates.io index, with `--locked`; the build needs the
+  network. The `autark-build` user didn't exist and was created with the command autark-pkg's error gives.
+  `openvpn` installs to `/usr/sbin`, which isn't on a user's PATH here; `autark-vpn` calls it by full path.
+- `scripts/autark-vpn.sh` (linked as `~/.local/bin/autark-vpn`): `autark-vpn <name>` connects in the foreground through sudo, `autark-vpn down <name>`
+  disconnects, no argument lists the profiles. DNS goes to systemd-resolved through OpenVPN's own `dns-updown`.
+- Shell: zsh was left out; Autark runs bash. `~/.bashrc` got a block (each tool used only when installed): `eza`/`bat` aliases without
+  `--icons` (no Nerd Font here), `gs`, `reload`, atuin and starship. `~/.tmux.conf` is the Ubuntu one without TPM and its plugins
+  (resurrect, continuum). The Ubuntu starship and atuin configs, and `bash-preexec`, were copied. The Ubuntu zshrc, tmux config and Claude
+  `CLAUDE.md`/`settings.json` are staged, unused, in `~/ubuntu-import/`; 80 skills, one command and `statusline.sh` were copied into
+  `~/.claude` (list in `~/ubuntu-import/claude/copied-manifest.txt`).
+- Kith (in autark-tools): answers now use a prompt that lists what Kith can do when asked, a lower temperature, and `answer_model` under
+  `[ollama]` in ai.toml. This laptop has `model = "gemma3:4b"` and `answer_model = "gemma3:12b"`; the 12B model is about three times slower
+  (5.5 against 16 tokens/s) and writes better answers. "What can you do" is answered from code, not the model.
+- Open: lock screen flicker (no cause found; waiting on when it happens), the VPNs untested, `/home` at 89%.
