@@ -1,6 +1,6 @@
 # Installer design
 
-Step 2 of making Autark installable by someone else ([open-source goal](../autark-opensource-checklist.md)). Today Autark is built by hand on the laptop it runs on, into a disk image that is copied over (build guide, Steps 1 to 7). This document describes how a stranger gets the same result on their machine without building Linux From Scratch. Nothing here exists yet.
+Step 2 of making Autark installable by someone else. Today Autark is built by hand on the laptop it runs on, into a disk image that is copied over (build guide, Steps 1 to 7). This document describes how a stranger gets the same result on their machine without building Linux From Scratch. Nothing here exists yet.
 
 ## Goals
 

@@ -9,7 +9,7 @@
 #   msi-ec-module.sh load       load it and show what it created and what the kernel said (root)
 #   msi-ec-module.sh remove     unload it and delete it again, back to the kernel's own driver (root)
 #
-# As root on Autark:  su -c 'sh /home/tan/autark/scripts/msi-ec-module.sh build install load'
+# As root on Autark:  su -c 'sh scripts/msi-ec-module.sh build install load'   (from the repository's root)
 # Loading only reads from the controller (the driver's init checks one bit); nothing is written until someone sets a fan mode, a charge
 # limit or a backlight. A kernel build wipes /usr/lib/modules/<kver>, so after one, run  build install  again for the new kernel.
 set -euo pipefail

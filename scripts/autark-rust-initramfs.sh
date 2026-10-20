@@ -25,7 +25,7 @@
 # in EFI/autark, so run  build uki default  again for the new kernel.
 set -euo pipefail
 
-INIT_BIN=${INIT_BIN:-/home/tan/autark-tools/target/release/autark-init}
+INIT_BIN=${INIT_BIN:-$HOME/autark-tools/target/release/autark-init}
 KVER=${KVER:-$(uname -r)}
 WORK=${WORK:-/var/tmp/autark-rust-initramfs}
 OUT=${OUT:-/boot/initramfs-rust-$KVER.img}

@@ -4,7 +4,7 @@
 # No kernel or boot steps. Already-built packages are skipped.
 set -euo pipefail
 LFS=/mnt/lfs
-REPO=/home/tan/personal/autark
+REPO=$(cd "$(dirname "$0")/.." && pwd)
 mountpoint -q $LFS || { echo "$LFS is not mounted"; exit 1; }
 [ "$(findmnt -no SOURCE $LFS)" = /dev/mapper/autark ] || { echo "$LFS is not Autark's root"; exit 1; }
 

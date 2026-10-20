@@ -7,7 +7,7 @@
 #   sh autark-init-bundle.sh            writes ~/autark-init-test-bundle.tar  (OUT=… to change)
 set -euo pipefail
 
-TOOLS=${TOOLS:-/home/tan/autark-tools}
+TOOLS=${TOOLS:-$HOME/autark-tools}
 INIT_BIN=${INIT_BIN:-$TOOLS/target/release/autark-init}
 PAYLOAD=${PAYLOAD:-$TOOLS/target/release/autark-init-test-payload}
 KVER=${KVER:-$(uname -r)}

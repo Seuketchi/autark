@@ -8,8 +8,8 @@
 #   autark-kernel-post.sh install   sign and install both drivers and load them, then build the Rust boot image and make it the default (root)
 #
 # The usual sequence, from the new kernel (the kernel install itself, kernel-install.sh-style, comes first and boots through dracut):
-#   bash /home/tan/autark/scripts/autark-kernel-post.sh check build
-#   su -c 'bash /home/tan/autark/scripts/autark-kernel-post.sh install'
+#   bash scripts/autark-kernel-post.sh check build
+#   su -c 'bash scripts/autark-kernel-post.sh install'   (from the repository's root)
 #   autark-hw doctor            "Every device that needs a driver has one", then reboot once to start the Rust init for this kernel
 #
 # NO_DEFAULT=1 installs the drivers and builds the Rust image but leaves the normal entry alone: try it first with
@@ -19,7 +19,7 @@ set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 KVER=${KVER:-$(uname -r)}
-TOOLS=${TOOLS:-/home/tan/autark-tools}
+TOOLS=${TOOLS:-$HOME/autark-tools}
 TARBALL=${TARBALL:-/sources/linux-$KVER.tar.xz}
 NOUVEAU_TREE_ROOT=${NOUVEAU_TREE_ROOT:-/var/tmp/autark-nouveau-src}   # holds only drivers/gpu/drm/nouveau, taken out of the tarball
 INIT_WORK=${INIT_WORK:-/var/tmp/autark-rust-initramfs-user}           # the any-user build and selftest; root's build uses the script's own
