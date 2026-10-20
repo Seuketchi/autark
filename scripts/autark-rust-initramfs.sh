@@ -156,7 +156,22 @@ uki() {
 
 entry_number() { efibootmgr | sed -n "s/^Boot\([0-9A-Fa-f]\{4\}\)\*\{0,1\} $LABEL.*/\1/p" | head -1; }
 
-enORDER_FILE=$ENTRY_DIR/bootorder-before
+entry() {
+  need_root entry; need_autark entry
+  [ -e "$ENTRY_DIR/grubx64.efi" ] || die "run uki first"
+  if [ -n "$(entry_number)" ]; then echo "the entry is already there: Boot$(entry_number)"; return 0; fi
+  local before dev disk part
+  before=$(efibootmgr | sed -n 's/^BootOrder: //p')
+  dev=$(findmnt -no SOURCE "$ESP")
+  disk=/dev/$(lsblk -no PKNAME "$dev")
+  part=$(cat "/sys/class/block/$(basename "$dev")/partition")
+  efibootmgr --create --disk "$disk" --part "$part" --label "$LABEL" --loader '\EFI\autark-rust\shimx64.efi' >/dev/null
+  # efibootmgr puts a new entry first. Put the order back, so nothing changes unless you ask for it.
+  efibootmgr --bootorder "$before" >/dev/null
+  efibootmgr | grep -F -e "BootOrder" -e "$LABEL"
+}
+
+ORDER_FILE=$ENTRY_DIR/bootorder-before
 
 # The boot order "a,b,c" with entry $1 moved to the front (added if it wasn't there).
 first_in_order() {
@@ -184,6 +199,7 @@ untry() {
   need_root untry; need_autark untry
   [ -s "$ORDER_FILE" ] || die "nothing to put back: try hasn't saved a BootOrder"
   efibootmgr --bootorder "$(cat "$ORDER_FILE")" >/dev/null
+  efibootmgr --delete-bootnext >/dev/null 2>&1 || true
   rm -f "$ORDER_FILE"
   efibootmgr | grep -E "^Boot(Current|Next|Order)"
 }
