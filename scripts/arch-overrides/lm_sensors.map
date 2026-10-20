@@ -1,0 +1,3 @@
+# sensord logs to rrdtool, which needs ruby, python and more: not built here. libsensors, sensors and sensors-detect are.
+drop rrdtool
+sub PROG_EXTRA=sensord => PROG_EXTRA=
