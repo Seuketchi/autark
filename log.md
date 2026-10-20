@@ -630,3 +630,11 @@ Next on the target: `git pull`, `bash scripts/fetch-8b.sh`, then `scripts/stage-
 - Lessons: tty1 auto-logs in (`login -f`), so killing the session starts a new desktop. Before the script, stop it with
   `systemctl stop getty@tty1`, then `loginctl terminate-user tan`; `fuser -vm /home` must list nothing. `blkid -p` exits 0 whenever a
   partition-table entry exists, so the blank check asks for `TYPE` and `PTTYPE` only; and `blkid` is not on a user's PATH (`/usr/sbin`).
+
+## 2026-10-20 — autark-vpn login and forget
+
+- `autark-vpn login <name>` asks for the username and password once (the password is not shown) and saves them in `~/.config/openvpn/<name>/auth`
+  (mode 0600, on the encrypted `/home`). `autark-vpn forget <name>` deletes it. With a saved login, `autark-vpn <name>` passes the file to
+  `--auth-user-pass`; a 2FA code (static-challenge) is still asked each time. With none, openvpn asks as before.
+- `autark-vpn` with no argument now marks the profiles that have a saved login.
+- Still untested against a real server: waiting for the work VPN logins.
