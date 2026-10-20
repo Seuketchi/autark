@@ -13,6 +13,12 @@
 # --image FILE works on a disk image file instead of a device (for tests: it is attached as a loop device).
 set -euo pipefail
 
+# Run in a private mount namespace: the live system's services (udevd, resolved, ...) keep their own copies of any mount
+# made in the shared one and then hold the new system's root busy, so it can't be closed at the end.
+if [ -z "${AUTARK_INSTALL_NS:-}" ] && [ "$(id -u)" = 0 ] && command -v unshare > /dev/null 2>&1; then
+  case " $* " in *" --dry-run "*|*" -n "*|*" -h "*|*" --help "*) ;; *) export AUTARK_INSTALL_NS=1; exec unshare --mount --propagation private "$0" "$@" ;; esac
+fi
+
 DISK= IMAGE= ROOTFS= PUBKEY= HOSTNAME_= USER_= DRY=0 NOVERIFY=0 CONFIRM= PASSFILE= USERPASSFILE= UNTIL=boot LOG=
 usage() { sed -n '2,/^set -e/p' "$0" | sed '$d;s/^# \{0,1\}//' >&2; exit 2; }
 die() { echo "autark-install: $*" >&2; exit 1; }
