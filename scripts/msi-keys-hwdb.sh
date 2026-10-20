@@ -6,7 +6,7 @@
 #   msi-keys-hwdb.sh install    copy it to /etc/udev/hwdb.d, rebuild the hardware database and re-apply it to the input devices (root)
 #   msi-keys-hwdb.sh remove     take it out again (root)
 #
-# As root on Autark:  su -c 'sh /home/tan/autark/scripts/msi-keys-hwdb.sh install'
+# As root on Autark:  su -c 'sh scripts/msi-keys-hwdb.sh install'   (from the repository's root)
 # It only maps a key's code to a key name; nothing is written to the keyboard or the embedded controller.
 set -euo pipefail
 

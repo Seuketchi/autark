@@ -158,9 +158,12 @@ install -d -m 0700 /etc/cryptsetup-keys.d
 [ -s /etc/cryptsetup-keys.d/autark-home.key ] || \
   ( umask 077; dd if=/dev/urandom of=/etc/cryptsetup-keys.d/autark-home.key bs=512 count=8 status=none )
 chmod 0400 /etc/cryptsetup-keys.d/autark-home.key
-cat > /etc/crypttab << "EOF"
+# The /home LUKS volume's UUID belongs to one disk image, so it is given, not written here (the installer, scripts/autark-install.sh,
+# writes its own crypttab).
+: "${HOME_LUKS_UUID:?set HOME_LUKS_UUID to the UUID of the home LUKS volume of the image}"
+cat > /etc/crypttab << EOF
 # name       device                                     key file                                   options
-autark-home  UUID=3467909c-6564-4195-b1d9-47fa4f6deafa  /etc/cryptsetup-keys.d/autark-home.key  luks
+autark-home  UUID=$HOME_LUKS_UUID  /etc/cryptsetup-keys.d/autark-home.key  luks
 EOF
 
 # zram swap (build guide 6.4): a zstd device of half the RAM, created at boot. The logic lives in a script:

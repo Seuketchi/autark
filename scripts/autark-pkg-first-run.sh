@@ -1,6 +1,6 @@
 #!/bin/sh
 # First run of autark-pkg on Autark (roadmap M10). Run once, as root:
-#   su -c 'sh /home/tan/autark/scripts/autark-pkg-first-run.sh'
+#   su -c 'sh scripts/autark-pkg-first-run.sh'   (from the repository's root)
 # It does four things and says so:
 #   1. copies the recipes (scripts/pkg) to /usr/src/autark/scripts/pkg, owned by root and writable by nobody else. autark-pkg runs
 #      their scripts as root, so a folder a user could change would be a way to root; Settings' updates check refuses one.
