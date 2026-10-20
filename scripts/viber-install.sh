@@ -48,7 +48,8 @@ if [ ! -x /opt/viber/Viber ]; then
   chown -R root:root /opt/viber
 fi
 install -m755 "$here/viber.sh" /usr/bin/viber
-install -Dm644 "$ubuntu/usr/share/icons/hicolor/scalable/apps/Viber.svg" /usr/share/icons/hicolor/scalable/apps/viber.svg
+# A PNG: the dock's GTK has no SVG loader here.
+install -Dm644 "$ubuntu/usr/share/pixmaps/viber.png" /usr/share/icons/hicolor/256x256/apps/viber.png
 cat > /usr/share/applications/viber.desktop << 'EOF'
 [Desktop Entry]
 Name=Viber

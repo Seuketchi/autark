@@ -13,6 +13,8 @@ set -eu
 
 # Viber picks the X11 plugin by default, and there is no X server here.
 export QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-wayland}
+# Its bundled libxml2 wants ICU 74, which sits in its own lib folder, but libxml2 has no runpath to find it there.
+export LD_LIBRARY_PATH=/opt/viber/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 if [ -n "${VIBER_NO_SANDBOX:-}" ]; then
   export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox ${QTWEBENGINE_CHROMIUM_FLAGS:-}"
 fi
