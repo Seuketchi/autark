@@ -26,6 +26,19 @@ The name comes from *autarky*, meaning self-sufficient: every package chosen and
 | 📦 **Signed packages** | `autark-pkg` builds recipes into signed archives, installs and rolls back, and can import a recipe from Arch Linux when none exists. |
 | 🧰 **An installer** | A USB image (or a Ventoy stick) that erases one blank disk you choose and sets up the encrypted system. |
 
+## 🖼️ What it looks like
+
+Real captures of the desktop, taken in a throwaway demo session with sample files (no personal data).
+
+<p align="center">
+  <img src="docs/screenshots/desktop.png" width="49%" alt="The Autark desktop: bar, dock and the Linen wallpaper">
+  <img src="docs/screenshots/files.png" width="49%" alt="Files, the file manager">
+</p>
+<p align="center">
+  <img src="docs/screenshots/notes.png" width="49%" alt="Notes, a Markdown vault with links and a graph">
+  <img src="docs/screenshots/settings.png" width="49%" alt="Settings, Appearance pane">
+</p>
+
 ## 🧩 How it works
 
 Autark is two repositories that work together.
