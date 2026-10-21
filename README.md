@@ -190,7 +190,7 @@ The kernel and some scripts are tuned for the author's laptop; [`hardware/generi
 
 ## 🤝 Contributing
 
-Issues and ideas are welcome, especially reports from hardware other than the author's. Tell us the laptop model and what the installer or the boot did; `scripts/capture-hardware.sh <name>` records a laptop's profile. Since this is early software that touches disks and boot keys, read [`docs/specs/installer.md`](docs/specs/installer.md) before trying a real install.
+Pull requests, issues and ideas are welcome (see [`CONTRIBUTING.md`](CONTRIBUTING.md); `main` is protected and every change goes through a pull request), especially reports from hardware other than the author's. Tell us the laptop model and what the installer or the boot did; `scripts/capture-hardware.sh <name>` records a laptop's profile. Since this is early software that touches disks and boot keys, read [`docs/specs/installer.md`](docs/specs/installer.md) before trying a real install.
 
 ## ⭐ Star history
 

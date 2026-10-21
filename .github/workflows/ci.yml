@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  recipes:
+    name: recipes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check every recipe; new and changed ones strictly
+        run: |
+          changed=()
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            mapfile -t changed < <(git diff --name-only --diff-filter=AM "origin/${{ github.base_ref }}...HEAD" -- 'scripts/pkg/*.sh')
+          fi
+          python3 -I scripts/ci/check-recipes.py --strict "${changed[@]}"
+
+  scripts:
+    name: scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every shell script parses
+        run: |
+          status=0
+          while IFS= read -r f; do
+            bash -n "$f" || status=1
+          done < <(git ls-files '*.sh')
+          exit $status
+      - name: Python helpers compile
+        run: python3 -I -m py_compile $(git ls-files '*.py')
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No keys, tokens or logins
+        run: scripts/ci/check-secrets.sh
