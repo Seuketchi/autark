@@ -25,6 +25,12 @@ GitHub releases on this repository: one release per version tag, `release-<N>`, 
 
 The format is just files in a folder, so any static web server can host the same layout later; moving hosts means changing that line.
 
+## The programs (autark-tools)
+
+The desktop programs and `autark-pkg` live in [`autark-tools`](https://github.com/Seuketchi/autark-tools). Pushing a tag there (`git tag v0.1.0 && git push origin v0.1.0`) makes GitHub build the workspace on Arch Linux and create a **draft** release holding one tarball (programs, desktop entries, icons) and `SHA256SUMS`. CI signs nothing and publishes nothing: the release key never leaves the offline media.
+
+These builds are for people on other wlroots desktops. They are not what Autark installs: Autark's packages are built from recipes with Autark's own libraries and flags, then signed with the release key (steps above). Read the draft, check the checksum, and press publish yourself.
+
 ## What a user checks
 
 `autark-pkg` downloads nothing it does not verify: each archive must be signed by a key in `/etc/autark/pkg-keys/` and be the package and version it asked for. The installer checks the rootfs signature against the same key before it unpacks anything.
