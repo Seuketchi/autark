@@ -179,6 +179,7 @@ The kernel and some scripts are tuned for the author's laptop; [`hardware/generi
 | [`docs/specs/build-guide.md`](docs/specs/build-guide.md) | The build, step by step, from an Ubuntu host to a running desktop |
 | [`docs/specs/installer.md`](docs/specs/installer.md) | The installer: what it does, the release files, installing from a USB stick or Ventoy |
 | [`docs/specs/releasing.md`](docs/specs/releasing.md) | How a release is made and signed |
+| [`docs/specs/hub.md`](docs/specs/hub.md) | Autark Hub (planned): install and update software from a window, every download verified |
 | [`docs/specs/maintenance.md`](docs/specs/maintenance.md) | Updates, rollback, A/B upgrades, health checks |
 | [`docs/specs/roadmap.md`](docs/specs/roadmap.md) | Milestones and target dates, from host setup to daily driver |
 | [`docs/specs/ai-layer.md`](docs/specs/ai-layer.md) | AI in the OS: Jev for fast decisions, Ollama for local generation |
