@@ -1,0 +1,10 @@
+# Everything needs the maintainer's review. Boot, keys and signing get the same, named explicitly so they stay protected
+# if the line above is ever loosened.
+*                                  @Seuketchi
+/scripts/make-rootfs.sh            @Seuketchi
+/scripts/make-installer-image.sh   @Seuketchi
+/scripts/autark-install.sh         @Seuketchi
+/scripts/autark-mkuki.sh           @Seuketchi
+/scripts/autark-tpm-enroll.sh      @Seuketchi
+/config/pkg-keys/                  @Seuketchi
+/.github/                          @Seuketchi
