@@ -19,7 +19,7 @@ The name comes from *autarky*, meaning self-sufficient: every package chosen and
 
 | | |
 | --- | --- |
-| 🔒 **Security first** | The whole disk is encrypted (LUKS2) and unlocks with a passphrase or TPM plus PIN. There is no bootloader: the firmware starts a signed kernel image directly, signed with a key made on your own machine. Packages are built with stack protection, `_FORTIFY_SOURCE=3`, CET, PIE and full RELRO. Nothing listens on the network by default. |
+| 🔒 **Security first** | The whole disk is encrypted (LUKS2) and unlocks with a passphrase or TPM plus PIN. There is no bootloader: the firmware starts a signed kernel image directly, signed with a key made on your own machine. Packages are built with stack protection, `_FORTIFY_SOURCE=3`, CET, PIE and full RELRO. A default-drop firewall (nftables) refuses every incoming connection, with no exceptions until you add them. |
 | ⚡ **Efficient and fast** | `-march=x86-64-v3 -O2` builds, zram swap, a kernel trimmed or generic by profile, and power settings that follow battery and charger. |
 | 🖥️ **A desktop you can read** | [Wayfire](https://github.com/WayfireWM/wayfire) with a shell written in GTK4 and Rust: bar, dock, launcher, notifications, lock screen, Files, Notes, Settings and more. It lives in [`autark-tools`](https://github.com/Seuketchi/autark-tools). |
 | 🤖 **Local-first AI** | Kith, an assistant that runs on [Ollama](https://ollama.com) on your laptop. It is off until you turn it on, reads only files you name, and logs every call. An optional cloud engine, Jev, can make fast typed decisions; it is off unless you switch it on per feature. |
