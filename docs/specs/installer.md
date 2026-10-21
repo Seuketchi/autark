@@ -24,6 +24,10 @@ Built once per release on a build machine, signed with the project's key, and pu
 
 The kernel's module-signing key is the build machine's, so modules built after the release (out-of-tree drivers such as `msi-ec`) cannot load under `MODULE_SIG_FORCE`. They have to be built into the release or into the kernel package, and kernel updates arrive from the repository as packages.
 
+## Installing from a Ventoy stick
+
+Ventoy's menu lists ISOs and a few other formats, and how it boots a custom live system differs per system, so the first version does not rely on that. `make-installer-image.sh --ventoy DIR` also writes `autark-installer.efi` (the same live kernel and initramfs as one EFI file) and an `autark/` folder (the live system image, the rootfs tarball, its signature and checksums). Copy both to the Ventoy stick's big partition and choose `autark-installer.efi` in Ventoy's menu; Secure Boot must be off (Ventoy's own MOK enrolment does not cover an unsigned image). The live system finds `autark/rootfs.img` on the partition labelled `Ventoy`, the label Ventoy gives it, and the initramfs carries the drivers for exFAT, NTFS, FAT, ext4 and XFS. An `.iso` (which Ventoy lists natively) needs an ISO tool this project does not have yet.
+
 ## What the installer does
 
 1. **Check the machine.** UEFI mode, Secure Boot state, TPM 2.0 present, RAM and disk size. Say plainly what is missing: no TPM means passphrase-only unlock, not a failed install.

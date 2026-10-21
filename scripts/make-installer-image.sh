@@ -4,11 +4,15 @@
 #
 #   p1  ESP, FAT32     EFI/BOOT/BOOTX64.EFI: the live system's kernel and initramfs as one EFI file (not signed, so
 #                      Secure Boot must be off on the machine while it boots the stick)
-#   p2  ext4 AUTARK-LIVE   LiveOS/rootfs.img: the live system (the release rootfs, signed in as autark-install and
-#                      the public key), and autark/: the rootfs tarball, its signature and checksums, for the installer
+#   p2  ext4 AUTARK-LIVE   autark/rootfs.img: the live system (the release rootfs, signed in as autark-install and
+#                      the public key), and beside it the rootfs tarball, its signature and checksums, for the installer
 #
 #   sudo scripts/make-installer-image.sh --rootfs autark-rootfs-0.1.tar.zst --version 0.1 --pubkey autark-release.pub \
-#                                        [--out FILE] [--installer scripts/autark-install.sh] [--dry-run]
+#                                        [--out FILE] [--ventoy DIR] [--installer scripts/autark-install.sh] [--dry-run]
+#
+# --ventoy DIR also writes what a Ventoy stick needs: copy DIR's contents (autark-installer.efi and the autark/ folder) to
+# the stick's big partition (label "Ventoy"), and pick autark-installer.efi in Ventoy's menu. Secure Boot must be off, as
+# for the plain image. The live system finds its files by that partition label, so the label must be left as it is.
 #
 # It is an image and not an ISO because it needs only tools every build machine has (sfdisk, mkfs.vfat, mke2fs, dracut,
 # ukify); an ISO builder comes with libisoburn or squashfs-tools later. Needs root (loop mounts). --rootfs must be the
@@ -18,7 +22,7 @@
 set -euo pipefail
 
 export PATH=$PATH:/usr/sbin:/sbin
-ROOTFS= VERSION= OUT= PUBKEY= INSTALLER= DRY=0
+ROOTFS= VERSION= OUT= PUBKEY= INSTALLER= VENTOY= DRY=0
 HERE=$(cd "$(dirname "$0")" && pwd)
 die() { echo "make-installer-image: $*" >&2; exit 1; }
 usage() { sed -n '2,/^set -e/p' "$0" | sed '$d;s/^# \{0,1\}//' >&2; exit 2; }
@@ -27,6 +31,7 @@ while [ $# -gt 0 ]; do
     --rootfs) ROOTFS=${2:?}; shift ;;
     --version) VERSION=${2:?}; shift ;;
     --out) OUT=${2:?}; shift ;;
+    --ventoy) VENTOY=${2:?}; shift ;;
     --pubkey) PUBKEY=${2:?}; shift ;;
     --installer) INSTALLER=${2:?}; shift ;;
     --dry-run|-n) DRY=1 ;;
@@ -48,7 +53,7 @@ for t in "${need[@]}"; do command -v "$t" > /dev/null || die "missing tool: $t";
 
 if [ "$DRY" = 1 ]; then
   echo "would unpack $ROOTFS, add the installer and live-boot settings, and write $OUT (ESP + AUTARK-LIVE with"
-  echo "LiveOS/rootfs.img and autark/$(basename "$ROOTFS")${PUBKEY:+, autark/autark-release.pub})"
+  echo "autark/rootfs.img and autark/$(basename "$ROOTFS")${PUBKEY:+, autark/autark-release.pub})"
   exit 0
 fi
 
@@ -101,10 +106,15 @@ rm -f "$ROOT/etc/machine-id"
 echo "== boot image for the live system"
 INITRD=$WORK/initramfs.img
 dracut --force --no-hostonly --kver "$KVER" --kmoddir "$ROOT/usr/lib/modules/$KVER" \
-  --add "dmsquash-live" --omit "plymouth" "$INITRD" > /dev/null
-CMDLINE='root=live:LABEL=AUTARK-LIVE rd.live.image rd.live.overlay.overlayfs=1 rw console=tty0 console=ttyS0,115200 loglevel=4'
+  --add "dmsquash-live" --filesystems "exfat vfat ext4 xfs ntfs3 udf iso9660" --omit "plymouth" "$INITRD" > /dev/null
+COMMON='rd.live.dir=autark rd.live.image rd.live.overlay.overlayfs=1 rw console=tty0 console=ttyS0,115200 loglevel=4'
+CMDLINE="root=live:LABEL=AUTARK-LIVE $COMMON"
 ukify build --linux="$ROOT/boot/vmlinuz-$KVER-autark" --initrd="$INITRD" --cmdline="$CMDLINE" \
   --os-release=@"$ROOT/etc/os-release" --uname="$KVER" --output="$WORK/BOOTX64.EFI"
+if [ -n "$VENTOY" ]; then   # the same system, finding its files on the stick's "Ventoy" partition instead
+  ukify build --linux="$ROOT/boot/vmlinuz-$KVER-autark" --initrd="$INITRD" --cmdline="root=live:LABEL=Ventoy $COMMON" \
+    --os-release=@"$ROOT/etc/os-release" --uname="$KVER" --output="$WORK/autark-installer.efi"
+fi
 
 echo "== live root filesystem"
 USED=$(du -s --block-size=1M "$ROOT" | cut -f1)
@@ -129,12 +139,18 @@ for _ in 1 2 3 4 5 6 7 8 9 10; do [ -b "${LOOP}p2" ] && break; sleep 0.3; done
 mkfs.vfat -F 32 -n AUTARKESP "${LOOP}p1" > /dev/null
 mke2fs -q -t ext4 -L AUTARK-LIVE "${LOOP}p2"
 mount "${LOOP}p1" "$ESPMNT"; mount "${LOOP}p2" "$DATAMNT"
-install -d "$ESPMNT/EFI/BOOT" "$DATAMNT/LiveOS" "$DATAMNT/autark"
+install -d "$ESPMNT/EFI/BOOT" "$DATAMNT/autark"
 install -m 0644 "$WORK/BOOTX64.EFI" "$ESPMNT/EFI/BOOT/BOOTX64.EFI"
-cp --sparse=always "$IMG" "$DATAMNT/LiveOS/rootfs.img"; rm -f "$IMG"; chmod 0644 "$DATAMNT/LiveOS/rootfs.img"
+cp --sparse=always "$IMG" "$DATAMNT/autark/rootfs.img"; rm -f "$IMG"; chmod 0644 "$DATAMNT/autark/rootfs.img"
 install -m 0644 "$ROOTFS" "$DATAMNT/autark/"
 [ ! -f "$ROOTFS.minisig" ] || install -m 0644 "$ROOTFS.minisig" "$DATAMNT/autark/"
 [ -z "$PUBKEY" ] || install -m 0644 "$PUBKEY" "$DATAMNT/autark/autark-release.pub"
 ( cd "$DATAMNT/autark" && sha256sum -- * > SHA256SUMS )
+if [ -n "$VENTOY" ]; then
+  install -d "$VENTOY"
+  cp -r --sparse=always "$DATAMNT/autark" "$VENTOY/"
+  install -m 0644 "$WORK/autark-installer.efi" "$VENTOY/"
+  echo "== $VENTOY: autark-installer.efi and autark/ for a Ventoy stick"
+fi
 sync
 echo "== $OUT: $(du -h --apparent-size "$OUT" | cut -f1) ($(basename "$ROOTFS"), kernel $KVER)"

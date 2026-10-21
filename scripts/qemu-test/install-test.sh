@@ -2,7 +2,7 @@
 # install-test.sh: boot the installer image (make-installer-image.sh) in qemu with UEFI firmware and a blank NVMe disk,
 # to try autark-install without touching a real disk (docs/specs/installer.md).
 #
-#   scripts/qemu-test/install-test.sh INSTALLER.img [--disk DISK.img] [--size 40G] [--boot-disk] [--no-kvm] [--display gtk|none]
+#   scripts/qemu-test/install-test.sh INSTALLER.img|/dev/sdX (a real Ventoy stick: run with sudo, it is only read) [--disk DISK.img] [--size 40G] [--boot-disk] [--no-kvm] [--display gtk|none]
 #
 # First run: creates a blank DISK.img (default install-test-disk.img next to the installer image, sparse) and boots the
 # stick; the console is this terminal (serial; Ctrl-a x quits), plus a window if this qemu has one. Log in is automatic; run
@@ -29,7 +29,7 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-[ -f "$STICK" ] || die "no such image: $STICK"
+[ -e "$STICK" ] || die "no such image or device: $STICK"
 [ -n "$DISK" ] || DISK=$(dirname "$STICK")/install-test-disk.img
 command -v qemu-system-x86_64 > /dev/null || die "qemu-system-x86_64 not found (autark-pkg install qemu)"
 
