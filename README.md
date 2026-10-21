@@ -81,6 +81,30 @@ flowchart LR
   arch["🏔️ Arch PKGBUILD"] -.->|"imported when no<br>recipe exists"| r
 ```
 
+## ⚖️ How it compares
+
+Autark is not trying to replace the big distributions. It makes a different set of choices, and this table shows them next to what the common distros typically do by default. Defaults change between releases, so check the distro you use.
+
+| | **Autark** | Ubuntu / Fedora | Arch | NixOS | Linux From Scratch |
+| --- | --- | --- | --- | --- | --- |
+| **Packages** | Built from source from recipes, installed as signed archives, with rollback | Prebuilt binary packages (apt, dnf) | Prebuilt binary packages (pacman) | Declarative, from the Nix store | You compile everything by hand, no package manager |
+| **Install** | Installer image that sets up the encrypted system (early, qemu-tested) | Graphical installer | Manual, from a shell | Installer plus a config file you write | Weeks of manual steps from a book |
+| **Disk encryption** | On by design: LUKS2 for root and `/home`, TPM plus PIN planned after the first boot | An option you choose at install | You set it up yourself | You set it up in your config | You set it up yourself |
+| **Bootloader** | None: the firmware starts a signed kernel image | GRUB | Your choice (GRUB, systemd-boot...) | systemd-boot or GRUB | Your choice |
+| **Secure Boot** | Your own key, made on your machine | Works out of the box through a Microsoft-signed shim | Manual setup | Needs an extra project (Lanzaboote) | Manual setup |
+| **Desktop** | Its own shell (Wayfire, GTK4 and Rust), Mac-like | GNOME (KDE and others available) | Whatever you install | Whatever you configure | Whatever you build |
+| **Init** | systemd | systemd | systemd | systemd | systemd (or sysvinit), your choice of book |
+| **AI** | Local-first assistant, off by default | None built in | None built in | None built in | None |
+| **Maturity** | One maintainer, one laptop, experimental | Large teams, years of releases | Large community, rolling | Large community | A teaching project |
+
+### 🤔 Should you use it?
+
+- **Use Fedora or Ubuntu** if you want something that works today on any hardware, with security updates from a big team.
+- **Use Arch or NixOS** if you want to assemble your own system and are happy to maintain it.
+- **Try Autark** if you want to know what every part of your system is and how it was built, with disk encryption and Secure Boot as the starting point and not an add-on, and you are fine with something early that may break.
+
+What Autark gives up today: hardware support is thin (the generic profile is largely untested), there is no signed release yet, updates come from building packages yourself, and one person maintains it.
+
 ## 🚀 Install
 
 > **There is no release to download yet.** The installer works from start to finish in a virtual machine, but it has not been tried on a second real computer, and the release signing key is not made, so signed images don't exist. This section shows what installing looks like and how to try it yourself today.
