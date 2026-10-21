@@ -13,7 +13,7 @@ jobs:
     name: recipes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Check every recipe; new and changed ones strictly
@@ -28,7 +28,7 @@ jobs:
     name: scripts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Every shell script parses
         run: |
           status=0
@@ -43,6 +43,6 @@ jobs:
     name: secrets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: No keys, tokens or logins
         run: scripts/ci/check-secrets.sh
