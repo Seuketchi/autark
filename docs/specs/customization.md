@@ -1,6 +1,18 @@
 # Customization
 
-How people make Autark look and behave their way, and how others add to it without touching code. Written 2026-10-21; nothing in this document is built yet except where it says "today".
+How people make Autark look and behave their way, and how others add to it without touching code. Written 2026-10-21. The sections below are the design; the "As built" section says where the code differs from it and what was left out.
+
+## As built (2026-10-21)
+
+All six items were built in one pull request to [`autark-tools`](https://github.com/Seuketchi/autark-tools). Where it differs from the sections below:
+
+- **Looks and wallpaper scenes live in `autark-tools`**, not here: `data/looks/*.toml` and `data/wallpapers/*.toml`, embedded into the tools at build time and validated by Rust tests (`looks::validate`, which also checks the WCAG contrast rules, and `wallpaper::validate`) that run in CI. There is no `config/looks/` and no `check-looks.py`. Yours go in `~/.config/autark/looks/` and `~/.config/autark/wallpapers/`; a file with a bad colour is left out and reported on stderr.
+- **The shortcut editor is `autark-keys`** (Change, Reset to the shipped `/usr/share/wayfire/wayfire.ini`, swap on a clash), using the shared line-based editor in `autark-common::ini` and the shortcut table in `autark-common::shortcuts`. Settings' Keyboard pane keeps its short list and links to it. Not built: adding and removing your own command shortcuts. Capture relies on GTK's `inhibit_system_shortcuts`; trying it on a real session is still to do.
+- **The Windows pane** has opening, closing and minimising animations with their speed, where new windows open, and the title bar height and border of the windows Wayfire decorates, each with "Reset to defaults". Not built: focus-follows-pointer (Wayfire's core has no such option), the blur switch, and reduce-motion forcing animations off.
+- **Bar and dock:** `bar.toml` gains `start` and `end` (the items on each side, in order; leave one out to hide it) and the bar rebuilds when they change; Settings → Desktop & Dock has switches and arrows, clock presets with a checked custom format, and a pinned-apps editor. Not built: the live preview.
+- **Launcher:** `launcher.toml` has `max_apps`, `max_files` and `actions`. Not built: choosing sources beyond those, or where the launcher opens.
+- **Sounds:** `sound.toml`'s `set` names a folder of `alert.wav` and `shutter.wav` in `~/.config/autark/sounds/` (or `/usr/share/autark/sounds/`); a missing file falls back to the synthesized sound. No sets are shipped yet, so there are no licence checks for them. Only the two effects that exist today are mapped.
+- **Not built:** rotating wallpaper folders.
 
 ## Rules every setting follows
 
@@ -85,7 +97,7 @@ Wayfire has the plugins; Settings gets a **Windows** pane that edits `wayfire.in
 | 5 | Bar items and the dock's pinned apps | nothing | Independent of the rest |
 | 6 | Launcher config, sound sets | nothing | Last: smallest payoff |
 
-Each step is its own pull request, with tests and (for the panes) a screenshot from the isolated demo session, and none changes anyone's defaults.
+The steps were built in this order on one branch (the maintainer chose one pull request for all of it), with tests and, for the panes, a look at the result in an isolated demo session. None changes anyone's defaults.
 
 ## Open questions
 
