@@ -1,0 +1,16 @@
+# The documentation (LaTeX, ghostscript), the Qt wizard and clang parsing are not built: they bring in Qt, texlive and clang,
+# and the command-line doxygen is what other packages need to build their docs.
+drop clang
+drop graphviz
+drop ghostscript
+drop qt6-base
+drop qt6-svg
+drop texlive-fontsrecommended
+drop texlive-fontutils
+drop texlive-latexextra
+drop texlive-plaingeneric
+sub -Dbuild_doc:BOOL=ON => -Dbuild_doc:BOOL=OFF
+sub -Dbuild_wizard:BOOL=ON => -Dbuild_wizard:BOOL=OFF
+sub -Duse_libclang:BOOL=ON => -Duse_libclang:BOOL=OFF
+sub cmake --build build --target docs => true
+sub _pick $pkgbase-docs usr/share/doc => true
