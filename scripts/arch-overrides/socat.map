@@ -1,0 +1,2 @@
+# socat 1.8.1.3 reads the fields of an ASN1_OCTET_STRING directly, which OpenSSL 4 hides. The accessors do the same on 3 and 4.
+sub ./configure --prefix=/usr --mandir=/usr/share/man => sed -i -e 's|pName->d.iPAddress->data|ASN1_STRING_get0_data(pName->d.iPAddress)|' -e 's|pName->d.iPAddress->length|ASN1_STRING_length(pName->d.iPAddress)|' xio-openssl.c; ./configure --prefix=/usr --mandir=/usr/share/man
