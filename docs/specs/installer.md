@@ -17,8 +17,8 @@ Built once per release on a build machine, signed with the project's key, and pu
 
 | Artifact | What it is |
 | --- | --- |
-| `autark-rootfs-<version>.tar.zst` | The finished system as files: LFS base, generic kernel and modules (`stage-profile.sh generic`), all firmware and microcode, desktop and tools, and the `autark-pkg` database. No keys, no machine-id, no fstab/crypttab, no boot image. |
-| Package repository | Signed `.tar.zst` packages for every recipe, so a user installs and upgrades without compiling (`autark-pkg` reads the project's public key from the rootfs). |
+| `autark-rootfs-<version>.tar.zst` | The finished system as files: LFS base, generic kernel and modules (`stage-profile.sh generic`), all firmware and microcode, desktop and tools, and the `ark` database. No keys, no machine-id, no fstab/crypttab, no boot image. |
+| Package repository | Signed `.tar.zst` packages for every recipe, so a user installs and upgrades without compiling (`ark` reads the project's public key from the rootfs). |
 | `autark-installer-<version>.img` | A USB-stick disk image: a live system that runs the installer, and the rootfs tarball. (An `.iso` for optical media and some VM tools comes later; it needs libisoburn or squashfs-tools.) |
 | `SHA256SUMS` + signature | For the above. |
 
@@ -70,5 +70,5 @@ Settled 2026-10-20; each can be revisited once something works.
 
 1. Rootfs tarball builder and a generic-profile build (needs the build machine to rebuild the kernel with `stage-profile.sh generic`).
 2. `autark-install` against a blank qemu disk, without Secure Boot or the TPM; then add each.
-3. The package repository and `autark-pkg` pointing at it.
+3. The package repository and `ark` pointing at it.
 4. Installer image builder, then the full qemu test, then a real second machine.

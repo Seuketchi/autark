@@ -6,15 +6,15 @@ How a release is made and signed, so other people can install Autark without com
 
 Releases are signed with their own key, never with the key the build machine signs its packages with. A stolen build machine must not be able to sign a release.
 
-- Made once, on a machine you trust: `autark-pkg release-keygen /media/usb/release`. It asks for a password and writes `autark-release.key` (the secret, password-protected) and `autark-release.pub`.
+- Made once, on a machine you trust: `ark release-keygen /media/usb/release`. It asks for a password and writes `autark-release.key` (the secret, password-protected) and `autark-release.pub`.
 - The secret key lives on offline media (an encrypted USB stick), with a second copy somewhere else. Losing it means every user has to be given a new public key by some other route; leaking it means the same. Write the password down separately.
 - The public key is committed to the repository (`config/pkg-keys/autark-release.pub`, to be added) and shipped in the rootfs in `/etc/autark/pkg-keys/`, so a fresh install trusts releases and nothing else.
 
 ## Making a release
 
-1. Build the packages from a clean checkout on the build machine (`autark-pkg install` or `build` for each recipe), so the cache holds the current version of everything the rootfs contains.
+1. Build the packages from a clean checkout on the build machine (`ark install` or `build` for each recipe), so the cache holds the current version of everything the rootfs contains.
 2. Make the rootfs from that system: `sudo scripts/make-rootfs.sh --src <mounted root> --version <N> --out release/` (see [installer.md](installer.md)). It refuses to pack anything with keys, users or passwords left in it.
-3. Sign the packages with the release key, mounted for the occasion: `autark-pkg publish release/packages --key /media/usb/release/autark-release.key`. This re-signs copies of the newest cached builds and writes the signed `index`.
+3. Sign the packages with the release key, mounted for the occasion: `ark publish release/packages --key /media/usb/release/autark-release.key`. This re-signs copies of the newest cached builds and writes the signed `index`.
 4. Sign the rootfs tarball the same way (`minisign -S -s /media/usb/release/autark-release.key -m release/autark-rootfs-<N>.tar.zst`) and keep its `SHA256SUMS`.
 5. Unmount and put the stick away. Upload `release/` (below).
 
@@ -27,10 +27,10 @@ The format is just files in a folder, so any static web server can host the same
 
 ## The programs (autark-tools)
 
-The desktop programs and `autark-pkg` live in [`autark-tools`](https://github.com/Seuketchi/autark-tools). Pushing a tag there (`git tag v0.1.0 && git push origin v0.1.0`) makes GitHub build the workspace on Arch Linux and create a **draft** release holding one tarball (programs, desktop entries, icons) and `SHA256SUMS`. CI signs nothing and publishes nothing: the release key never leaves the offline media.
+The desktop programs and `ark` live in [`autark-tools`](https://github.com/Seuketchi/autark-tools). Pushing a tag there (`git tag v0.1.0 && git push origin v0.1.0`) makes GitHub build the workspace on Arch Linux and create a **draft** release holding one tarball (programs, desktop entries, icons) and `SHA256SUMS`. CI signs nothing and publishes nothing: the release key never leaves the offline media.
 
 These builds are for people on other wlroots desktops. They are not what Autark installs: Autark's packages are built from recipes with Autark's own libraries and flags, then signed with the release key (steps above). Read the draft, check the checksum, and press publish yourself.
 
 ## What a user checks
 
-`autark-pkg` downloads nothing it does not verify: each archive must be signed by a key in `/etc/autark/pkg-keys/` and be the package and version it asked for. The installer checks the rootfs signature against the same key before it unpacks anything.
+`ark` downloads nothing it does not verify: each archive must be signed by a key in `/etc/autark/pkg-keys/` and be the package and version it asked for. The installer checks the rootfs signature against the same key before it unpacks anything.

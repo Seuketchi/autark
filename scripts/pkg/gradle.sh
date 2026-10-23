@@ -7,7 +7,7 @@ checksums=(sha256:21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e3896
 depends=(temurin-jdk)
 mode=staged
 
-# The zip isn't unpacked by autark-pkg; bsdtar reads it.
+# The zip isn't unpacked by ark; bsdtar reads it.
 build() {
   bsdtar -xf gradle-$version-bin.zip
   install -d "$DESTDIR/usr/share" "$DESTDIR/usr/bin"

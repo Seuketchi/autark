@@ -9,7 +9,7 @@
 #    headers over from the old mesa (hence --force), so from that moment until Mesa is installed, about as long as the Mesa
 #    build, a program started fresh can't open EGL. Don't start new programs meanwhile; running ones keep their libraries.
 #    Afterwards log out and back in, so the compositor and everything else use the new ones.
-#    If the Mesa build fails, run this script again; `autark-pkg rollback mesa` goes back to the previous Mesa later.
+#    If the Mesa build fails, run this script again; `ark rollback mesa` goes back to the previous Mesa later.
 # 4. copies Viber from the read-only Ubuntu disk (/mnt/ubuntu-ro, mounted by hand) to /opt/viber,
 # 5. adds the viber command, its menu entry and its icon.
 
@@ -37,10 +37,10 @@ echo "== recipes"
 for p in $packages; do install -m644 -o root -g root "$recipes/$p.sh" "$dest/$p.sh"; done
 
 echo "== libraries"
-autark-pkg install $libs
+ark install $libs
 
 echo "== libglvnd and Mesa (don't start new programs until this finishes)"
-autark-pkg --force install libglvnd mesa
+ark --force install libglvnd mesa
 
 echo "== Viber"
 if [ ! -x /opt/viber/Viber ]; then

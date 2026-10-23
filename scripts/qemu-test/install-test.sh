@@ -31,7 +31,7 @@ while [ $# -gt 0 ]; do
 done
 [ -e "$STICK" ] || die "no such image or device: $STICK"
 [ -n "$DISK" ] || DISK=$(dirname "$STICK")/install-test-disk.img
-command -v qemu-system-x86_64 > /dev/null || die "qemu-system-x86_64 not found (autark-pkg install qemu)"
+command -v qemu-system-x86_64 > /dev/null || die "qemu-system-x86_64 not found (ark install qemu)"
 
 CODE= VARS_TEMPLATE=
 for d in /usr/share/OVMF /usr/share/edk2/ovmf /usr/share/ovmf /usr/share/edk2-ovmf; do
@@ -44,7 +44,7 @@ if [ -z "$CODE" ] || [ -z "$VARS_TEMPLATE" ]; then
   q=/usr/share/qemu
   if [ -f $q/edk2-x86_64-code.fd ] && [ -f $q/edk2-i386-vars.fd ]; then CODE=$q/edk2-x86_64-code.fd VARS_TEMPLATE=$q/edk2-i386-vars.fd; fi
 fi
-[ -n "$CODE" ] && [ -n "$VARS_TEMPLATE" ] || die "no UEFI firmware found (qemu's edk2 files, or autark-pkg install ovmf)"
+[ -n "$CODE" ] && [ -n "$VARS_TEMPLATE" ] || die "no UEFI firmware found (qemu's edk2 files, or ark install ovmf)"
 VARS=${DISK%.img}-vars.fd
 [ -f "$VARS" ] || cp "$VARS_TEMPLATE" "$VARS"
 [ -f "$DISK" ] || { truncate -s "$SIZE" "$DISK"; echo "made a blank $SIZE disk: $DISK"; }

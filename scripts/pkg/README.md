@@ -1,7 +1,7 @@
 # Package recipes
 
-One recipe per package, `<name>.sh`, built and installed by `autark-pkg` (autark-tools). The header is plain
-assignments autark-pkg reads without running anything; `build()` is what the build runs, after `lib.sh`
+One recipe per package, `<name>.sh`, built and installed by `ark` (autark-tools). The header is plain
+assignments ark reads without running anything; `build()` is what the build runs, after `lib.sh`
 (Autark's flags and `testfail`), inside the unpacked first source:
 
 ```sh
@@ -22,7 +22,7 @@ build() {
 }
 ```
 
-- **staged**: runs as the `autark-build` user and installs into `$DESTDIR`; autark-pkg packs and signs that, then
+- **staged**: runs as the `autark-build` user and installs into `$DESTDIR`; ark packs and signs that, then
   installs from the signed archive.
 - **tracked**: for bodies that write outside `$DESTDIR` or need root (`useradd`, `chown`, tests as `tester`). It
   runs as root against the system; the files it created, and the files of packages it rewrote, are packed and
@@ -48,13 +48,13 @@ UKI, services), which stay in their phase scripts; the kernel stays with `ch10-k
 ## Recipes imported from Arch Linux
 
 `scripts/arch-import.py <package>...` turns Arch's recipe (its PKGBUILD, from gitlab.archlinux.org, pinned to the commit it read)
-into one of ours. `autark-pkg install <package>` runs it for a package with no recipe (as the `autark-build` user), into
+into one of ours. `ark install <package>` runs it for a package with no recipe (as the `autark-build` user), into
 `/var/lib/autark/imported`, below the hand-written recipes here.
 
 - Every source is downloaded and checked against the PKGBUILD's hash; the recipe records its sha256. A `git+https://github.com/o/r#tag=X`
   source becomes the host's tag archive, which has no hash to check, so it is pinned by the sha256 first seen (the recipe says so).
 - `depends` and `makedepends` are mapped through `pkg/arch-names.map` (`archname autarkname`; `-` means nothing to depend on). Runtime
-  dependencies with no recipe are imported too (`-r`, which `autark-pkg` passes); missing build-time ones are only reported, unless `--make-deps`.
+  dependencies with no recipe are imported too (`-r`, which `ark` passes); missing build-time ones are only reported, unless `--make-deps`.
 - `build()` unpacks the sources as makepkg does and runs the PKGBUILD's own `prepare()`, `build()` and `package()` with `$srcdir` and
   `$pkgdir` set (and `DESTDIR` unset, as under makepkg). `check()` is not run.
 - `arch-overrides/<name>.map` records a deliberate difference: `drop <dependency>` and `sub <old> => <new>` in the PKGBUILD's functions

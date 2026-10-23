@@ -1,5 +1,5 @@
 # arch-names.map: Arch package name -> Autark recipe name, read by scripts/arch-import.py.
-# `-` means nothing to depend on: it is in the base system or installed outside autark-pkg.
+# `-` means nothing to depend on: it is in the base system or installed outside ark.
 gcc-libs gcc
 gcc gcc
 sh bash

@@ -1,23 +1,23 @@
 #!/bin/sh
-# First run of autark-pkg on Autark (roadmap M10). Run once, as root:
-#   su -c 'sh scripts/autark-pkg-first-run.sh'   (from the repository's root)
+# First run of ark on Autark (roadmap M10). Run once, as root:
+#   su -c 'sh scripts/ark-first-run.sh'   (from the repository's root)
 # It does four things and says so:
-#   1. copies the recipes (scripts/pkg) to /usr/src/autark/scripts/pkg, owned by root and writable by nobody else. autark-pkg runs
+#   1. copies the recipes (scripts/pkg) to /usr/src/autark/scripts/pkg, owned by root and writable by nobody else. ark runs
 #      their scripts as root, so a folder a user could change would be a way to root; Settings' updates check refuses one.
 #   2. makes the package signing key, if there isn't one (/etc/autark/pkg-secret.key, root only).
-#   3. imports the file lists the phase scripts recorded in /var/lib/autark/files into the package database, so `autark-pkg list`,
+#   3. imports the file lists the phase scripts recorded in /var/lib/autark/files into the package database, so `ark list`,
 #      `remove` and `upgrade` know what is installed. Only the database is written; no package file is touched.
-#   4. shows what `autark-pkg upgrade` would change (a dry run, nothing is installed).
+#   4. shows what `ark upgrade` would change (a dry run, nothing is installed).
 # ROOT=/some/folder runs the whole thing against that folder instead of / (for trying it; no root needed).
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 RECIPES_SRC=$HERE/pkg
 ROOT=${ROOT:-}
-PKG=${AUTARK_PKG:-autark-pkg}
+PKG=${AUTARK_PKG:-ark}
 DEST=$ROOT/usr/src/autark/scripts/pkg
 
-die() { echo "autark-pkg-first-run.sh: $*" >&2; exit 1; }
+die() { echo "ark-first-run.sh: $*" >&2; exit 1; }
 [ -d "$RECIPES_SRC" ] || die "no recipes at $RECIPES_SRC"
 if [ -z "$ROOT" ]; then
   [ "$(id -u)" = 0 ] || die "run it as root: su -c 'sh $0'"

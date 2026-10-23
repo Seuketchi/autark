@@ -10,7 +10,7 @@ Researched 2026-10-18. Research only: nothing was built or installed on this mac
 - **GTK 4.22.4 hard-requires libtiff** (its `meson.build` has `dependency('libtiff-4', 'tiff')` with no `required: false`). BLFS's GTK page does not list it, so tiff 4.7.2 is added as #3.
 - **GTK 4.22.4 and adwaita-icon-theme 50.0 do not need librsvg** (verified: no meson dependency on it, GTK has its own SVG renderer `gtk/gtksvg.c` used by `gtk/gdktextureutils.c`). BLFS lists it as required anyway. Kept as decided; see Open question 3.
 - **UPower 1.91.3 does not use libusb** (verified: no `libusb` anywhere in the tarball except `NEWS`), though BLFS lists it as required. libusb is skipped.
-- **`setpriv` is not installed.** ch8's util-linux is configured `--disable-setpriv` and `autark-pkg` runs `setpriv` for every staged build (Open question 2). `wpctl`, `gio`, `kill`, `umount` are present.
+- **`setpriv` is not installed.** ch8's util-linux is configured `--disable-setpriv` and `ark` runs `setpriv` for every staged build (Open question 2). `wpctl`, `gio`, `kill`, `umount` are present.
 - Switches that must be turned off or the build fails (all verified in the meson files): GTK `x11-backend` (default on), `media-gstreamer` (default **enabled**), `vulkan` (default enabled); gtk4-layer-shell `introspection` (default **true**); polkit `introspection` (default true). polkit also needs `-D os_type=lfs` and `-D pam_prefix=/etc/pam.d` or its PAM file is wrong or unread.
 - A polkit authentication agent is **not** needed for `systemctl poweroff`/`reboot`/`suspend`/`hibernate` from the active local session: systemd 261.2's `org.freedesktop.login1.policy` has `allow_active=yes` for all four (also the `-multiple-sessions` variants). It is needed only when something holds a shutdown inhibitor (`*-ignore-inhibit` is `auth_admin_keep` for the active session). polkit itself **is** needed: without `polkitd` on the bus systemd treats the check as denied for non-root callers (`src/shared/bus-polkit.c`), and Autark's systemd already has the support compiled in (`ENABLE_POLKIT = feature.allowed()` in 261.2's `meson.build`, option left at auto), so no systemd rebuild.
 
@@ -157,7 +157,7 @@ No cycle. The gdk-pixbuf ↔ glycin cycle BLFS describes does not arise because 
 ## Settled 2026-10-18 (the open questions, answered)
 
 1. **Rust prefix: `/usr`, no test suite.** `[install] prefix = "/usr"`, `docdir = "share/doc/rustc-1.97.1"`.
-2. **`setpriv`: autark-pkg drops privileges itself** (setgroups, setresgid, setresuid and `PR_SET_NO_NEW_PRIVS` in the child before exec; autark-tools 9dbd15b). The libcap-ng and util-linux extras are not built.
+2. **`setpriv`: ark drops privileges itself** (setgroups, setresgid, setresuid and `PR_SET_NO_NEW_PRIVS` in the child before exec; autark-tools 9dbd15b). The libcap-ng and util-linux extras are not built.
 3. **librsvg and cargo-c are dropped** (rows 2 and 11 are not built). Add them back if SVG thumbnails in Files are wanted.
 4. gdk-pixbuf with its own loaders, no glycin (as listed).
 5. No polkit authentication agent for now; a shutdown blocked by an inhibitor fails until the shell has one.

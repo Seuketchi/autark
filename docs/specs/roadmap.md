@@ -16,7 +16,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 | M7 | Kith everywhere | Shell | When the box exists | Kith moves to your own box: reachable over Signal from the phone, laptop actions through MCP, Wren migrated and retired | M5, and a box with about 16 GB of RAM where only you have root |
 | M8 ✅ (checked 2026-10-19) | Notes v1 | Shell | 2027-03-14 | Autark Notes opens a vault with three panes, checklists, pins, live preview, `[[links]]`, backlinks, search, tags and graph view ([notes.md](notes.md)) | M3 |
 | M9 ✅ (checked 2026-10-19) | System apps | Shell | 2027-06-13 | Files app, task manager with energy impact and force quit, widgets, and the `autark-stats` service ([decisions.md](decisions.md)) | M8 |
-| M10 🔶 written, not run on Autark yet | Package manager | System | 2027-01-31 | `autark-pkg` installs, removes, upgrades and rolls back signed packages built from `scripts/pkg/`; the sandbox launcher runs a vendor binary under a Landlock profile | M2 |
+| M10 🔶 written, not run on Autark yet | Package manager | System | 2027-01-31 | `ark` installs, removes, upgrades and rolls back signed packages built from `scripts/pkg/`; the sandbox launcher runs a vendor binary under a Landlock profile | M2 |
 
 ## Status, checked 2026-10-19
 
@@ -31,7 +31,7 @@ There are two tracks. The **system track** is the LFS build, which Claude mostly
 - ⬜ **M7.** No box yet.
 - ✅ **M8.** Notes opens a vault with folders, tags, a note list, the editor, `[[links]]`, backlinks, search and a graph view.
 - ✅ **M9.** Files, Activity (apps by CPU, memory, energy impact, disk and network, with force quit), the widgets and the `autark-stats` service run.
-- 🔶 **M10.** `autark-pkg` (install, remove, upgrade, rollback, verify) and `autark-sandbox` are written. On Autark itself it hasn't run: the recipes aren't installed in the root-owned place it reads (`/usr/src/autark/scripts/pkg`) and there is no package database yet (`/var/lib/autark/pkg`). Without root it already works against a scratch folder (`search`, `info`, a dry-run install with dependencies, 149 recipes). [`scripts/autark-pkg-first-run.sh`](../../scripts/autark-pkg-first-run.sh), run once as root, installs the recipes, makes the signing key, imports the 278 file lists the phase scripts recorded, and shows what `upgrade` would change; it hasn't been run as root yet.
+- 🔶 **M10.** `ark` (install, remove, upgrade, rollback, verify) and `autark-sandbox` are written. On Autark itself it hasn't run: the recipes aren't installed in the root-owned place it reads (`/usr/src/autark/scripts/pkg`) and there is no package database yet (`/var/lib/autark/pkg`). Without root it already works against a scratch folder (`search`, `info`, a dry-run install with dependencies, 149 recipes). [`scripts/ark-first-run.sh`](../../scripts/ark-first-run.sh), run once as root, installs the recipes, makes the signing key, imports the 278 file lists the phase scripts recorded, and shows what `upgrade` would change; it hasn't been run as root yet.
 
 Beyond the milestones, also done and running: Settings (23 panes, with a root helper that needs its one-time install, `crates/autark-settings/data/install-helper.sh`), Terminal, the app icons, window buttons at the top right, the show-desktop command, and the dark mode.
 

@@ -90,7 +90,7 @@ up() {
   valid "$1"
   config=$PROFILES/$1/$1.ovpn
   [ -f "$config" ] || die "no profile $config"
-  [ -x "$OPENVPN" ] || die "openvpn isn't installed: sudo autark-pkg install openvpn"
+  [ -x "$OPENVPN" ] || die "openvpn isn't installed: sudo ark install openvpn"
   ! connected "$1" || die "$1 is already connected: autark-vpn down $1"
   login_option=
   [ ! -f "$(authfile "$1")" ] || login_option=1

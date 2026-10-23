@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""arch-import.py: turn Arch Linux package recipes (PKGBUILDs) into autark-pkg recipes.
+"""arch-import.py: turn Arch Linux package recipes (PKGBUILDs) into ark recipes.
 
     python3 -I scripts/arch-import.py [--out DIR] [--recipes DIR] [-r] <package>...
 
 For each package it
   - finds the PKGBUILD in Arch's packaging repository (gitlab.archlinux.org), pinned to the commit it read;
-  - downloads every source, checks it against the hash the PKGBUILD gives, and records its sha256 (autark-pkg
+  - downloads every source, checks it against the hash the PKGBUILD gives, and records its sha256 (ark
     takes md5 and sha256 only); a `git+https://github.com/o/r#tag=X` source becomes GitHub's (or GitLab's) tag
     archive, which has no hash to check against, so it is pinned by the sha256 first seen;
   - maps the dependencies to Autark's recipes (scripts/pkg/arch-names.map), importing missing ones with -r;
@@ -13,7 +13,7 @@ For each package it
     PKGBUILD's own prepare(), build() and package() with $srcdir and $pkgdir set. check() is not run.
 
 The PKGBUILD is run through bash once to read its arrays and functions (top-level code only; build steps run later,
-under autark-pkg, as the unprivileged build user). Only read official-repository PKGBUILDs this way.
+under ark, as the unprivileged build user). Only read official-repository PKGBUILDs this way.
 
 Not handled yet, and reported: git sources from other hosts or without a tag or commit, git submodules,
 install scripts (*.install), split packages' per-package depends, and dependencies nobody provides.
@@ -37,7 +37,7 @@ PACKAGES = "archlinux/packaging/packages"
 ARCH_API = "https://archlinux.org/packages/search/json/"
 AGENT = {"User-Agent": "autark-arch-import/0.1"}
 ARCHIVE = re.compile(r"\.(tar|tar\.\w+|tgz|tbz2|txz|zip)$")
-DRIVER_UNPACKS = re.compile(r"\.(tar\.\w+|tgz|tbz2)$")  # autark-pkg unpacks the first source when it is one of these
+DRIVER_UNPACKS = re.compile(r"\.(tar\.\w+|tgz|tbz2)$")  # ark unpacks the first source when it is one of these
 SIGNATURE = re.compile(r"\.(sig|asc|sign)$")
 HASHES = [
     ("sha256sums", lambda: hashlib.sha256()),
@@ -182,7 +182,7 @@ def load_overrides(directory, name):
 
 
 def load_names(path):
-    """`archname autarkname` per line; `archname -` means "nothing to depend on" (provided outside autark-pkg)."""
+    """`archname autarkname` per line; `archname -` means "nothing to depend on" (provided outside ark)."""
     names = {}
     if os.path.exists(path):
         for line in open(path):
@@ -322,7 +322,7 @@ class Importer:
                                             functions, package_function, meta, notes)
         text = render(release)
         # A recipe rewritten with other contents under the same version must not reuse the build kept for the old
-        # one (autark-pkg keys builds on version-release), so its release goes up.
+        # one (ark keys builds on version-release), so its release goes up.
         target = os.path.join(self.args.out, f"{name}.sh")
         if os.path.exists(target):
             old = open(target).read()
@@ -365,7 +365,7 @@ class Importer:
             "",
         ]
         noextract = set(as_list(meta.get("noextract")))
-        body = ['build() {', '  cd "$srcdir"', "  # makepkg unpacks every archive source into $srcdir (autark-pkg already unpacked the first .tar.*)"]
+        body = ['build() {', '  cd "$srcdir"', "  # makepkg unpacks every archive source into $srcdir (ark already unpacked the first .tar.*)"]
         for index, (file, _, _, clone) in enumerate(sources):
             if not ARCHIVE.search(file) or file in noextract or (index == 0 and DRIVER_UNPACKS.search(file)):
                 continue
@@ -399,7 +399,7 @@ class Importer:
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    parser = argparse.ArgumentParser(description="Import Arch Linux packages as autark-pkg recipes.")
+    parser = argparse.ArgumentParser(description="Import Arch Linux packages as ark recipes.")
     parser.add_argument("packages", nargs="+")
     parser.add_argument("--out", default=os.path.join(here, "pkg-arch"), help="where the recipes are written")
     parser.add_argument("--recipes", default=os.path.join(here, "pkg"), help="Autark's own recipes (dependencies found there are used)")

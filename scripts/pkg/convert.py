@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Splits the phase scripts (scripts/lfs/*-inside.sh) into one autark-pkg recipe per package.
+"""Splits the phase scripts (scripts/lfs/*-inside.sh) into one ark recipe per package.
 
     python3 -I scripts/pkg/convert.py            # from the repo root; rewrites scripts/pkg/*.sh
 
 Each recipe keeps its function body from the phase script, with three changes: T_* and the boot script's
-variables become literal names, `/sources/` becomes `$srcdir/` (autark-pkg's folder of the package's sources),
+variables become literal names, `/sources/` becomes `$srcdir/` (ark's folder of the package's sources),
 and install commands get DESTDIR when the whole body can stage (see `stage`). Sources and checksums come from
 the LFS book's lists (sources/lfs-*), phase-8a-packages.md and sources/extra.tsv. A recipe without the
 GENERATED line was taken over by hand and is never overwritten.

@@ -39,7 +39,7 @@ Code for the desktop and the tools lives in [`autark-tools`](https://github.com/
 
 - **Risk first.** Anything touching disks, boot, keys, the installer, signing or the firewall gets a slower, closer
   review, and a test on a real machine or in qemu (`scripts/qemu-test/`).
-- **Small and reversible.** A change that can be rolled back (`autark-pkg rollback`) merges faster.
+- **Small and reversible.** A change that can be rolled back (`ark rollback`) merges faster.
 - **Hardware reports help.** `scripts/capture-hardware.sh <name>` records a laptop's profile.
 
 ## Security

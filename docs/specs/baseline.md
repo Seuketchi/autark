@@ -32,7 +32,7 @@ Measured on 2026-10-21 on the target laptop (MSI Cyborg 15, 24 GB RAM) while it 
 | Reachable from the network | SSH on 22 and iperf3 on 5201 accepted connections from any network | None: nftables drops all incoming connections with no exceptions. `sshd` still listens on 22, but the firewall blocks it | Yes |
 | Running services | 37 | 19 | Yes, loosely (different software installed) |
 | Error lines in one boot | 103 | 23 (kernel messages such as a Bluetooth firmware error and "TDX not supported") | Loosely: different firmware and drivers |
-| Packages | 2,039 debs and 12 snaps | 278 base packages tracked by the build scripts and 189 managed by `autark-pkg` (the two sets may overlap) | Loosely: different scope |
+| Packages | 2,039 debs and 12 snaps | 278 base packages tracked by the build scripts and 189 managed by `ark` (the two sets may overlap) | Loosely: different scope |
 | Boot, userspace only | 10.1 s (6.0 s waiting for the network) | 4.9 s to the graphical target, nothing waits for the network | Loosely: the CPU and disks differ |
 | Boot, firmware | 12.4 s | 13.1 s | No: it's the laptop's firmware |
 | Boot, kernel and initramfs | 2.4 s | 22.2 s, which includes the time spent typing the disk passphrase | No |
