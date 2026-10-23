@@ -1,0 +1,5 @@
+# The text and man documentation is not built: it needs sphinx and sphinx_rtd_theme, a long chain only for two doc files.
+drop python-sphinx
+sub make -C docs man text SPHINXBUILD=sphinx-build => true
+sub install -Dm 644 docs/_build/text/* -t "${pkgdir}/usr/share/doc/${pkgname}" => true
+sub install -Dm 644 docs/_build/man/commonmark-py.1 "${pkgdir}/usr/share/man/man1/${pkgname}.1" => true

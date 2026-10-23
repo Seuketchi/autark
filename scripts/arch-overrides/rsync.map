@@ -1,0 +1,6 @@
+# Arch cherry-picks four upstream commits after 3.5.1 with git; the source here is the v3.5.1 tag archive, which has no history,
+# so rsync is built as released. Take the commits as patches (as the importer does for a literal sha) when this matters.
+sub git log --oneline --reverse "${_c}" => true
+sub git log --oneline -1 "${_c}" => true
+sub git cherry-pick -n -m1 "${_c}" => true
+sub git revert -n "${_c}" => true

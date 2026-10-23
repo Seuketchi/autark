@@ -20,8 +20,15 @@ python-flit-core flit-core
 python-packaging packaging
 python-setuptools setuptools
 python-wheel wheel
+python-jinja jinja2
+python-markupsafe markupsafe
+python-yaml pyyaml
 # Rust is installed outside autark-pkg (rustc and cargo in the base system), so a Rust program needs nothing built for it.
 rust -
 cargo -
 # Autark builds systemd whole; its libraries (libsystemd, libudev) are part of that recipe.
 systemd-libs systemd
+# The base system carries the CA bundle (/etc/pki/tls/certs/ca-bundle.crt); Arch's ca-certificates only generates one from p11-kit.
+ca-certificates -
+ca-certificates-mozilla -
+ca-certificates-utils -

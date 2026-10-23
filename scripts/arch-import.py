@@ -430,6 +430,8 @@ class Importer:
             if clone:  # a git source is a folder named for the clone; a tag archive's folder is named otherwise
                 body.append(f'  top=$(tar -tf "$srcdir/{file}" | sed -n \'1{{s|^\\./||;s|/.*||;p}}\')')
                 body.append(f'  [ -e "{clone}" ] || mv "$top" "{clone}"')
+        if sources:  # makepkg keeps the downloaded files in the folder above $srcdir too, and some PKGBUILDs read "../file.patch"
+            body.append("  ln -sf " + " ".join(f'"$srcdir/{file}"' for file, _, _, _ in sources) + ' "$srcdir/.."')
         body += [
             "  set +u  # PKGBUILDs assume makepkg's environment, where CPPFLAGS, RUSTFLAGS and the like always exist",
             "  startdir=$srcdir pkgdir=$DESTDIR CARCH=x86_64 CHOST=x86_64-pc-linux-gnu",
@@ -453,6 +455,9 @@ class Importer:
             if arch_name not in functions:
                 continue
             text = re.sub(r"^\S+ \(\)", f"{as_name} ()", functions[arch_name], count=1)
+            if "-m build" in text and "--skip-dependency-check" not in text:
+                # build checks the version pins of the PEP 517 backends (flit_core<4) against our versions, which differ from Arch's
+                text = text.replace("--no-isolation", "--no-isolation --skip-dependency-check")
             body.append(re.sub(r"^", "  ", text, flags=re.M))
             called.append(as_name)
         body.append("")
