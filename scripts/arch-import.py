@@ -25,6 +25,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -344,7 +345,7 @@ class Importer:
         if name not in pkgnames:
             raise SystemExit(f"{name}: not one of the PKGBUILD's packages {pkgnames}")
         if len(pkgnames) > 1:
-            notes.append(f"split package ({' '.join(pkgnames)}): only package_{name}() is run, and depends are the shared ones")
+            notes.append(f"split package ({' '.join(pkgnames)}): only package_{name}() is run, and depends are its own, or the shared ones")
         package_function = f"package_{name}" if f"package_{name}" in functions else "package"
         if package_function not in functions:
             raise SystemExit(f"{name}: no {package_function}() in the PKGBUILD")
@@ -364,6 +365,10 @@ class Importer:
             sources.append((file, url, file_hash(download(url, self.args.cache), hashlib.sha256), None))
         depends = []
         runtime = as_list(meta.get("depends"))
+        # makepkg lets package_x() set its own depends (or add to the shared ones), which is what keeps libcups from needing ghostscript
+        for assign, values in re.findall(r"^\s*depends(\+?)=\(([^)]*)\)", functions.get(package_function, ""), re.M):
+            own = shlex.split(values)
+            runtime = runtime + own if assign else own
         for dep in runtime + [d for d in as_list(meta.get("makedepends")) if d not in runtime]:
             if re.split(r"[<>=]", dep)[0] in drops:
                 notes.append(f"override: dependency {dep} dropped")
@@ -421,6 +426,7 @@ class Importer:
             "",
         ]
         noextract = set(as_list(meta.get("noextract")))
+        first = (as_list(meta.get("pkgname")) or [name])[0]
         body = ['build() {', '  cd "$srcdir"', "  # makepkg unpacks every archive source into $srcdir (autark-pkg already unpacked the first .tar.*)"]
         for index, (file, _, _, clone) in enumerate(sources):
             if not ARCHIVE.search(file) or file in noextract or (index == 0 and DRIVER_UNPACKS.search(file)):
@@ -436,7 +442,8 @@ class Importer:
             "  set +u  # PKGBUILDs assume makepkg's environment, where CPPFLAGS, RUSTFLAGS and the like always exist",
             "  startdir=$srcdir pkgdir=$DESTDIR CARCH=x86_64 CHOST=x86_64-pc-linux-gnu",
             "  unset DESTDIR  # makepkg does not set it, and a Makefile given both it and prefix=$pkgdir/usr installs under it twice",
-            f"  pkgname={name} pkgbase={pkgbase} pkgver={meta['pkgver']} pkgrel={meta.get('pkgrel', '1')}",
+            # makepkg runs prepare() and build() with pkgname the first package of a split PKGBUILD, and package_x() with x
+            f"  pkgname={first} pkgbase={pkgbase} pkgver={meta['pkgver']} pkgrel={meta.get('pkgrel', '1')}",
         ]
         for declaration in pkg["vars"]:
             body.append("  " + declaration.replace("\n", "\n  "))
@@ -462,7 +469,7 @@ class Importer:
             called.append(as_name)
         body.append("")
         for as_name in called:
-            body.append(f'  cd "$srcdir"; {as_name}')
+            body.append(f'  cd "$srcdir"; {"pkgname=" + name + "; " if as_name == "arch_package" and first != name else ""}{as_name}')
         # What makepkg removes after package(): its PURGE_TARGETS (usr/share/info/dir is one index every info package would
         # otherwise own, and perllocal.pod and .packlist are Perl's install logs) and, unless the PKGBUILD keeps them, .la files.
         body.append("  # makepkg's purge step: files that would make this package conflict with others")

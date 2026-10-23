@@ -1,0 +1,5 @@
+# The man page is not built: sphinx needs sphinx-copybutton, which Arch builds from git submodules, only for libuv.1.
+drop python-sphinx
+drop python-sphinx-copybutton
+sub make man -C docs => true
+sub install -Dm644 docs/build/man/libuv.1 "$pkgdir"/usr/share/man/man1/libuv.1 => true

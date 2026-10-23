@@ -32,3 +32,5 @@ systemd-libs systemd
 ca-certificates -
 ca-certificates-mozilla -
 ca-certificates-utils -
+# pip is part of the base system (the recipes here build Python packages with pip3).
+python-pip -

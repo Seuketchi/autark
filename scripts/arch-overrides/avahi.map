@@ -1,0 +1,5 @@
+# avahi-gtk (avahi-discover, bshell, libavahi-ui-gtk3) is not built: gtk3 needs libcups, which needs avahi. Losing GTK printing
+# to break the cycle at gtk3 would cost far more than losing these browsing tools.
+drop gtk3
+sub --disable-qt5 => --disable-qt5 --disable-gtk3
+sub _pick a-gtk => : # _pick a-gtk

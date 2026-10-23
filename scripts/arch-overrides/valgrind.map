@@ -1,0 +1,7 @@
+# valgrind's tools are linked without libc, so the stack protector the build flags ask for (__stack_chk_fail) cannot link.
+sub ./configure --prefix=/usr => CFLAGS="${CFLAGS//-fstack-protector-strong/}" CXXFLAGS="${CXXFLAGS//-fstack-protector-strong/}" ./configure --prefix=/usr
+# The man pages are not built: they need the DocBook XML catalogs registered, which an imported package cannot do.
+drop docbook-xml
+drop docbook-xsl
+sub make -C docs man-pages => true
+sub install -Dm644 docs/*.1 -t "$pkgdir/usr/share/man/man1" => true

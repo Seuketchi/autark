@@ -1,0 +1,3 @@
+# ghostscript is a makedepends that the build does not use (ijs is a stand-alone library), and ghostscript needs ijs.
+drop ghostscript
+drop docbook-utils

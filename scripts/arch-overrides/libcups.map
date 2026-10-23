@@ -1,0 +1,3 @@
+# cups-filters is a makedepends of the cups PKGBUILD (the cups package needs it, libcups does not), and it needs ghostscript,
+# which needs libcups.
+drop cups-filters

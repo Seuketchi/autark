@@ -1,0 +1,4 @@
+# The HTML specification is not built (it is not installed either): it needs xmlto and the DocBook catalogs.
+drop xmlto
+drop docbook-xsl
+sub -D build-tests=false => -D build-tests=false -D build-spec=false
