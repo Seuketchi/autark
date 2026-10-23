@@ -1,0 +1,10 @@
+# libsasl builds the LDAP, MySQL and PostgreSQL password plugins and libldap depends on libsasl: a cycle (Arch builds
+# the first twice by hand). The plugins are removed from the package anyway (they ship in extra/cyrus-sasl), so build without them.
+drop libldap
+drop mariadb-libs
+drop postgresql-libs
+sub --enable-ldapdb => --disable-ldapdb
+sub --enable-sql => --disable-sql
+sub --with-ldap => --without-ldap
+sub --with-mysql=/usr => --without-mysql
+sub --with-pgsql=/usr/lib => --without-pgsql
