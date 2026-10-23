@@ -9,6 +9,8 @@
 #   OUT=dir            where the results go (default: ./compat-results): results.tsv, and logs/<package>.log
 #   TIMEOUT=minutes    how long one package may take (default 45)
 #   KEEP=1             keep the build folder of a failed package (default: delete it; the log stays)
+#   ACTION=build|install   build (default) leaves dependencies unbuilt, so a package whose dependencies are not installed
+#                      fails; install builds and installs them too, which is what compat/container.sh uses, in a throwaway system
 #
 # It can be stopped and started again: a package already in results.tsv is skipped. Delete its line to retry it.
 
@@ -18,6 +20,7 @@ LIST=${1:-$(dirname "$0")/packages.txt}
 OUT=${OUT:-$PWD/compat-results}
 TIMEOUT=${TIMEOUT:-45}
 BUILDS=${BUILDS:-/var/tmp/autark-pkg}
+ACTION=${ACTION:-build}
 
 die() { echo "compat/run.sh: $*" >&2; exit 1; }
 
@@ -44,7 +47,7 @@ while read -r name _; do
     fi
     start=$(date +%s)
     # shellcheck disable=SC2086
-    nice -n 15 ionice -c3 timeout "${TIMEOUT}m" "$ARK" $flags build "$name" > "$OUT/logs/$name.log" 2>&1
+    nice -n 15 ionice -c3 timeout "${TIMEOUT}m" "$ARK" $flags "$ACTION" "$name" > "$OUT/logs/$name.log" 2>&1
     code=$?
     seconds=$(($(date +%s) - start))
     case $code in
@@ -53,7 +56,7 @@ while read -r name _; do
         *) status=failed ;;
     esac
     last=
-    [ "$status" = ok ] || last=$(grep -E 'error|Error|failed|No such file|not found|refused' "$OUT/logs/$name.log" | tail -1 | tr '\t' ' ' | cut -c1-160)
+    [ "$status" = ok ] || last=$(grep -E '^ark: |error|Error|failed|No such file|not found|refused' "$OUT/logs/$name.log" | tail -1 | tr '\t' ' ' | cut -c1-160)
     printf '%s\t%s\t%s\t%s\n' "$name" "$status" "$seconds" "$last" >> "$results"
     # A failed build keeps its folder for debugging; across a long list that fills the disk. The log is kept.
     if [ "$status" != ok ] && [ -z "${KEEP:-}" ]; then
