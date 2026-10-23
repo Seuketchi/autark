@@ -439,6 +439,15 @@ class Importer:
         for declaration in pkg["vars"]:
             body.append("  " + declaration.replace("\n", "\n  "))
         body.append("")
+        # Functions the PKGBUILD defines for its own use (_srcenv, _pick) are called by prepare(), build() and package().
+        own = {key: text for key, text in functions.items()
+               if key not in ("prepare", "build", "check", "pkgver", package_function) and not key.startswith("package_")}
+        for text in own.values():
+            body.append(re.sub(r"^", "  ", text, flags=re.M))
+        # Arch's devtools install arch-meson, a meson setup with the distribution's options; PKGBUILDs call it as a command.
+        if any("arch-meson" in text for text in functions.values()):
+            body.append("  arch-meson () { meson setup --prefix /usr --libexecdir lib --sbindir bin --buildtype plain "
+                        "--auto-features enabled --wrap-mode nodownload -D b_pie=true \"$@\"; }")
         called = []
         for arch_name, as_name in (("prepare", "arch_prepare"), ("build", "arch_build"), (package_function, "arch_package")):
             if arch_name not in functions:
