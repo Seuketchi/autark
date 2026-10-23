@@ -1,0 +1,81 @@
+# Packages to try with scripts/compat/run.sh, one Arch package name per line, smallest first. A name after the first
+# word is ignored, so a line can carry a note. Add what you actually use; the order is the order they are tried in.
+
+# small command-line tools
+tree
+ncdu
+htop
+btop
+tmux
+screen
+jq
+ripgrep
+fd
+fzf
+zoxide
+eza
+hyperfine
+tokei
+dust
+sd
+git-delta
+bottom
+procs
+hexyl
+entr
+pv
+parallel
+bc
+cloc
+fastfetch
+
+# network
+socat
+nmap
+mtr
+iperf3
+wget
+rsync
+whois
+tcpdump
+traceroute
+openbsd-netcat
+bind
+
+# development
+strace
+ltrace
+gdb
+valgrind
+cmake
+ninja
+meson
+ccache
+shfmt
+direnv
+tig
+lazygit
+neovim
+vim
+
+# archives and data
+p7zip
+unzip
+zip
+unrar
+sqlite
+redis
+graphviz
+
+# media
+sox
+flac
+imagemagick
+mpv
+ffmpeg
+yt-dlp
+
+# heavy: long builds, many dependencies. They show where the importer stops working.
+postgresql
+nodejs
+go
