@@ -14,3 +14,12 @@ python3 python
 ncurses ncurses
 libgcc gcc
 libstdc++ gcc
+# Python build tooling: Autark has these under their PyPI names, and Arch's python-build, python-installer and
+# python-pyproject-hooks need each other to build, so those three are hand-written recipes here.
+python-flit-core flit-core
+python-packaging packaging
+python-setuptools setuptools
+python-wheel wheel
+# Rust is installed outside autark-pkg (rustc and cargo in the base system), so a Rust program needs nothing built for it.
+rust -
+cargo -
