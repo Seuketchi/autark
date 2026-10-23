@@ -449,6 +449,12 @@ class Importer:
         body.append("")
         for as_name in called:
             body.append(f'  cd "$srcdir"; {as_name}')
+        # What makepkg removes after package(): its PURGE_TARGETS (usr/share/info/dir is one index every info package would
+        # otherwise own, and perllocal.pod and .packlist are Perl's install logs) and, unless the PKGBUILD keeps them, .la files.
+        body.append("  # makepkg's purge step: files that would make this package conflict with others")
+        body.append('  find "$pkgdir" -type f \\( -path "*/usr/share/info/dir" -o -path "*/usr/info/dir" -o -name .packlist -o -name "*.pod" \\) -delete')
+        if "libtool" not in as_list(meta.get("options")):
+            body.append('  find "$pkgdir" -type f -name "*.la" -delete')
         body.append("}")
         return "\n".join(lines) + "\n" + "\n".join(body) + "\n"
 
