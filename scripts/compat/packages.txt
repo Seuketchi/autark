@@ -59,12 +59,12 @@ neovim
 vim
 
 # archives and data
-p7zip
+7zip
 unzip
 zip
 unrar
 sqlite
-redis
+valkey
 graphviz
 
 # media

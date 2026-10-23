@@ -124,6 +124,14 @@ def packaging_commit(pkgbase):
     return json.loads(http(f"{GITLAB}/api/v4/projects/{project}/repository/commits/main", binary=False))["id"]
 
 
+def packaging_repository(info):
+    """The packaging repository's name for a package, from the link on its page at archlinux.org: a few were renamed
+    there (tree's is unix-tree) while the package search still says the old pkgbase."""
+    page = http(f"https://archlinux.org/packages/{info['repo']}/{info['arch']}/{info['pkgname']}/", binary=False)
+    found = re.search(re.escape(f"{GITLAB}/{PACKAGES}/") + r'([^"/]+)"', page)
+    return found.group(1) if found else info["pkgbase"]
+
+
 def packaging_raw(pkgbase, commit, path):
     return f"{GITLAB}/{PACKAGES}/{pkgbase}/-/raw/{commit}/{urllib.parse.quote(path)}"
 
@@ -221,6 +229,44 @@ class Importer:
         notes.append(f"dependency {dep}: no recipe (left out)")
         return None
 
+    def commit_patches(self, functions, meta, notes):
+        """prepare() often runs `git cherry-pick -n <sha>` or `git show <sha> -- file | git apply -`; a source archive has no
+        history, so each commit becomes a patch fetched from the upstream host (a source, pinned by its sha256) and applied
+        with patch(1) or git apply. `git apply -3` needs a repository too, and means a plain apply here."""
+        picks = {}
+        texts = {}
+        for key, text in functions.items():
+            for sha in re.findall(r"git cherry-pick -n ([0-9a-f]{40})", text) + re.findall(r"git show ([0-9a-f]{40}) -- \S+ \| git apply -", text):
+                picks[sha] = f"commit-{sha[:12]}.patch"
+            text = re.sub(r"git cherry-pick -n ([0-9a-f]{40})", lambda m: f'patch -Np1 -i "$srcdir/commit-{m.group(1)[:12]}.patch"', text)
+            text = re.sub(r"git show ([0-9a-f]{40}) -- (\S+) \| git apply -",
+                          lambda m: f'git apply --include={m.group(2)} < "$srcdir/commit-{m.group(1)[:12]}.patch"', text)
+            text = re.sub(r"git apply (?:-3|--3way)\b", "git apply", text)
+            texts[key] = text
+        if not picks:
+            return texts, []
+        upstream = None
+        for entry in as_list(meta.get("source")):
+            git = re.match(r"(?:[^:]*::)?git\+(https://[^#?]+?)(?:\.git)?(?:[?#].*)?$", entry)
+            if git:
+                upstream = urllib.parse.urlparse(git.group(1))
+                break
+        if upstream is None or len(upstream.path.strip("/").split("/")) < 2:
+            raise SystemExit("prepare() cherry-picks commits, and no git source says where they come from")
+        extra = []
+        for sha, file in picks.items():
+            if upstream.netloc == "github.com":
+                url = f"https://github.com{upstream.path}/commit/{sha}.patch"
+            elif upstream.netloc.startswith("gitlab."):
+                url = f"https://{upstream.netloc}{upstream.path}/-/commit/{sha}.patch"
+            elif upstream.netloc == "codeberg.org":
+                url = f"https://codeberg.org{upstream.path}/commit/{sha}.patch"
+            else:
+                raise SystemExit(f"prepare() cherry-picks commit {sha[:12]}, and git host {upstream.netloc} is not supported")
+            extra.append((file, url))
+            notes.append(f"commit {sha[:12]} fetched as a patch ({file}) instead of git cherry-pick; pinned by the sha256 first seen")
+        return texts, extra
+
     def sources(self, meta, pkgbase, commit, notes):
         """[(file name, url, sha256, unpacked-as folder or None)] for the PKGBUILD's sources."""
         entries = [s for s in as_list(meta.get("source")) if not SIGNATURE.search(s.split("::")[-1].split("#")[0])]
@@ -239,6 +285,7 @@ class Importer:
             checked = True
             if git:
                 base, kind, ref = git.groups()
+                ref = re.sub(r"\?(un)?signed$", "", ref or "")  # Arch's marker that the tag is checked with gpg; not part of the name
                 host = urllib.parse.urlparse(base)
                 parts = host.path.strip("/").split("/")
                 repo = parts[-1]
@@ -250,6 +297,8 @@ class Importer:
                     url = f"{base}/archive/{ref}.tar.gz"
                 elif host.netloc.startswith("gitlab.") and len(parts) >= 2:
                     url = f"{base}/-/archive/{ref}/{repo}-{ref}.tar.gz"
+                elif host.netloc == "codeberg.org" and len(parts) == 2:
+                    url = f"{base}/archive/{ref}.tar.gz"
                 else:
                     notes.append(f"source {entry}: git host {host.netloc} is not supported")
                     raise SystemExit("; ".join(notes))
@@ -280,7 +329,11 @@ class Importer:
         if not info:
             raise SystemExit(f"{name}: not in Arch's repositories")
         pkgbase = info["pkgbase"]
-        commit = packaging_commit(pkgbase)
+        try:
+            commit = packaging_commit(pkgbase)
+        except SystemExit:
+            pkgbase = packaging_repository(info)
+            commit = packaging_commit(pkgbase)
         notes = []
         with tempfile.TemporaryDirectory() as work:
             with open(os.path.join(work, "PKGBUILD"), "wb") as out:
@@ -305,7 +358,10 @@ class Importer:
                 raise SystemExit(f"override `{old}` matches nothing in the PKGBUILD any more: look at {name}.map")
             functions = {key: text.replace(old, new) for key, text in functions.items()}
             notes.append(f"override: `{old}` replaced by `{new}`")
+        functions, patches = self.commit_patches(functions, meta, notes)
         sources = self.sources(meta, pkgbase, commit, notes)
+        for file, url in patches:
+            sources.append((file, url, file_hash(download(url, self.args.cache), hashlib.sha256), None))
         depends = []
         runtime = as_list(meta.get("depends"))
         for dep in runtime + [d for d in as_list(meta.get("makedepends")) if d not in runtime]:
