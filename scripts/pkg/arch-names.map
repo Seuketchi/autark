@@ -23,3 +23,5 @@ python-wheel wheel
 # Rust is installed outside autark-pkg (rustc and cargo in the base system), so a Rust program needs nothing built for it.
 rust -
 cargo -
+# Autark builds systemd whole; its libraries (libsystemd, libudev) are part of that recipe.
+systemd-libs systemd
