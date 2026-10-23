@@ -1,0 +1,9 @@
+# fmt-docs is not built: the documentation needs doxygen, mkdocs and npm, and doxygen needs fmt, so the cycle ends here.
+drop doxygen
+drop mkdocs
+drop mkdocs-material
+drop mkdocstrings
+drop npm
+drop python-pymdown-extensions
+drop python-regex
+sub cmake --build build --target doc => true
