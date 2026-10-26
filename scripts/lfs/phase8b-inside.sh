@@ -445,6 +445,13 @@ pkg_autark_tools() {
       *) install -v -m755 "$bin" /usr/bin/ ;;
     esac
   done
+  # The default session (data/session): Wayfire's config, for new accounts and for Keyboard shortcuts' "reset to the
+  # shipped keys" (which read /usr/share/wayfire/wayfire.ini, replacing the stock file the wayfire package put there),
+  # the cursor environment for login shells, and the cursor theme the environment names.
+  install -v -Dm644 data/session/wayfire.ini /usr/share/wayfire/wayfire.ini
+  install -v -Dm644 data/session/wayfire.ini /etc/skel/.config/wayfire.ini
+  install -v -Dm644 data/session/autark-session.sh /etc/profile.d/autark-session.sh
+  /usr/bin/autark-cursors install /usr/share/icons/Autark
   # The RAPL helper: systemd unit, D-Bus activation and policy (crates/autark-stats/data).
   install -v -Dm644 crates/autark-stats/data/autark-stats-power.service   /usr/lib/systemd/system/autark-stats-power.service
   install -v -Dm644 crates/autark-stats/data/org.autark.StatsPower1.service /usr/share/dbus-1/system-services/org.autark.StatsPower1.service
