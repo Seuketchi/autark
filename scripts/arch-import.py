@@ -174,6 +174,12 @@ def read_pkgbuild(directory):
     return {"meta": meta, "vars": variables, "funcs": functions}
 
 
+def apply_patch(path):
+    """patch(1) for a commit PKGBUILD cherry-picks. The pinned tag can already hold it (Arch's list lags the releases),
+    which patch -N reports as a failure: a patch that applies in reverse is in already."""
+    return f'patch -Np1 -i "{path}" || patch -Rp1 --dry-run -s -i "{path}"'
+
+
 def as_list(value):
     return value if isinstance(value, list) else ([value] if value else [])
 
@@ -245,13 +251,13 @@ class Importer:
         for key, text in functions.items():
             for sha in re.findall(r"git cherry-pick -n ([0-9a-f]{40})", text) + re.findall(r"git show ([0-9a-f]{40}) -- \S+ \| git apply -", text):
                 picks[sha] = f"commit-{sha[:12]}.patch"
-            text = re.sub(r"git cherry-pick -n ([0-9a-f]{40})", lambda m: f'patch -Np1 -i "$srcdir/commit-{m.group(1)[:12]}.patch"', text)
+            text = re.sub(r"git cherry-pick -n ([0-9a-f]{40})", lambda m: apply_patch(f"$srcdir/commit-{m.group(1)[:12]}.patch"), text)
             # a loop over an array of commits: `for commit in "${picks[@]}"; do git cherry-pick -n "$commit"; done`
             loop = re.search(r'git cherry-pick -n "?\$\{?(\w+)\}?"?', text)
             if loop:
                 for sha in re.findall(r"\b[0-9a-f]{40}\b", text):
                     picks[sha] = f"commit-{sha[:12]}.patch"
-                text = text.replace(loop.group(0), f'patch -Np1 -i "$srcdir/commit-${{{loop.group(1)}:0:12}}.patch"')
+                text = text.replace(loop.group(0), apply_patch(f"$srcdir/commit-${{{loop.group(1)}:0:12}}.patch"))
             text = re.sub(r"git show ([0-9a-f]{40}) -- (\S+) \| git apply -",
                           lambda m: f'git apply --include={m.group(2)} < "$srcdir/commit-{m.group(1)[:12]}.patch"', text)
             text = re.sub(r"git apply (?:-3|--3way)\b", "git apply", text)

@@ -41,3 +41,5 @@ llvm22-libs llvm
 clang -
 clang22 -
 clang-libs -
+# The base ships Lua 5.4 (lua), whose files lua54 would overwrite.
+lua54 lua

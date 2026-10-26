@@ -1,0 +1,2 @@
+# expect already ships mkpasswd (and its man page); whois's is the same name for a different program.
+sub make prefix=/usr BASEDIR="$pkgdir" install => make prefix=/usr BASEDIR="$pkgdir" install && rm -f "$pkgdir"/usr/bin/mkpasswd "$pkgdir"/usr/share/man/man1/mkpasswd.1 "$pkgdir"/usr/share/man/*/man1/mkpasswd.1

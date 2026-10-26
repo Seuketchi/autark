@@ -1,0 +1,3 @@
+# lmdb's source is on git.openldap.org, a host the importer does not read: no LMDB support in named.
+drop lmdb
+sub --with-lmdb => --without-lmdb

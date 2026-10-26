@@ -1,0 +1,3 @@
+# ruby depends on rubygems and rubygems (pure Ruby) needs ruby to install: Arch builds a bootstrap ruby first. Here ruby is
+# installed without rubygems, which then goes on top of it.
+drop rubygems

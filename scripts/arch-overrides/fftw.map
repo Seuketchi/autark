@@ -1,0 +1,7 @@
+# fftw-openmpi needs openmpi, which does not build here (its tarball no longer matches Arch's checksum): no MPI libraries.
+drop openmpi
+sub --enable-mpi --enable-openmp MPILIBS="$(mpicc --showme:link)" => --disable-mpi --disable-fortran --enable-openmp
+# ...so there are no MPI files for the split package to pick out.
+sub mv "$f" "$d"; => mv "$f" "$d" || true;
+# gfortran is not built, and configure fails when it cannot compile a Fortran program.
+sub --disable-mpi --enable-quad-precision => --disable-mpi --disable-fortran --enable-quad-precision
