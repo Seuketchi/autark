@@ -178,13 +178,15 @@ def load_overrides(directory, name):
     """Deliberate differences from Arch, one file per package: `drop <dependency>` and `sub <old> => <new>` (a text
     replacement in the PKGBUILD's functions, which must match something, so an update that moves it is noticed)."""
     drops, subs = [], []
-    path = os.path.join(directory, f"{name}.map")
-    if os.path.exists(path):
+    for stem in ("_all", name):  # _all.map: drops that apply to every package
+        path = os.path.join(directory, f"{stem}.map")
+        if not os.path.exists(path):
+            continue
         for line in open(path):
             line = line.rstrip("\n")
             if line.startswith("drop "):
                 drops.append(line[5:].strip())
-            elif line.startswith("sub ") and " => " in line:
+            elif line.startswith("sub ") and " => " in line and stem == name:
                 old, new = line[4:].split(" => ", 1)
                 subs.append((old, new))
     return drops, subs

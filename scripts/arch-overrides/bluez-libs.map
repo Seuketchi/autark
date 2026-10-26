@@ -1,0 +1,3 @@
+# bluez-libs is the old libbluetooth from the bluez PKGBUILD; cups is for bluez's own printing backend, and cups needs
+# cups-filters, libcups, colord and so back to bluez-libs.
+drop cups

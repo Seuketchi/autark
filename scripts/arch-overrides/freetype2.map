@@ -1,0 +1,3 @@
+# librsvg is only for freetype2-demos' SVG viewer, and librsvg needs freetype2. The demos are not packaged here.
+drop librsvg
+sub arch-meson ft2demos-$pkgver build => arch-meson ft2demos-$pkgver build -D librsvg=disabled

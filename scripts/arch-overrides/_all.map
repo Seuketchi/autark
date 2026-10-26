@@ -1,0 +1,3 @@
+# Dependencies dropped from every package. check() is never run, so the tools only tests need are not wanted, and they are
+# what most of the dependency cycles through the hardware libraries come from (umockdev needs libgudev, libgusb, libpcap, ...).
+drop umockdev

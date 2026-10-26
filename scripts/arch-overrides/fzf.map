@@ -1,0 +1,2 @@
+# fzf's Makefile reads its version and revision from git; the source here is the tag archive, which has no repository.
+sub export CGO_LDFLAGS="${LDFLAGS}" => export FZF_VERSION="$pkgver" FZF_REVISION=release; export CGO_LDFLAGS="${LDFLAGS}"
