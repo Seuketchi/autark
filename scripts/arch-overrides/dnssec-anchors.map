@@ -1,0 +1,2 @@
+# unbound is a makedepends, and unbound needs dnssec-anchors; the package is two files that the PKGBUILD installs as they are.
+drop unbound

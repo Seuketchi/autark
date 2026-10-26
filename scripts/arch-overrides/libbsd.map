@@ -1,0 +1,2 @@
+# The tag archive has no .dist-version, which configure.ac reads for the version (the release tarball has it).
+sub autoreconf -vfi => echo "$pkgver" > .dist-version; autoreconf -vfi

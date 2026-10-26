@@ -1,0 +1,3 @@
+# Built without MPI: openmpi's source hash does not match the PKGBUILD's any more, so it is not imported.
+sub echo "using mpi ;" >> project-config.jam => true
+sub cp fakeinstall/lib/boost-python*/mpi.so "$pkgdir"$site_packages/boost/mpi.so => true

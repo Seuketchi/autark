@@ -1,0 +1,10 @@
+# The documentation is not built: nasmdoc.ps needs a PostScript toolchain (ghostscript, a2ps) for a manual.
+sub make all doc => make all
+sub install install_doc => install
+drop perl-font-ttf
+drop perl-sort-versions
+drop fontconfig
+drop ttf-roboto
+drop ttf-roboto-mono
+drop ghostscript
+drop asciidoc

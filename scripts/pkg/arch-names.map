@@ -34,3 +34,10 @@ ca-certificates-mozilla -
 ca-certificates-utils -
 # pip is part of the base system (the recipes here build Python packages with pip3).
 python-pip -
+# The base builds LLVM and clang whole (llvm 22.x, with clang, lld and the libraries), so Arch's split and versioned packages are that recipe.
+llvm-libs llvm
+llvm22 llvm
+llvm22-libs llvm
+clang -
+clang22 -
+clang-libs -

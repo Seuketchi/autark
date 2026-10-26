@@ -24,6 +24,7 @@ import datetime
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shlex
 import subprocess
@@ -80,7 +81,10 @@ done
 
 
 def http(url, binary=True):
-    request = urllib.request.Request(url, headers=AGENT)
+    headers = dict(AGENT)
+    if url.startswith("https://api.github.com/") and os.environ.get("GITHUB_TOKEN"):  # the API allows 60 requests an hour without
+        headers["Authorization"] = "Bearer " + os.environ["GITHUB_TOKEN"]
+    request = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=60) as reply:
             data = reply.read()
@@ -242,6 +246,12 @@ class Importer:
             for sha in re.findall(r"git cherry-pick -n ([0-9a-f]{40})", text) + re.findall(r"git show ([0-9a-f]{40}) -- \S+ \| git apply -", text):
                 picks[sha] = f"commit-{sha[:12]}.patch"
             text = re.sub(r"git cherry-pick -n ([0-9a-f]{40})", lambda m: f'patch -Np1 -i "$srcdir/commit-{m.group(1)[:12]}.patch"', text)
+            # a loop over an array of commits: `for commit in "${picks[@]}"; do git cherry-pick -n "$commit"; done`
+            loop = re.search(r'git cherry-pick -n "?\$\{?(\w+)\}?"?', text)
+            if loop:
+                for sha in re.findall(r"\b[0-9a-f]{40}\b", text):
+                    picks[sha] = f"commit-{sha[:12]}.patch"
+                text = text.replace(loop.group(0), f'patch -Np1 -i "$srcdir/commit-${{{loop.group(1)}:0:12}}.patch"')
             text = re.sub(r"git show ([0-9a-f]{40}) -- (\S+) \| git apply -",
                           lambda m: f'git apply --include={m.group(2)} < "$srcdir/commit-{m.group(1)[:12]}.patch"', text)
             text = re.sub(r"git apply (?:-3|--3way)\b", "git apply", text)
@@ -270,6 +280,49 @@ class Importer:
             notes.append(f"commit {sha[:12]} fetched as a patch ({file}) instead of git cherry-pick; pinned by the sha256 first seen")
         return texts, extra
 
+    def submodule(self, main, base, parts):
+        """(archive url, file name, folder to unpack into) for a git source the PKGBUILD lists without a tag or commit and then
+        feeds to `git submodule update`: it is a submodule of the main repository, whose tag pins the commit. None if it is not."""
+        mbase, mref, mhost, mparts, mclone = main
+        host = urllib.parse.urlparse(base)
+        github = lambda h: h.netloc == "github.com"
+        gitlab = lambda h: h.netloc.startswith("gitlab.")
+        if not ((github(mhost) and len(mparts) == 2) or (gitlab(mhost) and len(mparts) >= 2)) or not (github(host) or gitlab(host)):
+            return None
+        mproject = "/".join(mparts)
+        raw = (f"https://raw.githubusercontent.com/{mproject}/{mref}/.gitmodules" if github(mhost)
+               else f"{mbase}/-/raw/{mref}/.gitmodules")
+        try:
+            modules = http(raw, binary=False)
+        except SystemExit:
+            return None
+        tidy = lambda url: re.sub(r"\.git$", "", url.strip().lower().rstrip("/"))
+        path = None
+        for section in modules.split("[submodule")[1:]:
+            where, url = re.search(r"path\s*=\s*(\S+)", section), re.search(r"url\s*=\s*(\S+)", section)
+            if not (where and url):
+                continue
+            where_from = url.group(1)
+            if where_from.startswith(("./", "../")):  # relative to the main repository's own url
+                where_from = f"https://{mhost.netloc}" + posixpath.normpath(posixpath.join(mhost.path + "/", where_from))
+            if tidy(where_from) == tidy(base):
+                path = where.group(1)
+        if not path:
+            return None
+        if github(mhost):
+            entry = json.loads(http(f"https://api.github.com/repos/{mproject}/contents/{path}?ref={mref}", binary=False))
+            sha = entry["sha"] if isinstance(entry, dict) and entry.get("type") == "submodule" else None
+        else:
+            folder, _, leaf = path.rpartition("/")
+            listing = json.loads(http(f"https://{mhost.netloc}/api/v4/projects/{urllib.parse.quote(mproject, safe='')}/repository/tree"
+                                      f"?path={urllib.parse.quote(folder)}&ref={mref}&per_page=100", binary=False))
+            sha = next((e["id"] for e in listing if e["name"] == leaf and e["type"] == "commit"), None)
+        if not sha:
+            return None
+        repo = parts[-1]
+        url = f"{base}/archive/{sha}.tar.gz" if github(host) else f"{base}/-/archive/{sha}/{repo}-{sha}.tar.gz"
+        return url, f"{repo}-{sha[:12]}.tar.gz", f"{mclone}/{path}"
+
     def sources(self, meta, pkgbase, commit, notes):
         """[(file name, url, sha256, unpacked-as folder or None)] for the PKGBUILD's sources."""
         entries = [s for s in as_list(meta.get("source")) if not SIGNATURE.search(s.split("::")[-1].split("#")[0])]
@@ -281,9 +334,11 @@ class Importer:
                 wanted = {"algorithm": name, "values": dict(zip(original, values))}
                 break
         out = []
+        main = None
         for entry in entries:
             fixed_name, _, rest = entry.partition("::") if "::" in entry else ("", "", entry)
             clone = None
+            inside = None
             git = re.match(r"git\+(https://[^#?]+?)(?:\.git)?(?:\?[^#]*)?(?:#(tag|commit|branch)=(.+))?$", rest)
             checked = True
             if git:
@@ -293,10 +348,19 @@ class Importer:
                 parts = host.path.strip("/").split("/")
                 repo = parts[-1]
                 clone = fixed_name or repo
+                inside = None
                 if kind not in ("tag", "commit"):
-                    notes.append(f"source {entry}: git source without a tag or commit (not pinned)")
-                    raise SystemExit("; ".join(notes))
-                if host.netloc == "github.com" and len(parts) == 2:
+                    inside = self.submodule(main, base, parts) if main else None
+                    if not inside:
+                        notes.append(f"source {entry}: git source without a tag or commit (not pinned)")
+                        raise SystemExit("; ".join(notes))
+                elif main is None:
+                    main = (base, ref, host, parts, clone)
+                if inside:
+                    url, file, folder = inside
+                    clone = "@" + folder  # unpacked into the main source's folder, not renamed
+                    notes.append(f"source {entry}: a submodule of the main repository, fetched at the commit its tag pins")
+                elif host.netloc == "github.com" and len(parts) == 2:
                     url = f"{base}/archive/{ref}.tar.gz"
                 elif host.netloc.startswith("gitlab.") and len(parts) >= 2:
                     url = f"{base}/-/archive/{ref}/{repo}-{ref}.tar.gz"
@@ -305,10 +369,14 @@ class Importer:
                 else:
                     notes.append(f"source {entry}: git host {host.netloc} is not supported")
                     raise SystemExit("; ".join(notes))
-                file = f"{repo}-{ref}.tar.gz"
+                if not inside:
+                    file = f"{repo}-{ref}.tar.gz"
                 checked = False
-                notes.append(f"source {file}: pinned by the sha256 first seen: Arch pins {kind} {ref} of the git repository, "
-                             f"which has no file hash to check")
+                if inside:
+                    notes.append(f"source {file}: pinned by the sha256 first seen: the main repository's tag fixes the commit")
+                else:
+                    notes.append(f"source {file}: pinned by the sha256 first seen: Arch pins {kind} {ref} of the git repository, "
+                                 f"which has no file hash to check")
             elif "://" in rest:
                 url, file = rest, fixed_name or rest.rsplit("/", 1)[-1].split("?")[0]
             else:  # a file kept in the packaging repository (a patch, a config)
@@ -363,6 +431,11 @@ class Importer:
             notes.append(f"override: `{old}` replaced by `{new}`")
         functions, patches = self.commit_patches(functions, meta, notes)
         sources = self.sources(meta, pkgbase, commit, notes)
+        if any((source[3] or "").startswith("@") for source in sources):
+            # the submodules are unpacked already; there is no repository for git to update them in
+            notes[:] = [note for note in notes if not note.startswith("the build uses git submodules")]
+            functions = {key: re.sub(r"git config --file=\S*\.gitmodules [^;\n]*", "true",
+                                     re.sub(r"git (?:-c \S+ )*submodule [^;\n]*", "true", text)) for key, text in functions.items()}
         for file, url in patches:
             sources.append((file, url, file_hash(download(url, self.args.cache), hashlib.sha256), None))
         depends = []
@@ -428,18 +501,23 @@ class Importer:
             "",
         ]
         noextract = set(as_list(meta.get("noextract")))
+        # a here-document's terminator must start its line, so a function that has one is written as it is
+        indent = lambda text: text if "<<" in text else re.sub(r"^", "  ", text, flags=re.M)
         first = (as_list(meta.get("pkgname")) or [name])[0]
         body = ['build() {', '  cd "$srcdir"', "  # makepkg unpacks every archive source into $srcdir (autark-pkg already unpacked the first .tar.*)"]
         for index, (file, _, _, clone) in enumerate(sources):
-            if not ARCHIVE.search(file) or file in noextract or (index == 0 and DRIVER_UNPACKS.search(file)):
+            if not ARCHIVE.search(file) or file in noextract or (index == 0 and DRIVER_UNPACKS.search(file)) or (clone or "").startswith("@"):
                 continue
             body.append(f'  bsdtar -xf "$srcdir/{file}"')
         for file, _, _, clone in sources:
-            if clone:  # a git source is a folder named for the clone; a tag archive's folder is named otherwise
+            if clone and not clone.startswith("@"):  # a git source is a folder named for the clone; a tag archive's folder is named otherwise
                 body.append(f'  top=$(tar -tf "$srcdir/{file}" | sed -n \'1{{s|^\\./||;s|/.*||;p}}\')')
                 body.append(f'  [ -e "{clone}" ] || mv "$top" "{clone}"')
         if sources:  # makepkg keeps the downloaded files in the folder above $srcdir too, and some PKGBUILDs read "../file.patch"
             body.append("  ln -sf " + " ".join(f'"$srcdir/{file}"' for file, _, _, _ in sources) + ' "$srcdir/.."')
+        for file, _, _, clone in sources:
+            if (clone or "").startswith("@"):  # a submodule: its commit's archive goes where git would have checked it out
+                body.append(f'  mkdir -p "{clone[1:]}" && bsdtar -xf "$srcdir/{file}" -C "{clone[1:]}" --strip-components=1')
         body += [
             "  set +u  # PKGBUILDs assume makepkg's environment, where CPPFLAGS, RUSTFLAGS and the like always exist",
             "  startdir=$srcdir pkgdir=$DESTDIR CARCH=x86_64 CHOST=x86_64-pc-linux-gnu",
@@ -454,11 +532,15 @@ class Importer:
         own = {key: text for key, text in functions.items()
                if key not in ("prepare", "build", "check", "pkgver", package_function) and not key.startswith("package_")}
         for text in own.values():
-            body.append(re.sub(r"^", "  ", text, flags=re.M))
+            body.append(indent(text))
         # Arch's devtools install arch-meson, a meson setup with the distribution's options; PKGBUILDs call it as a command.
         if any("arch-meson" in text for text in functions.values()):
             body.append("  arch-meson () { meson setup --prefix /usr --libexecdir lib --sbindir bin --buildtype plain "
                         "--auto-features enabled --wrap-mode nodownload -D b_pie=true \"$@\"; }")
+        # makepkg's message functions, which PKGBUILDs call as commands
+        for helper in ("msg", "msg2", "warning", "error", "plain"):
+            if any(re.search(rf"^\s*{helper} ", text, re.M) for text in functions.values()):
+                body.append(f'  {helper} () {{ echo "== {helper}: $*"; }}')
         called = []
         for arch_name, as_name in (("prepare", "arch_prepare"), ("build", "arch_build"), (package_function, "arch_package")):
             if arch_name not in functions:
@@ -467,7 +549,7 @@ class Importer:
             if "-m build" in text and "--skip-dependency-check" not in text:
                 # build checks the version pins of the PEP 517 backends (flit_core<4) against our versions, which differ from Arch's
                 text = text.replace("--no-isolation", "--no-isolation --skip-dependency-check")
-            body.append(re.sub(r"^", "  ", text, flags=re.M))
+            body.append(indent(text))
             called.append(as_name)
         body.append("")
         for as_name in called:

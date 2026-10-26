@@ -1,0 +1,6 @@
+# Built without the assembly routines: they need uasm, an assembler Arch ships and we do not. LZMA decoding is somewhat slower.
+sub MY_ASM=uasm USE_ASM=1 => 
+# The newer gcc here warns about code in 7-zip that Arch's build tolerates, and the makefile turns warnings into errors.
+sub CXX="g++ $CPPFLAGS $CXXFLAGS $LDFLAGS" => CXX="g++ $CPPFLAGS $CXXFLAGS $LDFLAGS -Wno-error"
+# ...and the makefile adds -Werror itself, after our flags; a variable given to make wins over the makefile's.
+sub LFLAGS_STRIP= => LFLAGS_STRIP= CFLAGS_WARN_WALL=-Wall

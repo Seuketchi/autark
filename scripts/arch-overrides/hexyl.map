@@ -1,0 +1,3 @@
+# The man page is not built: pandoc (a Haskell program, not in Arch's repositories as a package to build) turns markdown into it.
+drop pandoc
+sub pandoc -s -f markdown -t man -o "doc/${pkgname}.1" "doc/${pkgname}.1.md" => cp "doc/${pkgname}.1.md" "doc/${pkgname}.1"

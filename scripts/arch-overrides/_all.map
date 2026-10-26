@@ -1,3 +1,5 @@
 # Dependencies dropped from every package. check() is never run, so the tools only tests need are not wanted, and they are
 # what most of the dependency cycles through the hardware libraries come from (umockdev needs libgudev, libgusb, libpcap, ...).
 drop umockdev
+# ruby-rdoc is the makedepends of the Ruby gems that generate ri documentation, and rdoc itself needs erb, bundler and rake (gems).
+drop ruby-rdoc

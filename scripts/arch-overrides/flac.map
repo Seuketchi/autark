@@ -1,0 +1,5 @@
+# doxygen and pandoc-cli build the API docs and man pages; pandoc is a Haskell program that is not built here.
+drop doxygen
+drop pandoc-cli
+# The man pages need pandoc, which is not built here.
+sub -D BUILD_SHARED_LIBS=ON => -D BUILD_SHARED_LIBS=ON -D INSTALL_MANPAGES=OFF

@@ -1,0 +1,4 @@
+# The jemalloc here is older than valkey now wants ("Newer version of jemalloc required"); valkey runs on the libc allocator.
+drop jemalloc
+sub make BUILD_TLS=yes USE_SYSTEMD=yes -C => make BUILD_TLS=yes USE_SYSTEMD=yes MALLOC=libc -C
+sub patch -Np1 < ../valkey-5.0-use-system-jemalloc.patch => true

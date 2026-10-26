@@ -1,0 +1,2 @@
+# apparmor is a makedepends (auditd's AppArmor support), and apparmor needs audit.
+drop apparmor

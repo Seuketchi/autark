@@ -1,0 +1,2 @@
+# libtiff is a makedepends (TIFF input for cwebp and the tools), and libtiff needs libwebp. Built without TIFF input.
+drop libtiff

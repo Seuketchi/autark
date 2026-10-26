@@ -1,0 +1,2 @@
+# dconf (and vala, which dconf builds with) need glib2, and glib2 lists dconf only for its test suite and as a runtime option.
+drop dconf
