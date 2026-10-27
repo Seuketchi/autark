@@ -1,0 +1,13 @@
+# Arch's gdk-pixbuf2 loads PNG, JPEG, GIF and TIFF through glycin, which needs gtk4 and librsvg, and those need gdk-pixbuf2.
+# Here the old built-in loaders do it (libpng, libjpeg and libtiff are in the base), without introspection and documentation.
+drop glycin
+drop gi-docgen
+drop gobject-introspection
+sub -D glycin=enabled => -D glycin=disabled
+sub -D png=disabled => -D png=enabled
+sub -D jpeg=disabled => -D jpeg=enabled
+sub -D gif=disabled => -D gif=enabled
+sub -D tiff=disabled => -D tiff=enabled
+sub -D introspection=enabled => -D introspection=disabled
+sub -D documentation=true => -D documentation=false
+sub -D gtk_doc=true => -D gtk_doc=false

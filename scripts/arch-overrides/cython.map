@@ -1,0 +1,2 @@
+# python-numpy builds with cython: numpy is only for cython's test suite.
+drop python-numpy

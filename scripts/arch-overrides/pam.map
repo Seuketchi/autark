@@ -1,0 +1,7 @@
+# The PDF and HTML documentation need fop, which needs a JDK, which needs libcups, which needs pam: no documentation.
+drop fop
+drop docbook-xml
+drop docbook-xsl
+drop libxslt
+sub -Dselinux=disabled => -Dselinux=disabled -Ddocs=disabled
+sub rm "${pkgdir}"/usr/share/doc/Linux-PAM/*.pdf; => rm -f "${pkgdir}"/usr/share/doc/Linux-PAM/*.pdf;

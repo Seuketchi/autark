@@ -1,0 +1,5 @@
+# The monorepo build lists the dependencies of every plugin set for each of its packages; GStreamer's core, base and bad libs
+# do not need them, and they lead back to GStreamer (libnice, opencv through zxing-cpp).
+drop libnice
+drop opencv
+drop zxing-cpp

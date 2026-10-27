@@ -1,0 +1,5 @@
+# Only the capture library is wanted, not the profiler (gtk4, libpanel, polkit, debuginfod and the rest of sysprof).
+drop yelp-tools
+sub arch-meson sysprof build; => arch-meson sysprof build -D libsysprof=false -D sysprofd=none -D gtk=false -D tools=false -D tests=false -D examples=false -D help=false -D debuginfod=disabled -D polkit-agent=disabled;
+sub mv "$f" "$d"; => mv "$f" "$d" || true;
+drop glib2-devel

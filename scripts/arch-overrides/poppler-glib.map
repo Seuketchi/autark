@@ -1,0 +1,2 @@
+# gtk3 is only for poppler's demo programs, and gtk3 needs poppler (through sane, colord and libcolord).
+drop gtk3

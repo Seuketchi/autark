@@ -1,0 +1,4 @@
+# The man pages and the gtk-doc manual need the DocBook stylesheets (docbook-xsl, found over the network), which are not here.
+sub -D gtk_doc=true -D man=true => -D gtk_doc=false -D man=false
+# ...so there is no gtk-doc folder for the split package to move out.
+sub mv "$f" "$d"; => mv "$f" "$d" || true;

@@ -1,0 +1,9 @@
+# world and install-world also build and install the documentation, which needs the DocBook stylesheets (xsltproc, over the network).
+sub make world => make world-bin
+sub install-world; => install-world-bin;
+# ...so the man pages the split packages move out do not exist.
+sub _pick libs usr/share/man/man1/pg_{config,dump,dumpall,isready,restore}.1; => 
+sub _pick libs usr/share/man/man1/{cluster,reindex,vacuum}db.1; => 
+sub _pick libs usr/share/man/man1/{create,drop}{db,user}.1; => 
+sub _pick libs usr/share/man/man1/{ecpg,psql,vacuumlo}.1; => 
+sub _pick docs usr/share/doc => 

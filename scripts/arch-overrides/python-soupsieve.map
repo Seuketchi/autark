@@ -1,0 +1,2 @@
+# beautifulsoup4 is only for the test suite, and beautifulsoup4 depends on soupsieve.
+drop python-beautifulsoup4

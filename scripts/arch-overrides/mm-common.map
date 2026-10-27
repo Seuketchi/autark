@@ -1,0 +1,3 @@
+# libsigc++-docs is built with mm-common, and mm-common lists it as a dependency.
+drop libsigc++-docs
+drop libsigc++

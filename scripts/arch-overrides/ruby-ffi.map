@@ -1,0 +1,2 @@
+# rspec is for ruby-ffi's test suite, and rspec's mocks need ruby-ffi.
+drop ruby-rspec

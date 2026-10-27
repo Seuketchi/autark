@@ -1,0 +1,3 @@
+# The version comes from build-aux/git-version-gen, which asks git: a tag archive has no repository, the macro yields nothing and
+# libthai.pc ended up with an empty Version, which breaks the Unicode::LineBreak configure check.
+sub autoreconf -fiv => sed -i 's|\[m4_esyscmd(build-aux/git-version-gen)\]|[0.1.30]|' configure.ac; autoreconf -fiv

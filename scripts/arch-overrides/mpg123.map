@@ -1,0 +1,2 @@
+# jack is not built here, and configure fails when a requested audio module is missing.
+sub --with-audio="alsa oss sdl jack pulse" => --with-audio="alsa oss sdl pulse"

@@ -1,0 +1,4 @@
+# npm lists node-gyp, semver and nodejs-nopt as dependencies and each of them is installed with npm: npm goes first, without them.
+drop node-gyp
+drop semver
+drop nodejs-nopt

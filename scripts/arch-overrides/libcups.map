@@ -1,3 +1,5 @@
 # cups-filters is a makedepends of the cups PKGBUILD (the cups package needs it, libcups does not), and it needs ghostscript,
 # which needs libcups.
 drop cups-filters
+# colord (colour management) needs libcups for its printer profiles, and libcups would use colord for them: not used here.
+drop colord

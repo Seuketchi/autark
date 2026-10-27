@@ -185,9 +185,9 @@ def as_list(value):
 
 
 def load_overrides(directory, name):
-    """Deliberate differences from Arch, one file per package: `drop <dependency>` and `sub <old> => <new>` (a text
-    replacement in the PKGBUILD's functions, which must match something, so an update that moves it is noticed)."""
-    drops, subs = [], []
+    """Deliberate differences from Arch, one file per package: `drop <dependency>`, `add <dependency>` and `sub <old> => <new>`
+    (a text replacement in the PKGBUILD's functions, which must match something, so an update that moves it is noticed)."""
+    drops, subs, adds = [], [], []
     for stem in ("_all", name):  # _all.map: drops that apply to every package
         path = os.path.join(directory, f"{stem}.map")
         if not os.path.exists(path):
@@ -196,10 +196,12 @@ def load_overrides(directory, name):
             line = line.rstrip("\n")
             if line.startswith("drop "):
                 drops.append(line[5:].strip())
+            elif line.startswith("add ") and stem == name:
+                adds.append(line[4:].strip())
             elif line.startswith("sub ") and " => " in line and stem == name:
                 old, new = line[4:].split(" => ", 1)
                 subs.append((old, new))
-    return drops, subs
+    return drops, subs, adds
 
 
 def load_names(path):
@@ -242,22 +244,39 @@ class Importer:
         notes.append(f"dependency {dep}: no recipe (left out)")
         return None
 
-    def commit_patches(self, functions, meta, notes):
+    def no_documentation(self, text):
+        """The manuals are not built: DocBook's stylesheets are fetched over the network (xsltproc cannot), doxygen's graphs
+        need a plugin registration, and the tools bring in cycles. A build that has the option turned on by the PKGBUILD
+        fails on it, so the options that switch API manuals on are turned off. (Man pages are left alone.)"""
+        text = re.sub(r"(-D\s*(?:gtk_doc|gtk-doc|gtkdoc|gtk_docs|documentation|docs|doc|apidocs|api_docs|enable_docs|build_docs)=)(?:true|enabled|yes|'true'|\"true\")",
+                      lambda m: m.group(1) + ("disabled" if m.group(0).endswith("enabled") else "false"), text)
+        text = re.sub(r"--enable-gtk-doc(?:-html|-pdf)?\b", "--disable-gtk-doc", text)
+        # gtkdocize, which autoreconf runs, looks for configure.ac in $srcdir, which here is the folder of the sources
+        text = re.sub(r"(?m)^(\s*)autoreconf\b", r"\1srcdir=. autoreconf", text)
+        return text
+
+    def commit_patches(self, functions, meta, notes, variables=""):
         """prepare() often runs `git cherry-pick -n <sha>` or `git show <sha> -- file | git apply -`; a source archive has no
         history, so each commit becomes a patch fetched from the upstream host (a source, pinned by its sha256) and applied
         with patch(1) or git apply. `git apply -3` needs a repository too, and means a plain apply here."""
         picks = {}
         texts = {}
         for key, text in functions.items():
-            for sha in re.findall(r"git cherry-pick -n ([0-9a-f]{40})", text) + re.findall(r"git show ([0-9a-f]{40}) -- \S+ \| git apply -", text):
+            flags = r"(?:\s+(?:-n|--no-commit|-x|--mainline\s+\d+|-m\s+\d+))*"
+            for sha in re.findall(rf"git (?:cherry-pick|revert){flags}\s+([0-9a-f]{{40}})", text) + re.findall(r"git show ([0-9a-f]{40}) -- \S+ \| git apply -", text):
                 picks[sha] = f"commit-{sha[:12]}.patch"
-            text = re.sub(r"git cherry-pick -n ([0-9a-f]{40})", lambda m: apply_patch(f"$srcdir/commit-{m.group(1)[:12]}.patch"), text)
-            # a loop over an array of commits: `for commit in "${picks[@]}"; do git cherry-pick -n "$commit"; done`
-            loop = re.search(r'git cherry-pick -n "?\$\{?(\w+)\}?"?', text)
-            if loop:
-                for sha in re.findall(r"\b[0-9a-f]{40}\b", text):
-                    picks[sha] = f"commit-{sha[:12]}.patch"
-                text = text.replace(loop.group(0), apply_patch(f"$srcdir/commit-${{{loop.group(1)}:0:12}}.patch"))
+            text = re.sub(rf"git cherry-pick{flags}\s+([0-9a-f]{{40}})", lambda m: apply_patch(f"$srcdir/commit-{m.group(1)[:12]}.patch"), text)
+            text = re.sub(rf"git revert{flags}\s+([0-9a-f]{{40}})", lambda m: f'patch -Rp1 -i "$srcdir/commit-{m.group(1)[:12]}.patch"', text)
+            # a loop over an array of commits: `for commit in "${picks[@]}"; do git cherry-pick -n "$commit"; done`; the array
+            # may be a variable of the PKGBUILD, outside the functions
+            for verb, apply in (("cherry-pick", lambda ref: apply_patch(f"$srcdir/commit-{ref}.patch")),
+                                ("revert", lambda ref: f'patch -Rp1 -i "$srcdir/commit-{ref}.patch"')):
+                loop = re.search(rf'git {verb}{flags}\s+"?\$\{{?(\w+)\}}?"?', text)
+                if loop:
+                    for sha in re.findall(r"\b[0-9a-f]{40}\b", text + " " + variables):
+                        picks[sha] = f"commit-{sha[:12]}.patch"
+                    text = text.replace(loop.group(0), apply(f"${{{loop.group(1)}:0:12}}"))
+            text = re.sub(r"git log --oneline [^;\n]*", "true", text)
             text = re.sub(r"git show ([0-9a-f]{40}) -- (\S+) \| git apply -",
                           lambda m: f'git apply --include={m.group(2)} < "$srcdir/commit-{m.group(1)[:12]}.patch"', text)
             text = re.sub(r"git apply (?:-3|--3way)\b", "git apply", text)
@@ -429,13 +448,14 @@ class Importer:
             notes.append(f"install script {meta['install']} is ignored (its hooks do not run)")
         if "submodule" in "".join(functions.values()):
             notes.append("the build uses git submodules: a source archive has none")
-        drops, subs = load_overrides(self.args.overrides, name)
+        drops, subs, adds = load_overrides(self.args.overrides, name)
         for old, new in subs:
             if not any(old in text for text in functions.values()):
                 raise SystemExit(f"override `{old}` matches nothing in the PKGBUILD any more: look at {name}.map")
             functions = {key: text.replace(old, new) for key, text in functions.items()}
             notes.append(f"override: `{old}` replaced by `{new}`")
-        functions, patches = self.commit_patches(functions, meta, notes)
+        functions = {key: self.no_documentation(text) for key, text in functions.items()}
+        functions, patches = self.commit_patches(functions, meta, notes, " ".join(pkg.get("vars", [])))
         sources = self.sources(meta, pkgbase, commit, notes)
         if any((source[3] or "").startswith("@") for source in sources):
             # the submodules are unpacked already; there is no repository for git to update them in
@@ -450,6 +470,7 @@ class Importer:
         for assign, values in re.findall(r"^\s*depends(\+?)=\(([^)]*)\)", functions.get(package_function, ""), re.M):
             own = shlex.split(values)
             runtime = runtime + own if assign else own
+        runtime = runtime + [dep for dep in adds if dep not in runtime]
         for dep in runtime + [d for d in as_list(meta.get("makedepends")) if d not in runtime]:
             if re.split(r"[<>=]", dep)[0] in drops:
                 notes.append(f"override: dependency {dep} dropped")
@@ -528,6 +549,8 @@ class Importer:
             "  set +u  # PKGBUILDs assume makepkg's environment, where CPPFLAGS, RUSTFLAGS and the like always exist",
             "  startdir=$srcdir pkgdir=$DESTDIR CARCH=x86_64 CHOST=x86_64-pc-linux-gnu",
             "  unset DESTDIR  # makepkg does not set it, and a Makefile given both it and prefix=$pkgdir/usr installs under it twice",
+            # the recipe's source array is name::url; a PKGBUILD that installs "${source[@]}" (pambase) means local files
+            '  source=("${source[@]%%::*}")',
             # makepkg runs prepare() and build() with pkgname the first package of a split PKGBUILD, and package_x() with x
             f"  pkgname={first} pkgbase={pkgbase} pkgver={meta['pkgver']} pkgrel={meta.get('pkgrel', '1')}",
         ]
@@ -540,14 +563,22 @@ class Importer:
         for text in own.values():
             body.append(indent(text))
         # Arch's devtools install arch-meson, a meson setup with the distribution's options; PKGBUILDs call it as a command.
+        # Features are auto here, not enabled as in Arch: a feature whose library is not built (a documentation tool, a
+        # codec) is left out rather than failing the build, and what a PKGBUILD turns on or off itself still holds.
         if any("arch-meson" in text for text in functions.values()):
             body.append("  arch-meson () { meson setup --prefix /usr --libexecdir lib --sbindir bin --buildtype plain "
-                        "--auto-features enabled --wrap-mode nodownload -D b_pie=true \"$@\"; }")
+                        "--auto-features auto --wrap-mode nodownload -D b_pie=true \"$@\"; }")
         # makepkg's message functions, which PKGBUILDs call as commands
         for helper in ("msg", "msg2", "warning", "error", "plain"):
             if any(re.search(rf"^\s*{helper} ", text, re.M) for text in functions.values()):
                 body.append(f'  {helper} () {{ echo "== {helper}: $*"; }}')
         called = []
+        # A split package's files are often moved out of the first package's pkgdir by _pick (into $srcdir/<name>), and its
+        # package function only collects them: the first one is run too, into a folder that is thrown away.
+        main_function = f"package_{first}" if f"package_{first}" in functions else "package"
+        run_main = first != name and main_function in functions and main_function != package_function
+        if run_main:
+            body.append(indent(re.sub(r"^\S+ \(\)", "arch_package_main ()", functions[main_function], count=1)))
         for arch_name, as_name in (("prepare", "arch_prepare"), ("build", "arch_build"), (package_function, "arch_package")):
             if arch_name not in functions:
                 continue
@@ -559,6 +590,9 @@ class Importer:
             called.append(as_name)
         body.append("")
         for as_name in called:
+            if as_name == "arch_package" and run_main:
+                # not in a subshell: variables the first package sets (_python_stdlib) are read by the others, as in makepkg
+                body.append(f'  cd "$srcdir"; _pkgdir=$pkgdir; pkgdir="$srcdir/_{first}-pkgdir"; mkdir -p "$pkgdir"; pkgname={first}; arch_package_main; pkgdir=$_pkgdir')
             body.append(f'  cd "$srcdir"; {"pkgname=" + name + "; " if as_name == "arch_package" and first != name else ""}{as_name}')
         # What makepkg removes after package(): its PURGE_TARGETS (usr/share/info/dir is one index every info package would
         # otherwise own, and perllocal.pod and .packlist are Perl's install logs) and, unless the PKGBUILD keeps them, .la files.

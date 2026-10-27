@@ -1,0 +1,2 @@
+# samba is for NTLM authentication through ntlm_auth, an optional helper; samba needs libcups, which gtk3 needs, which tinysparql feeds.
+drop samba

@@ -1,0 +1,3 @@
+# doxygen's graphs need `dot -c` to have registered graphviz's plugins, which an install into a staging folder cannot do.
+sub -Denable_docs='true' => -Denable_docs='false'
+sub ninja -C build all doc/html => ninja -C build all

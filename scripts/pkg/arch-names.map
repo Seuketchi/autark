@@ -43,3 +43,21 @@ clang22 -
 clang-libs -
 # The base ships Lua 5.4 (lua), whose files lua54 would overwrite.
 lua54 lua
+# Arch splits libXScrnSaver as libxss; the base has it as libXScrnSaver.
+libxss libXScrnSaver
+# The base has PAM as linux-pam, with its /etc/pam.d files; Arch's pam and pambase are the same two things.
+pam linux-pam
+pambase -
+# The base builds lld with the rest of LLVM.
+lld llvm
+lld22 llvm
+# The base installs the util-linux libraries (libuuid, libblkid, libmount, ...) with util-linux.
+util-linux-libs util-linux
+# The base ships GLib 2.88 as glib (with gdbus-codegen, gi-compile-repository and the rest of what Arch splits out), and p11-kit with its library.
+glib2 glib
+glib2-devel glib
+glib2-docs -
+libp11-kit p11-kit
+# libjpeg-turbo is the base libjpeg, and python-mako the base mako.
+libjpeg-turbo libjpeg
+python-mako mako

@@ -1,0 +1,2 @@
+# Arch's default Lua is 5.5; here it is 5.4, and the 5.4 config is made on the last line.
+sub ./build/luarocks-admin ./build/config-5.5.lua => ./build/luarocks-admin

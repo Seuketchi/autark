@@ -1,0 +1,3 @@
+# gtk-doc builds the API docs, and needs glib2-docs, which needs dconf.
+drop gtk-doc
+sub -D gtk_doc=true => -D gtk_doc=false

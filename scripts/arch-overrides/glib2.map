@@ -7,3 +7,4 @@ drop gi-docgen
 sub -D documentation=true => -D documentation=false
 sub -D introspection=enabled => -D introspection=disabled
 sub mv "$f" "$d"; => mv "$f" "$d" || true;
+add libsysprof-capture

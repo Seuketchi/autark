@@ -1,3 +1,5 @@
 # lmdb's source is on git.openldap.org, a host the importer does not read: no LMDB support in named.
 drop lmdb
 sub --with-lmdb => --without-lmdb
+# The build runs as a plain user and cannot chown: the files are installed owned by root (the named group does not exist here yet).
+sub  -o 0 -g 40 => 

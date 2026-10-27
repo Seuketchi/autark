@@ -1,0 +1,2 @@
+# libxml2 is built here without its Python module, which itstool imports.
+add python-libxml2

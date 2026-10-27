@@ -1,0 +1,4 @@
+# gst-plugins-base needs libpipewire (through fluidsynth) and libpipewire's GStreamer plugins need gst-plugins-base: no GStreamer
+# plugins here. No documentation either (doxygen, graphviz).
+drop gst-plugins-base
+sub -D docs=enabled => -D docs=disabled -D gstreamer=disabled -D gstreamer-device-provider=disabled

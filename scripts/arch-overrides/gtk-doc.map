@@ -1,0 +1,2 @@
+# meson checks for python-parameterized while configuring, although only the tests use it.
+add python-parameterized

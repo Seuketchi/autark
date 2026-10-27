@@ -1,0 +1,2 @@
+# The `Build` script is made by Build.PL, which Arch's recipe never runs (its tag archive had one, this one does not).
+sub LC_ALL=en_US.UTF-8 perl Build => perl Build.PL installdirs=vendor; LC_ALL=C.UTF-8 perl Build

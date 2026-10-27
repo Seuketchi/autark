@@ -1,0 +1,2 @@
+# gnupg builds its manual's pictures with imagemagick, which needs ghostscript, which needs libcups, ... which needs gnupg again.
+drop imagemagick

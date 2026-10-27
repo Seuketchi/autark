@@ -3,3 +3,9 @@
 drop umockdev
 # ruby-rdoc is the makedepends of the Ruby gems that generate ri documentation, and rdoc itself needs erb, bundler and rake (gems).
 drop ruby-rdoc
+# Documentation toolchains: fig2dev (xfig) and dblatex (LaTeX) are only for PDF manuals, and they pull in ghostscript, gnupg and
+# half of the printing stack, whose dependencies come back round to the libraries that want the manuals.
+drop fig2dev
+drop dblatex
+# po4a translates man pages and needs the DocBook stylesheets over the network; it is a build tool for documentation only.
+drop po4a
