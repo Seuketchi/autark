@@ -1,0 +1,2 @@
+# Arch restores the test folder from a git commit; the tag archive has no repository, and nothing here runs the tests.
+sub git checkout 53718dbe36ee9fd42e97527188a788f2754288c0 -- test => true

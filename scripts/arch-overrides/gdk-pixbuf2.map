@@ -11,3 +11,5 @@ sub -D tiff=disabled => -D tiff=enabled
 sub -D introspection=enabled => -D introspection=disabled
 sub -D documentation=true => -D documentation=false
 sub -D gtk_doc=true => -D gtk_doc=false
+# The documentation is off, so there is no usr/share/doc to move out into the docs package.
+sub mv {"$pkgdir",doc}/usr/share/doc => mv {"$pkgdir",doc}/usr/share/doc || true

@@ -1,0 +1,3 @@
+# pandoc only builds the man pages, and it is Haskell: building it needs GHC, which needs GHC.
+drop pandoc-cli
+sub -DAVIF_BUILD_MAN_PAGES=ON => -DAVIF_BUILD_MAN_PAGES=OFF

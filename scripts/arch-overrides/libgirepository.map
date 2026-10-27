@@ -1,0 +1,4 @@
+# The documentation is off (gtk_doc=false), so there is no usr/share/gtk-doc to pick, and its tools are not wanted.
+drop gtk-doc
+drop python-sphinx
+sub _pick libg usr/share/gtk-doc => _pick libg usr/share/gtk-doc || true
